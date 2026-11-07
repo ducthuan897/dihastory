@@ -1212,7 +1212,7 @@ const AdminModule = (function () {
                     name: fName,
                     folderTitle,
                     modifiedRaw: fMod,
-                    capturedAt: normalizeDateToIsoMinute(fMod),
+                    capturedAt: extractDateFromText(fName) || null,
                     url: `https://drive.google.com/thumbnail?id=${fId}&sz=w1600`
                 });
             }
@@ -1364,10 +1364,8 @@ const AdminModule = (function () {
                         const processedFiles = await Promise.all(data.files.map(async (f) => {
                             let photoLoc = f.location || "";
                             let photoCity = f.city || "";
-                            let capturedAt = normalizeDateToIsoMinute(f.date || f.capturedAt || f.lastUpdated);
-                            if (!capturedAt) {
-                                capturedAt = extractDateFromText(f.name);
-                            }
+                            // Strict EXIF capture date (DateTimeOriginal) or photo filename (never Drive upload date)
+                            let capturedAt = normalizeDateToIsoMinute(f.capturedAt) || extractDateFromText(f.name);
                             if (f.lat != null && f.lon != null) {
                                 const geo = await reverseGeocodeCoords(f.lat, f.lon);
                                 if (geo) {
@@ -1375,7 +1373,7 @@ const AdminModule = (function () {
                                     photoCity = geo.city;
                                 }
                             }
-                            if (!photoLoc) {
+                            if (!photoLoc && f.name) {
                                 const nameLoc = extractLocationFromText(f.name);
                                 if (nameLoc) {
                                     photoLoc = nameLoc.location;
@@ -1394,6 +1392,30 @@ const AdminModule = (function () {
                                 url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`
                             };
                         }));
+
+                        // If no EXIF was extracted by Apps Script, sample browser EXIF extraction on first 6 photos
+                        const hasExif = processedFiles.some(f => f.capturedAt || f.lat != null || f.location);
+                        if (!hasExif && processedFiles.length > 0) {
+                            const sampleCount = Math.min(processedFiles.length, 6);
+                            await Promise.all(
+                                processedFiles.slice(0, sampleCount).map(async (f) => {
+                                    const exifMeta = await extractDriveFileMetaInBrowser(f.id);
+                                    if (exifMeta) {
+                                        if (exifMeta.capturedAt && !f.capturedAt) f.capturedAt = exifMeta.capturedAt;
+                                        if (exifMeta.lat != null && f.lat == null) {
+                                            f.lat = exifMeta.lat;
+                                            f.lon = exifMeta.lon;
+                                            const geo = await reverseGeocodeCoords(f.lat, f.lon);
+                                            if (geo) {
+                                                f.location = geo.location;
+                                                f.city = geo.city;
+                                            }
+                                        }
+                                    }
+                                })
+                            );
+                        }
+
                         return { folderTitle, files: processedFiles };
                     }
                 }
@@ -1631,17 +1653,14 @@ const AdminModule = (function () {
             const folderId = extractGoogleDriveFolderId(rawLink);
             if (folderId) {
                 const folderData = await fetchGoogleDriveFolderFiles(folderId);
-                const folderTitle = folderData.folderTitle || "";
                 const folderFiles = folderData.files || [];
-                const folderLocHint = extractLocationFromText(folderTitle);
-                const folderDateHint = extractDateFromText(folderTitle);
 
                 for (let j = 0; j < folderFiles.length; j++) {
                     const f = folderFiles[j];
                     counter++;
                     const cleanCode = (f.name || '').replace(/\.[^/.]+$/, "").toUpperCase();
 
-                    // 1. Resolve Location from EXIF GPS / XMP / filename / folder title
+                    // 1. Resolve Location strictly from EXIF GPS / reverse geocoding / photo filename metadata (NEVER from folder title)
                     let photoLoc = f.location || "";
                     let photoCity = f.city || "";
                     if (!photoLoc && f.lat != null && f.lon != null) {
@@ -1651,34 +1670,18 @@ const AdminModule = (function () {
                             photoCity = geo.city;
                         }
                     }
-                    if (!photoLoc) {
-                        const nameLoc = extractLocationFromText(f.name) || folderLocHint;
+                    if (!photoLoc && f.name) {
+                        const nameLoc = extractLocationFromText(f.name);
                         if (nameLoc) {
                             photoLoc = nameLoc.location;
                             photoCity = nameLoc.city;
                         }
                     }
-                    if (!photoLoc && folderTitle) {
-                        photoLoc = folderTitle;
-                        photoCity = fallbackCity || folderTitle;
-                    }
-                    if (!photoLoc) {
-                        photoLoc = fallbackCity || "";
-                        photoCity = fallbackCity || "";
-                    }
 
-                    // 2. Resolve Capture Date/Time from EXIF DateTimeOriginal / Drive Modified / filename
+                    // 2. Resolve Capture Date/Time strictly from EXIF DateTimeOriginal / photo filename (NEVER from folder title or upload date)
                     let capturedAt =
                         normalizeDateToIsoMinute(f.capturedAt) ||
-                        extractDateFromText(f.name) ||
-                        normalizeDateToIsoMinute(f.modifiedRaw) ||
-                        folderDateHint;
-                    if (!capturedAt) {
-                        const baseD = fallbackDate || new Date().toISOString().slice(0, 10);
-                        const hour = 8 + Math.floor((counter % 40) / 6);
-                        const min = ((counter * 7) % 60).toString().padStart(2, '0');
-                        capturedAt = `${baseD}T${hour.toString().padStart(2, '0')}:${min}`;
-                    }
+                        extractDateFromText(f.name);
 
                     photos.push({
                         id: `drv_${f.id}_${Date.now()}_${counter}`,
@@ -1686,7 +1689,7 @@ const AdminModule = (function () {
                         code: cleanCode && cleanCode.length <= 22 ? cleanCode : `DRV_${1000 + counter}`,
                         location: photoLoc,
                         city: photoCity,
-                        capturedAt,
+                        capturedAt: capturedAt || "",
                         title: f.name || `Ảnh Google Drive #${counter}`,
                         url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`
                     });
@@ -1757,6 +1760,30 @@ const AdminModule = (function () {
                 });
             }
         }
+
+        // Propagate detected shoot location and capture date among photos in the same album
+        const photoWithLoc = photos.find(p => p.location && p.location.trim());
+        const detectedLoc = photoWithLoc ? photoWithLoc.location : (fallbackCity || "");
+        const detectedCity = photoWithLoc ? (photoWithLoc.city || photoWithLoc.location) : (fallbackCity || "");
+
+        const validDatePhotos = photos.filter(p => p.capturedAt && /^\d{4}-\d{2}-\d{2}/.test(p.capturedAt));
+        const detectedShootDate = validDatePhotos.length > 0
+            ? validDatePhotos.map(p => p.capturedAt.slice(0, 10)).sort()[0]
+            : (fallbackDate || "");
+
+        photos.forEach((p, idx) => {
+            if (!p.location || !p.location.trim()) {
+                p.location = detectedLoc;
+                p.city = detectedCity;
+            }
+            if (!p.capturedAt) {
+                if (detectedShootDate) {
+                    const hour = 8 + Math.floor((idx % 40) / 6);
+                    const min = ((idx * 7) % 60).toString().padStart(2, '0');
+                    p.capturedAt = `${detectedShootDate}T${hour.toString().padStart(2, '0')}:${min}`;
+                }
+            }
+        });
 
         return photos;
     }
