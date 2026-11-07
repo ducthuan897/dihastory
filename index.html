@@ -561,32 +561,7 @@
                         <i class="fa-solid fa-chevron-left text-[10px]"></i>
                         <span>Quay về trang quản lý</span>
                     </button>
-
-                    <span class="text-base sm:text-lg font-bold text-zinc-900 tracking-tight cursor-pointer"
-                        onclick="App.showView('home')">
-                        Shotpik
-                    </span>
-
-                    <div class="flex items-center gap-2 sm:gap-3 text-zinc-600">
-                        <button type="button" onclick="AdminModule.openCustomAlbumModal('settings')"
-                            class="w-8 h-8 rounded-full hover:bg-zinc-100 flex items-center justify-center text-sm transition"
-                            title="Hướng dẫn & Cài đặt">
-                            <i class="fa-regular fa-circle-question"></i>
-                        </button>
-                        <button type="button" onclick="AdminModule.openCustomAlbumModal('selections')"
-                            class="relative w-8 h-8 rounded-full hover:bg-zinc-100 flex items-center justify-center text-sm transition"
-                            title="Thông báo lượt khách gửi kết quả chọn ảnh">
-                            <i class="fa-regular fa-bell"></i>
-                            <span id="managePageBellBadge"
-                                class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center">0</span>
-                        </button>
-                        <span class="text-xs font-bold text-zinc-700 px-1">VI</span>
-                        <button type="button" onclick="App.openAlbumPage(AdminModule.getActiveAdminAlbum()?.id)"
-                            class="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-bold shadow-xs overflow-hidden"
-                            title="Xem trang Album giao diện khách hàng">
-                            <i class="fa-solid fa-camera-retro"></i>
-                        </button>
-                    </div>
+                    <span id="managePageBellBadge" class="hidden">0</span>
                 </div>
 
                 <!-- 2. MAIN ALBUM HEADER CARD (BANNER + INFO + TOOLBAR + SUBTABS) -->
