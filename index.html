@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Custom CSS File -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
 
@@ -71,42 +71,45 @@
     <!-- CONTENT AREA -->
     <div class="flex-grow">
         
-        <!-- PUBLIC VIEW -->
-        <main id="publicView" class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                    Chào mừng đến với Blog Video Của Tôi
-                </h1>
-                <p class="mt-3 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
-                    Nơi chia sẻ kiến thức công nghệ, trải nghiệm nhiếp ảnh và các nội dung chất lượng cao.
-                </p>
+        <!-- Main Content Area -->
+    <main id="publicView" class="main-wrapper">
+        
+        <!-- Hero Header -->
+        <div class="hero-section">
+            <h1>Chào mừng đến với Blog Video Của Tôi</h1>
+            <p>Nơi chia sẻ kiến thức công nghệ, trải nghiệm nhiếp ảnh và các nội dung chất lượng cao.</p>
+        </div>
+
+        <!-- Video Card -->
+        <div class="content-card">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-circle-play text-red"></i> Video Nổi Bật Hôm Nay</h2>
+                <span class="badge-tag">YouTube Player</span>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 mb-10">
-                <div class="bg-slate-900 px-6 py-4 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-3 h-3 bg-red-500 rounded-full inline-block animate-pulse"></span>
-                        <h2 class="text-white font-semibold text-base sm:text-lg">Video Nổi Bật Hôm Nay</h2>
-                    </div>
-                    <span class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full border border-slate-700">YouTube Player</span>
-                </div>
-                
-                <div class="aspect-video-container bg-black">
-                    <iframe id="mainVideoPlayer" src="" title="YouTube Video Player" allowfullscreen></iframe>
-                </div>
-
-                <div class="p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div class="text-sm text-slate-600">
-                        <i class="fa-solid fa-circle-info text-brand-500 mr-1.5"></i> Nội dung được cập nhật trực tiếp bởi Quản Trị Viên.
-                    </div>
-                    <button onclick="AdminModule.shareCurrentVideo()" class="inline-flex items-center text-sm font-medium text-brand-600 hover:text-brand-700">
-                        <i class="fa-solid fa-share-nodes mr-1.5"></i> Chia sẻ Video
-                    </button>
-                </div>
+            <!-- Responsive 16:9 Video Player -->
+            <div class="video-container">
+                <iframe 
+                    id="mainVideoPlayer"
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                    title="YouTube video player" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    referrerpolicy="strict-origin-when-cross-origin" 
+                    allowfullscreen>
+                </iframe>
             </div>
 
-            
-        </main>
+            <div class="card-footer">
+                <span><i class="fa-solid fa-circle-info"></i> Nội dung được cập nhật trực tiếp bởi Quản Trị Viên.</span>
+                <span class="btn-chip" onclick="AdminModule.shareCurrentVideo()"><i class="fa-solid fa-share-nodes"></i> Chia sẻ Video</span>
+            </div>
+        </div>
+
+        <!-- Admin Control Panel Section -->
+        <section id="adminPanel" class="admin-panel hidden">
+            <!-- Giữ nguyên phần adminPanel cũ -->
+        </section>
+    </main>
 
         <!-- ADMIN DASHBOARD VIEW -->
         <main id="adminView" class="hidden max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
