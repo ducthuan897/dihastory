@@ -13,7 +13,7 @@ const AdminModule = (function () {
     const STORAGE_KEY_REMOVED_BACKUP_MAP = "shotpik_removed_interactions_backup_v2";
     const STORAGE_KEY_GOOGLE_API_KEY = "shotpik_google_drive_api_key_v1";
 
-    const DEFAULT_GOOGLE_DRIVE_API_KEY = "";
+    const DEFAULT_GOOGLE_DRIVE_API_KEY = "https://script.google.com/macros/s/AKfycbw2nwiPyK04c9V4dQKVPlAya8Z0FrwBG3McsT0swJjRulOjpwt06ytvSrMKAm7xZ9FL/exec";
 
     function getGoogleDriveApiKey() {
         try {
@@ -632,6 +632,9 @@ function testRun() {
             try {
                 localStorage.setItem(STORAGE_KEY_ALBUMS, JSON.stringify(current));
             } catch (e) {}
+            if (typeof App !== 'undefined' && typeof App.renderHomeShowcase === 'function') {
+                App.renderHomeShowcase();
+            }
         }
         return changed;
     }
