@@ -94,25 +94,33 @@ function saveAlbumsToDrive(albums) {
   var fileName = "dutustory_db.json";
   var jsonStr = JSON.stringify(albums);
   var files = DriveApp.getFilesByName(fileName);
-  if (files.hasNext()) {
+  var saved = false;
+  while (files.hasNext()) {
     var file = files.next();
-    file.setContent(jsonStr);
-  } else {
+    if (!file.isTrashed()) {
+      file.setContent(jsonStr);
+      saved = true;
+      break;
+    }
+  }
+  if (!saved) {
     DriveApp.createFile(fileName, jsonStr, MimeType.PLAIN_TEXT);
   }
 }
 
-// Đọc file 'dutustory_db.json' từ Google Drive
+// Đọc file 'dutustory_db.json' từ Google Drive (luôn lấy bản mới nhất, bỏ qua file thùng rác)
 function loadAlbumsFromDrive() {
   var fileName = "dutustory_db.json";
   var files = DriveApp.getFilesByName(fileName);
-  if (files.hasNext()) {
+  while (files.hasNext()) {
     var file = files.next();
-    var content = file.getBlob().getDataAsString();
-    try {
-      var parsed = JSON.parse(content);
-      if (Array.isArray(parsed)) return parsed;
-    } catch(e) {}
+    if (!file.isTrashed()) {
+      var content = file.getBlob().getDataAsString("UTF-8");
+      try {
+        var parsed = JSON.parse(content);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch(e) {}
+    }
   }
   return [];
 }

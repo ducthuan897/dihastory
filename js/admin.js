@@ -710,7 +710,8 @@ function testRun() {
             console.error(e);
         }
         const initial = JSON.parse(JSON.stringify(DEFAULT_ALBUMS));
-        saveAllAlbums(initial);
+        memoryAlbumsCache = initial;
+        // Không gọi syncAlbumsToCloud ở đây để tránh ghi đè dữ liệu Cloud DB khi thiết bị mới mở web lần đầu
         return initial;
     }
 
@@ -724,36 +725,46 @@ function testRun() {
         syncAlbumsToCloud(albums);
     }
 
-    function mergeCloudAlbums(incomingAlbums) {
+    // Luôn áp dụng bản DB mới nhất từ Cloud lên toàn bộ mọi thiết bị
+    function applyLatestCloudAlbums(incomingAlbums) {
         if (!Array.isArray(incomingAlbums) || incomingAlbums.length === 0) return false;
-        const current = getAllAlbums();
-        let changed = false;
+        
+        const current = memoryAlbumsCache || [];
+        const currentJson = JSON.stringify(current);
+        const incomingJson = JSON.stringify(incomingAlbums);
 
-        incomingAlbums.forEach(inc => {
-            if (!inc || !inc.id) return;
-            const existingIdx = current.findIndex(a => a.id === inc.id);
-            if (existingIdx !== -1) {
-                // If incoming has more photos or updated info, merge
-                if (JSON.stringify(current[existingIdx]) !== JSON.stringify(inc)) {
-                    current[existingIdx] = inc;
-                    changed = true;
-                }
-            } else {
-                current.push(inc);
-                changed = true;
-            }
-        });
+        // Nếu dữ liệu giống hệt hiện tại thì không cần render lại
+        if (currentJson === incomingJson) return false;
 
-        if (changed) {
-            memoryAlbumsCache = current;
-            try {
-                localStorage.setItem(STORAGE_KEY_ALBUMS, JSON.stringify(current));
-            } catch (e) {}
-            if (typeof App !== 'undefined' && typeof App.renderHomeShowcase === 'function') {
+        memoryAlbumsCache = incomingAlbums;
+        try {
+            localStorage.setItem(STORAGE_KEY_ALBUMS, incomingJson);
+        } catch (e) {
+            console.warn("Storage warning:", e);
+        }
+
+        // Đảm bảo activeAdminAlbumId luôn hợp lệ
+        if (!incomingAlbums.some(a => a.id === activeAdminAlbumId)) {
+            activeAdminAlbumId = incomingAlbums[0].id;
+        }
+
+        // Tự động cập nhật lại toàn bộ giao diện đang hiển thị trên thiết bị
+        if (typeof App !== 'undefined') {
+            if (typeof App.renderHomeShowcase === 'function') {
                 App.renderHomeShowcase();
             }
+            if (typeof App.renderPublicAlbum === 'function' && App.getCurrentAlbumId()) {
+                App.renderPublicAlbum();
+            }
         }
-        return changed;
+        if (typeof renderAdminAlbumsTable === 'function') {
+            renderAdminAlbumsTable();
+        }
+        if (typeof renderAlbumManagePage === 'function') {
+            renderAlbumManagePage();
+        }
+
+        return true;
     }
 
     async function syncAlbumsToCloud(albums) {
@@ -765,30 +776,40 @@ function testRun() {
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'saveAlbums', albums })
                 });
-            } catch (e) {}
+            } catch (e) {
+                // Dự phòng qua GET nếu POST bị chặn
+                try {
+                    await fetch(`${cloudUrl}?action=saveAlbums&data=${encodeURIComponent(JSON.stringify(albums))}`);
+                } catch(err) {}
+            }
         }
     }
 
     async function fetchCloudOrStaticAlbums() {
-        // 1. Try Google Apps Script cloud database (3s timeout)
+        // 1. Luôn ưu tiên lấy bản mới nhất từ Google Apps Script Cloud Database
         const cloudUrl = getGoogleDriveApiKey();
         if (cloudUrl && cloudUrl.startsWith('https://script.google.com/')) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000);
-                const resp = await fetch(`${cloudUrl}?action=getAlbums`, { signal: controller.signal })
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const resp = await fetch(`${cloudUrl}?action=getAlbums&_t=${Date.now()}`, {
+                    signal: controller.signal,
+                    cache: 'no-store'
+                })
                     .catch(() => null)
                     .finally(() => clearTimeout(timeoutId));
                 if (resp && resp.ok) {
                     const data = await resp.json();
                     if (data && Array.isArray(data.albums) && data.albums.length > 0) {
-                        return mergeCloudAlbums(data.albums);
+                        return applyLatestCloudAlbums(data.albums);
                     }
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.warn("Lỗi đọc Cloud DB:", e);
+            }
         }
 
-        // 2. Try static data/albums.json from GitHub Pages repository (2.5s timeout)
+        // 2. Dự phòng qua data/albums.json từ repository (với timestamp chống lưu cache cũ)
         try {
             let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
             if (window.location.hostname.includes('github.io')) {
@@ -796,14 +817,17 @@ function testRun() {
             }
             const staticUrl = `${base}/data/albums.json?v=${Date.now()}`;
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2500);
-            const staticResp = await fetch(staticUrl, { signal: controller.signal })
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            const staticResp = await fetch(staticUrl, {
+                signal: controller.signal,
+                cache: 'no-store'
+            })
                 .catch(() => null)
                 .finally(() => clearTimeout(timeoutId));
             if (staticResp && staticResp.ok) {
                 const staticAlbums = await staticResp.json();
                 if (Array.isArray(staticAlbums) && staticAlbums.length > 0) {
-                    return mergeCloudAlbums(staticAlbums);
+                    return applyLatestCloudAlbums(staticAlbums);
                 }
             }
         } catch (e) {}
@@ -4208,7 +4232,8 @@ function testRun() {
         testGoogleDriveApiKey,
         copyAppsScriptCode,
         fetchCloudOrStaticAlbums,
-        mergeCloudAlbums,
+        applyLatestCloudAlbums,
+        mergeCloudAlbums: applyLatestCloudAlbums,
         exportAlbumsJsonFile
     };
 })();

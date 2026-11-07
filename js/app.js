@@ -44,12 +44,29 @@ const App = (function () {
             handleUrlRouting(true);
         });
 
-        // Background sync albums from Cloud or data/albums.json so other devices immediately see new albums
+        // 1. Luôn tải bản DB mới nhất từ Cloud ngay khi khởi động
         AdminModule.fetchCloudOrStaticAlbums().then(hasNewData => {
             if (hasNewData) {
                 handleUrlRouting(true);
             }
         });
+
+        // 2. Tự động kiểm tra và đồng bộ bản DB mới nhất khi người dùng chuyển lại tab hoặc mở màn hình điện thoại
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                AdminModule.fetchCloudOrStaticAlbums();
+            }
+        });
+        window.addEventListener('focus', () => {
+            AdminModule.fetchCloudOrStaticAlbums();
+        });
+
+        // 3. Tự động đồng bộ ngầm định kỳ mỗi 15 giây để mọi thiết bị luôn luôn có bản DB mới nhất
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                AdminModule.fetchCloudOrStaticAlbums();
+            }
+        }, 15000);
     }
 
     function handleUrlRouting(skipPush) {

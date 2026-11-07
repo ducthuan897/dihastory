@@ -1,129 +1,62 @@
 ﻿[
     {
-        "id":  "wedding-minhquan-lananh",
-        "title":  "Wedding: Minh QuÃ¢n \u0026 Lan Anh",
-        "clientName":  "Minh QuÃ¢n \u0026 Lan Anh",
-        "date":  "2026-11-07",
-        "city":  "ÄÃ  Láº¡t",
-        "location":  "Dalat Palace Heritage, ÄÃ  Láº¡t",
-        "photographer":  "Äá»©c Thuáº­n Studio",
-        "selectionLimit":  10,
+        "id":  "gian-than-dat-09",
+        "title":  "Gian thần Đạt 09",
+        "clientName":  "Nguyễn Thành Đạt",
+        "date":  "2026-07-24",
+        "city":  "",
+        "location":  "",
+        "photographer":  "Đức Thuận Studio",
+        "selectionLimit":  15,
         "pinCode":  "",
         "isPublic":  true,
         "tags":  [
-                     "ÄÃ  Láº¡t",
-                     "Wedding",
-                     "Pre-Wedding"
+
                  ],
         "sourceType":  "drive",
         "driveLinks":  [
-                           "https://drive.google.com/drive/folders/1aBcDeFgHiJkLmNoPqRsTuVwXyZ"
+                           "https://drive.google.com/drive/folders/1GJ1XAfPhF5wYF9BwqZUL1f96IdLm9t09?usp=drive_link"
                        ],
         "reminderEnabled":  true,
-        "reminderText":  "ChÃ o Minh QuÃ¢n \u0026 Lan Anh! Hai báº¡n vui lÃ²ng tháº£ tim chá»n 10 táº¥m áº£nh Æ°ng Ã½ nháº¥t Ä‘á»ƒ Studio tiáº¿n hÃ nh chá»‰nh sá»­a chi tiáº¿t vÃ  in áº£nh cá»•ng trÆ°á»›c ngÃ y 15/11 nhÃ©!",
-        "deadlineEnabled":  true,
+        "reminderText":  "Chào Nguyễn Thành Đạt! Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé.",
+        "deadlineEnabled":  false,
         "deadlineAt":  "2026-11-15T23:59",
         "completeLockEnabled":  true,
         "isSelectionLockedBySubmit":  false,
-        "youtubeId":  "dQw4w9WgXcQ",
-        "coverUrl":  "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format\u0026fit=crop\u0026w=1800\u0026q=85",
-        "description":  "Bá»™ áº£nh phÃ³ng sá»± cÆ°á»›i vÃ  ngoáº¡i cáº£nh bÃ¬nh minh táº¡i ÄÃ  Láº¡t.",
+        "youtubeId":  "",
+        "coverUrl":  "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U\u0026sz=w1600",
+        "description":  "Album Gian thần Đạt 09 của khách hàng Nguyễn Thành Đạt ().",
         "photos":  [
                        {
-                           "id":  "p1",
-                           "code":  "IMG_1001",
-                           "location":  "Äá»“i ThÃ´ng Äa PhÃº - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T05:45",
-                           "title":  "SÆ°Æ¡ng sá»›m Ä‘á»“i thÃ´ng",
-                           "url":  "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
+                           "id":  "drv_1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7_1794052824913_1",
+                           "driveFileId":  "1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7",
+                           "code":  "DSC00346",
+                           "location":  "",
+                           "city":  "",
+                           "capturedAt":  "2026-07-24T16:28",
+                           "title":  "DSC00346.jpg",
+                           "url":  "https://drive.google.com/thumbnail?id=1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7\u0026sz=w1600",
+                           "starred":  true
                        },
                        {
-                           "id":  "p2",
-                           "code":  "IMG_1002",
-                           "location":  "Äá»“i ThÃ´ng Äa PhÃº - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T06:15",
-                           "title":  "Náº¯ng mai cháº¡m ngÃµ",
-                           "url":  "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
+                           "id":  "drv_1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U_1794052824913_2",
+                           "driveFileId":  "1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U",
+                           "code":  "DSC01193",
+                           "location":  "",
+                           "city":  "",
+                           "capturedAt":  "2026-07-24T16:28",
+                           "title":  "DSC01193.jpg",
+                           "url":  "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U\u0026sz=w1600"
                        },
                        {
-                           "id":  "p3",
-                           "code":  "IMG_1003",
-                           "location":  "Äá»“i ThÃ´ng Äa PhÃº - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T06:50",
-                           "title":  "Khoáº£nh kháº¯c náº¯m tay",
-                           "url":  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "p4",
-                           "code":  "IMG_1004",
-                           "location":  "Äá»“i ThÃ´ng Äa PhÃº - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T07:20",
-                           "title":  "Háº¹n Æ°á»›c trÄƒm nÄƒm",
-                           "url":  "https://images.unsplash.com/photo-1529636798458-92182e662485?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "p5",
-                           "code":  "IMG_1005",
-                           "location":  "NhÃ  Thá» Con GÃ  - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T09:30",
-                           "title":  "CÃ´ dÃ¢u chuáº©n bá»‹ lá»…",
-                           "url":  "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "p6",
-                           "code":  "IMG_1006",
-                           "location":  "NhÃ  Thá» Con GÃ  - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T10:05",
-                           "title":  "Hoa cÆ°á»›i tinh khÃ´i",
-                           "url":  "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "p7",
-                           "code":  "IMG_1007",
-                           "location":  "NhÃ  Thá» Con GÃ  - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T10:40",
-                           "title":  "Nghi thá»©c trao nháº«n",
-                           "url":  "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "p8",
-                           "code":  "IMG_1008",
-                           "location":  "NhÃ  Thá» Con GÃ  - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T11:15",
-                           "title":  "Ná»¥ cÆ°á»i háº¡nh phÃºc",
-                           "url":  "https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "p9",
-                           "code":  "IMG_1009",
-                           "location":  "Dalat Palace Heritage - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T17:10",
-                           "title":  "Chiá»u hoÃ ng hÃ´n bÃªn há»“",
-                           "url":  "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "p10",
-                           "code":  "IMG_1010",
-                           "location":  "Dalat Palace Heritage - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T18:30",
-                           "title":  "KhÃ´ng gian bÃ n tiá»‡c tá»‘i",
-                           "url":  "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "p11",
-                           "code":  "IMG_1011",
-                           "location":  "Dalat Palace Heritage - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T19:15",
-                           "title":  "Äiá»‡u nháº£y Ä‘áº§u tiÃªn",
-                           "url":  "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "p12",
-                           "code":  "IMG_1012",
-                           "location":  "Dalat Palace Heritage - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-11-07T20:00",
-                           "title":  "NÃ¢ng ly chÃºc má»«ng",
-                           "url":  "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
+                           "id":  "drv_1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd_1794052824913_3",
+                           "driveFileId":  "1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd",
+                           "code":  "DSC01184",
+                           "location":  "",
+                           "city":  "",
+                           "capturedAt":  "2026-07-24T16:28",
+                           "title":  "DSC01184.jpg",
+                           "url":  "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd\u0026sz=w1600"
                        }
                    ]
     },
@@ -300,70 +233,6 @@
                            "capturedAt":  "2026-10-25T17:00",
                            "title":  "NÃ©t Ä‘áº¹p tá»± nhiÃªn",
                            "url":  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       }
-                   ]
-    },
-    {
-        "id":  "private-hanoi-autumn",
-        "title":  "Pre-Wedding: Tuáº¥n Kiá»‡t \u0026 Mai PhÆ°Æ¡ng",
-        "clientName":  "Tuáº¥n Kiá»‡t \u0026 Mai PhÆ°Æ¡ng",
-        "date":  "2026-11-05",
-        "city":  "HÃ  Ná»™i",
-        "location":  "Phá»‘ Cá»• \u0026 Há»“ GÆ°Æ¡m, HÃ  Ná»™i",
-        "photographer":  "Äá»©c Thuáº­n Studio",
-        "selectionLimit":  15,
-        "pinCode":  "",
-        "isPublic":  false,
-        "tags":  [
-                     "HÃ  Ná»™i",
-                     "Pre-Wedding",
-                     "MÃ¹a Thu"
-                 ],
-        "sourceType":  "drive",
-        "driveLinks":  [
-                           "https://drive.google.com/drive/folders/1HanoiAutumnFolderDemo"
-                       ],
-        "reminderEnabled":  true,
-        "reminderText":  "ChÃ o Tuáº¥n Kiá»‡t \u0026 Mai PhÆ°Æ¡ng! ÄÃ¢y lÃ  link áº£nh gá»‘c buá»•i chá»¥p táº¡i HÃ  Ná»™i, hai báº¡n báº¥m tháº£ tim chá»n 15 áº£nh Ä‘á»ƒ Studio háº­u ká»³ nhÃ©.",
-        "deadlineEnabled":  true,
-        "deadlineAt":  "2026-11-20T23:59",
-        "completeLockEnabled":  true,
-        "isSelectionLockedBySubmit":  false,
-        "youtubeId":  "",
-        "coverUrl":  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format\u0026fit=crop\u0026w=1800\u0026q=85",
-        "description":  "Bá»™ áº£nh ngoáº¡i cáº£nh mÃ¹a thu táº¡i Phá»‘ Cá»• \u0026 Há»“ GÆ°Æ¡m, HÃ  Ná»™i.",
-        "photos":  [
-                       {
-                           "id":  "h1",
-                           "code":  "HN_4001",
-                           "location":  "Há»“ GÆ°Æ¡m - HÃ  Ná»™i",
-                           "capturedAt":  "2026-11-05T06:30",
-                           "title":  "Thu HÃ  Ná»™i bÃªn há»“",
-                           "url":  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "h2",
-                           "code":  "HN_4002",
-                           "location":  "Há»“ GÆ°Æ¡m - HÃ  Ná»™i",
-                           "capturedAt":  "2026-11-05T07:15",
-                           "title":  "Náº¯ng thu dá»‹u ngá»t",
-                           "url":  "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "h3",
-                           "code":  "HN_4003",
-                           "location":  "Phá»‘ Phan ÄÃ¬nh PhÃ¹ng - HÃ  Ná»™i",
-                           "capturedAt":  "2026-11-05T08:45",
-                           "title":  "Con Ä‘Æ°á»ng lÃ¡ sáº¥u",
-                           "url":  "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "h4",
-                           "code":  "HN_4004",
-                           "location":  "Phá»‘ Phan ÄÃ¬nh PhÃ¹ng - HÃ  Ná»™i",
-                           "capturedAt":  "2026-11-05T09:20",
-                           "title":  "Xe hoa mÃ¹a thu",
-                           "url":  "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
                        }
                    ]
     }
