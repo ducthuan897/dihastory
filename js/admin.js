@@ -199,7 +199,8 @@ var KNOWN_VN_LOCATIONS = [
   { keywords: ["vung tau", "vũng tàu", "ho tram", "hồ tràm"], city: "Vũng Tàu" },
   { keywords: ["ha long", "hạ long", "quang ninh", "quảng ninh", "tuan chau"], city: "Hạ Long" },
   { keywords: ["phan thiet", "phan thiết", "mui ne", "mũi né", "bau trang", "bàu trắng"], city: "Phan Thiết" },
-  { keywords: ["quy nhon", "quy nhơn", "ky co", "kỳ co", "eo gio", "eo gió"], city: "Quy Nhơn" }
+  { keywords: ["quy nhon", "quy nhơn", "ky co", "kỳ co", "eo gio", "eo gió"], city: "Quy Nhơn" },
+  { keywords: ["thu dau mot", "thủ dầu một", "binh duong", "bình dương", "phu cuong", "phú cường"], city: "Thủ Dầu Một" }
 ];
 
 function extractLocationFromText(text) {
@@ -309,7 +310,7 @@ function parseBinaryExifGps(bytes) {
     };
     var u32 = function(idx, le) {
       var b0 = u(idx), b1 = u(idx + 1), b2 = u(idx + 2), b3 = u(idx + 3);
-      return le ? (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) : ((b0 << 24) | (b1 << 16) | (b2 << 8) | b3);
+      return le ? (b0 + b1 * 256 + b2 * 65536 + b3 * 16777216) : (b0 * 16777216 + b1 * 65536 + b2 * 256 + b3);
     };
 
     if (u(0) !== 0xFF || u(1) !== 0xD8) return null;
@@ -1247,7 +1248,8 @@ function testRun() {
         { keywords: ["vung tau", "vũng tàu", "ho tram", "hồ tràm"], city: "Vũng Tàu" },
         { keywords: ["ha long", "hạ long", "quang ninh", "quảng ninh", "tuan chau"], city: "Hạ Long" },
         { keywords: ["phan thiet", "phan thiết", "mui ne", "mũi né", "bau trang", "bàu trắng"], city: "Phan Thiết" },
-        { keywords: ["quy nhon", "quy nhơn", "ky co", "kỳ co", "eo gio", "eo gió"], city: "Quy Nhơn" }
+        { keywords: ["quy nhon", "quy nhơn", "ky co", "kỳ co", "eo gio", "eo gió"], city: "Quy Nhơn" },
+        { keywords: ["thu dau mot", "thủ dầu một", "binh duong", "bình dương", "phu cuong", "phú cường"], city: "Thủ Dầu Một" }
     ];
 
     function extractLocationFromText(text) {
