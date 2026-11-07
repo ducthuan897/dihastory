@@ -2126,17 +2126,6 @@ const AdminModule = (function () {
                             }
                         </div>
                     </div>
-
-                    <!-- Generated Client Link Bar -->
-                    <div class="mt-3 pt-2.5 border-t border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span class="text-zinc-400 font-medium shrink-0">Tên miền album:</span>
-                            <code class="font-mono text-[11px] bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded truncate">https://ducthuanstudio.shotpik.com/albums/${album.id}</code>
-                            <span class="text-zinc-300">•</span>
-                            <code class="font-mono text-[11px] bg-amber-50 text-amber-900 px-2 py-0.5 rounded truncate">${shareLink}</code>
-                        </div>
-                        <span class="text-[11px] text-zinc-400 shrink-0">Mã Album: <strong class="font-mono text-zinc-600">${album.id}</strong></span>
-                    </div>
                 </div>
             `;
         }).join('');
