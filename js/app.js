@@ -320,7 +320,7 @@ const App = (function () {
             });
 
             const pills = [
-                { id: 'ALL', label: `Tất cả địa điểm (${publicAlbums.length})` },
+                { id: 'ALL', label: `Tất cả (${publicAlbums.length})` },
                 ...cities.map(c => ({
                     id: c,
                     label: `${c} (${publicAlbums.filter(a => (a.city || 'Khác') === c).length})`
@@ -333,13 +333,13 @@ const App = (function () {
                     <button
                         type="button"
                         onclick="App.setHomeLocationFilter('${p.id}')"
-                        class="px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap flex items-center gap-1.5 ${
+                        class="px-3 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                             active
-                                ? 'bg-zinc-900 text-white shadow-sm'
-                                : 'bg-white text-zinc-600 hover:bg-zinc-100 border border-zinc-200'
+                                ? 'bg-zinc-900 text-white shadow-xs'
+                                : 'bg-white text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200'
                         }"
                     >
-                        <i class="fa-solid fa-location-dot ${active ? 'text-rose-400' : 'text-zinc-400'}"></i>
+                        <i class="fa-solid fa-location-dot text-[11px] ${active ? 'text-rose-400' : 'text-zinc-400'}"></i>
                         <span>${p.label}</span>
                     </button>
                 `;
@@ -348,7 +348,7 @@ const App = (function () {
 
         const groupBtn = document.getElementById('homeGroupToggleBtn');
         if (groupBtn) {
-            groupBtn.className = `px-3.5 py-2 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 ${
+            groupBtn.className = `px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 shrink-0 shadow-xs ${
                 homeGroupByLocation
                     ? 'bg-zinc-900 text-white border-zinc-900'
                     : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
@@ -692,7 +692,7 @@ const App = (function () {
 
         const groupBtn = document.getElementById('albumGroupLocationBtn');
         if (groupBtn) {
-            groupBtn.className = `px-3.5 py-2 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 ${
+            groupBtn.className = `px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 shrink-0 shadow-xs ${
                 albumGroupByLocation
                     ? 'bg-zinc-900 text-white border-zinc-900'
                     : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
@@ -735,7 +735,7 @@ const App = (function () {
 
         const deliveredCount = (album.deliveredPhotos || []).length;
         const tabs = [
-            { id: 'ALL', label: `Tất cả địa điểm (${album.photos.length})`, icon: 'fa-solid fa-layer-group' }
+            { id: 'ALL', label: `Tất cả (${album.photos.length})`, icon: 'fa-solid fa-layer-group' }
         ];
 
         if (isClientMode) {
@@ -760,10 +760,10 @@ const App = (function () {
                 <button
                     type="button"
                     onclick="App.setCategoryFilter('${tab.id}')"
-                    class="px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap flex items-center gap-1.5 ${
+                    class="px-3 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                         isActive
-                            ? 'bg-zinc-900 text-white shadow-sm'
-                            : 'bg-white text-zinc-600 hover:bg-zinc-100 border border-zinc-200'
+                            ? 'bg-zinc-900 text-white shadow-xs'
+                            : 'bg-white text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200'
                     }"
                 >
                     ${tab.icon ? `<i class="${tab.icon}"></i>` : ''}
