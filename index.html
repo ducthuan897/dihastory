@@ -299,6 +299,11 @@
                     </div>
 
                     <div class="flex flex-wrap items-center justify-center gap-3">
+                        <button id="heroViewGalleryBtn" type="button" onclick="App.scrollToGallery()"
+                            class="bg-white text-zinc-900 hover:bg-zinc-100 font-semibold px-6 py-3 rounded-full text-sm transition shadow-lg flex items-center gap-2">
+                            <span id="heroViewGalleryBtnLabel">Xem Album</span>
+                            <i class="fa-solid fa-arrow-down text-xs"></i>
+                        </button>
                         <button id="heroClientDownloadBtn" type="button" onclick="App.openDownloadModal()"
                             class="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-5 py-3 rounded-full text-sm transition shadow-lg flex items-center gap-2">
                             <i class="fa-solid fa-cloud-arrow-down"></i>
@@ -496,11 +501,6 @@
                         class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5"
                         title="Tải file data/albums.json để đưa lên GitHub cho mọi thiết bị đều thấy">
                         <i class="fa-solid fa-cloud-arrow-down text-emerald-400"></i> Xuất data/albums.json
-                    </button>
-                    <button type="button" onclick="AdminModule.resetDemoData()"
-                        class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3.5 py-2.5 rounded-xl text-xs font-medium transition"
-                        title="Khôi phục 4 Album mẫu ban đầu">
-                        <i class="fa-solid fa-rotate-left mr-1"></i>Khôi phục mẫu
                     </button>
                 </div>
             </div>
