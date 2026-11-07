@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đức Thuận Studio - Quản Lý Video Blog</title>
+    <title>Đức Thuận Studio</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -51,7 +51,7 @@
                     
                     <!-- Guest State -->
                     <button id="navLoginBtn" onclick="AuthModule.openLoginModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition flex items-center">
-                        <i class="fa-solid fa-lock mr-2"></i> Đăng nhập Admin
+                        <i class="fa-solid fa-lock mr-2"></i>Admin
                     </button>
 
                     <!-- Authenticated Admin State -->
@@ -105,30 +105,7 @@
                 </div>
             </div>
 
-            <!-- Features Info Grid -->
-            <div class="grid md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xl mb-4">
-                        <i class="fa-solid fa-folder-tree"></i>
-                    </div>
-                    <h3 class="font-bold text-slate-900 text-lg mb-2">Modular Code</h3>
-                    <p class="text-slate-600 text-sm">Mã nguồn được chia tách rõ ràng theo chuẩn JS Module chuyên nghiệp.</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-xl mb-4">
-                        <i class="fa-solid fa-mobile-screen"></i>
-                    </div>
-                    <h3 class="font-bold text-slate-900 text-lg mb-2">Đáp Ứng Hoàn Hảo</h3>
-                    <p class="text-slate-600 text-sm">Tự động co giãn theo tỉ lệ 16:9 mượt mà trên mọi kích thước màn hình.</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center text-xl mb-4">
-                        <i class="fa-solid fa-user-gear"></i>
-                    </div>
-                    <h3 class="font-bold text-slate-900 text-lg mb-2">Bảng Quản Trị</h3>
-                    <p class="text-slate-600 text-sm">Cho phép chọn nhanh video mẫu hoặc dán trực tiếp đường dẫn YouTube.</p>
-                </div>
-            </div>
+            
         </main>
 
         <!-- ADMIN DASHBOARD VIEW -->
@@ -237,11 +214,6 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Mật khẩu</label>
                         <input type="password" id="passwordInput" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 outline-none text-sm">
-                    </div>
-
-                    <div class="bg-slate-50 p-3 rounded-xl border text-xs text-slate-600">
-                        <p class="font-semibold text-slate-700">Tài khoản mẫu:</p>
-                        <p>User: <b>admin</b> | Pass: <b>123456</b></p>
                     </div>
 
                     <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl transition text-sm">
