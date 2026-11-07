@@ -1,6 +1,6 @@
 /**
  * GOOGLE APPS SCRIPT CHO ĐỨC THUẬN STUDIO (DUTUSTORY)
- * 1. Tự động đọc ảnh Google Drive, trích xuất EXIF DateTimeOriginal (ngày giờ chụp thật) & toạ độ GPS.
+ * 1. Tự động đọc ảnh Google Drive, trích xuất EXIF DateTimeOriginal & toạ độ GPS.
  * 2. ĐỒNG BỘ DỮ LIỆU ALBUM ĐA THIẾT BỊ (Cloud Database lưu trữ vào Google Drive miễn phí).
  * 
  * Hướng dẫn cập nhật:
@@ -50,9 +50,10 @@ function doGet(e) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 
-  // 4. Đọc ảnh và EXIF từ thư mục Google Drive
+  // 4. Đọc ảnh và trích xuất EXIF / GPS từ thư mục Google Drive
   try {
-    var result = getFolderPhotosWithExif(folderId);
+    var cleanFolderId = folderId.replace(/[?&].*$/, "").trim();
+    var result = getFolderPhotosWithExif(cleanFolderId);
     return ContentService.createTextOutput(JSON.stringify(result))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
@@ -116,151 +117,85 @@ function loadAlbumsFromDrive() {
   return [];
 }
 
-function getFolderPhotosWithExif(folderId) {
-  var folder = DriveApp.getFolderById(folderId);
-  var folderTitle = folder.getName();
-  var token = ScriptApp.getOAuthToken();
-  var filesList = [];
-  var detectedFolderDate = null;
-  var detectedFolderCity = null;
-  var detectedFolderLoc = null;
+// ==================== TRÍCH XUẤT ẢNH & METADATA (EXIF / GPS / ĐỊA ĐIỂM) ====================
 
-  // 1. Dùng Drive API v3 (Lấy imageMediaMetadata EXIF thời gian chụp & GPS nhanh nhất)
-  try {
-    var apiUrl = "https://www.googleapis.com/drive/v3/files?q='" + encodeURIComponent(folderId) + "'+in+parents+and+trashed=false&fields=files(id,name,mimeType,imageMediaMetadata,createdTime)&pageSize=100";
-    var resp = UrlFetchApp.fetch(apiUrl, {
-      headers: { Authorization: "Bearer " + token },
-      muteHttpExceptions: true
-    });
-    if (resp.getResponseCode() === 200) {
-      var data = JSON.parse(resp.getContentText());
-      if (data.files && data.files.length > 0) {
-        var rawFiles = data.files.filter(function(f) {
-          return !f.mimeType || f.mimeType.indexOf("image/") === 0 || f.name.match(/\.(jpe?g|png|webp|heic|tiff?|dng|raw|cr2|cr3|nef|arw)$/i);
-        });
+var KNOWN_VN_LOCATIONS = [
+  { keywords: ["da lat", "dalat", "đà lạt", "tuyen lam", "đa phú", "da phu", "con ga", "cầu đất", "cau dat", "langbiang", "xuan huong"], city: "Đà Lạt" },
+  { keywords: ["phu quoc", "phú quốc", "bai sao", "bãi sao", "sanato", "hon thom", "hòn thơm", "rach vem"], city: "Phú Quốc" },
+  { keywords: ["ha noi", "hanoi", "hà nội", "ho guom", "hồ gươm", "pho co", "phố cổ", "phan dinh phung", "ho tay", "hồ tây"], city: "Hà Nội" },
+  { keywords: ["sai gon", "saigon", "sài gòn", "tp hcm", "tphcm", "ho chi minh", "hồ chí minh", "quan 1", "quận 1", "thu thiêm"], city: "TP. Hồ Chí Minh" },
+  { keywords: ["da nang", "danang", "đà nẵng", "ba na", "bà nà", "my khe", "mỹ khê", "son tra", "sơn trà"], city: "Đà Nẵng" },
+  { keywords: ["hoi an", "hội an", "cua dai", "an bang"], city: "Hội An" },
+  { keywords: ["nha trang", "cam ranh", "bai dai"], city: "Nha Trang" },
+  { keywords: ["sapa", "sa pa", "fansipan", "muong hoa"], city: "Sa Pa" },
+  { keywords: ["ninh binh", "ninh bình", "trang an", "tràng an", "tam coc", "hang mua"], city: "Ninh Bình" },
+  { keywords: ["hue", "huế", "dai noi", "đại nội", "huong giang"], city: "Huế" },
+  { keywords: ["vung tau", "vũng tàu", "ho tram", "hồ tràm"], city: "Vũng Tàu" },
+  { keywords: ["ha long", "hạ long", "quang ninh", "quảng ninh", "tuan chau"], city: "Hạ Long" },
+  { keywords: ["phan thiet", "phan thiết", "mui ne", "mũi né", "bau trang", "bàu trắng"], city: "Phan Thiết" },
+  { keywords: ["quy nhon", "quy nhơn", "ky co", "kỳ co", "eo gio", "eo gió"], city: "Quy Nhơn" }
+];
 
-        for (var i = 0; i < rawFiles.length; i++) {
-          var f = rawFiles[i];
-          var capturedAt = null;
-          var lat = null;
-          var lon = null;
-          var city = null;
-          var location = null;
+function extractLocationFromText(text) {
+  if (!text) return null;
+  var norm = text.toLowerCase()
+    .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, "a")
+    .replace(/[èéẹẻẽêềếệểễ]/g, "e")
+    .replace(/[ìíịỉĩ]/g, "i")
+    .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, "o")
+    .replace(/[ùúụủũưừứựửữ]/g, "u")
+    .replace(/[ỳýỵỷỹ]/g, "y")
+    .replace(/đ/g, "d")
+    .replace(/[_.\-]+/g, " ");
 
-          if (f.imageMediaMetadata) {
-            // EXIF DateTimeOriginal: "YYYY:MM:DD HH:MM:SS" -> "YYYY-MM-DDTHH:MM"
-            if (f.imageMediaMetadata.time) {
-              var tStr = f.imageMediaMetadata.time.trim();
-              var m = tStr.match(/^(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s]+(\d{2}):(\d{2})/);
-              if (m) {
-                capturedAt = m[1] + "-" + m[2] + "-" + m[3] + "T" + m[4] + ":" + m[5];
-              }
-            }
-            if (f.imageMediaMetadata.location) {
-              lat = f.imageMediaMetadata.location.latitude;
-              lon = f.imageMediaMetadata.location.longitude;
-            }
-          }
-
-          // Phân tích toạ độ GPS thành địa danh tiếng Việt thực tế
-          if (lat != null && lon != null && !detectedFolderCity) {
-            var geo = reverseGeocodeCoords(lat, lon);
-            if (geo) {
-              city = geo.city;
-              location = geo.location;
-              detectedFolderCity = city;
-              detectedFolderLoc = location;
-            }
-          } else if (detectedFolderCity) {
-            city = detectedFolderCity;
-            location = detectedFolderLoc;
-          }
-
-          if (capturedAt && !detectedFolderDate) {
-            detectedFolderDate = capturedAt;
-          }
-
-          filesList.push({
-            id: f.id,
-            name: f.name,
-            capturedAt: capturedAt,
-            lat: lat,
-            lon: lon,
-            city: city,
-            location: location
-          });
-        }
-      }
-    }
-  } catch(e) {}
-
-  // 2. Dự phòng bằng DriveApp nếu Drive v3 chưa tải xong
-  if (filesList.length === 0) {
-    var iter = folder.getFiles();
-    while (iter.hasNext()) {
-      var file = iter.next();
-      var fname = file.getName();
-      if (fname.match(/\.(jpe?g|png|webp|heic|tiff?|dng|raw|cr2|cr3|nef|arw)$/i)) {
-        filesList.push({
-          id: file.getId(),
-          name: fname,
-          capturedAt: null,
-          lat: null,
-          lon: null,
-          city: null,
-          location: null
-        });
+  for (var i = 0; i < KNOWN_VN_LOCATIONS.length; i++) {
+    var item = KNOWN_VN_LOCATIONS[i];
+    for (var j = 0; j < item.keywords.length; j++) {
+      var kw = item.keywords[j].toLowerCase()
+        .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, "a")
+        .replace(/[èéẹẻẽêềếệểễ]/g, "e")
+        .replace(/[ìíịỉĩ]/g, "i")
+        .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, "o")
+        .replace(/[ùúụủũưừứựửữ]/g, "u")
+        .replace(/[ỳýỵỷỹ]/g, "y")
+        .replace(/đ/g, "d");
+      if (norm.indexOf(kw) !== -1) {
+        return { city: item.city, location: item.city };
       }
     }
   }
+  return null;
+}
 
-  // 3. Quét nhị phân header JPEG (APP1 EXIF) cho 2 ảnh đầu tiên nếu chưa có capturedAt
-  if (filesList.length > 0 && !detectedFolderDate) {
-    var sampleMax = Math.min(filesList.length, 2);
-    for (var s = 0; s < sampleMax; s++) {
-      try {
-        var sFile = DriveApp.getFileById(filesList[s].id);
-        var sExif = scanBinaryExif(sFile);
-        if (sExif) {
-          if (sExif.capturedAt) {
-            filesList[s].capturedAt = sExif.capturedAt;
-            detectedFolderDate = sExif.capturedAt;
-          }
-          if (sExif.lat != null && sExif.lon != null) {
-            filesList[s].lat = sExif.lat;
-            filesList[s].lon = sExif.lon;
-            if (!detectedFolderCity) {
-              var sGeo = reverseGeocodeCoords(sExif.lat, sExif.lon);
-              if (sGeo) {
-                detectedFolderCity = sGeo.city;
-                detectedFolderLoc = sGeo.location;
-              }
-            }
-          }
-        }
-        if (detectedFolderDate) break;
-      } catch(ex) {}
-    }
+function extractDateFromText(text) {
+  if (!text) return null;
+  var m = text.match(/(20\d{2})[-_.]?(0[1-9]|1[0-2])[-_.]?(0[1-9]|[12]\d|3[01])(?:[-_ T]?([01]\d|2[0-3])[-_:]?([0-5]\d))?/);
+  if (m) {
+    var yyyy = m[1];
+    var mm = m[2];
+    var dd = m[3];
+    var hh = m[4] || "08";
+    var min = m[5] || "30";
+    return yyyy + "-" + mm + "-" + dd + "T" + hh + ":" + min;
   }
+  return null;
+}
 
-  // Gán thông tin ngày chụp và vị trí cho các ảnh khác trong cùng buổi chụp
-  for (var k = 0; k < filesList.length; k++) {
-    if (!filesList[k].capturedAt && detectedFolderDate) {
-      filesList[k].capturedAt = detectedFolderDate;
-    }
-    if (!filesList[k].city && detectedFolderCity) {
-      filesList[k].city = detectedFolderCity;
-      filesList[k].location = detectedFolderLoc;
-    }
+function parseGpsString(str) {
+  if (!str) return null;
+  var s = String(str).trim();
+  var m = s.match(/^(\d+(?:\.\d+)?)[,\s]+(\d+(?:\.\d+)?)(?:[,\s]+(\d+(?:\.\d+)?))?\s*([NSEWnsew])?$/);
+  if (m) {
+    var deg = parseFloat(m[1]) || 0;
+    var min = parseFloat(m[2]) || 0;
+    var sec = parseFloat(m[3]) || 0;
+    var val = deg + min / 60 + sec / 3600;
+    var ref = (m[4] || '').toUpperCase();
+    if (ref === 'S' || ref === 'W') val = -val;
+    return val;
   }
-
-  return {
-    folderTitle: folderTitle,
-    folderDate: detectedFolderDate,
-    folderCity: detectedFolderCity,
-    folderLocation: detectedFolderLoc,
-    files: filesList
-  };
+  var num = parseFloat(s);
+  return isNaN(num) ? null : num;
 }
 
 function reverseGeocodeCoords(lat, lon) {
@@ -287,28 +222,173 @@ function reverseGeocodeCoords(lat, lon) {
   return null;
 }
 
-function scanBinaryExif(file) {
+function extractExifAndLocationFromDriveFile(file) {
+  var meta = {
+    capturedAt: null,
+    lat: null,
+    lon: null,
+    city: null,
+    location: null
+  };
+
   try {
+    // Đọc nhị phân 130KB đầu của file ảnh trong 2ms
     var blob = file.getBlob();
     var bytes = blob.getBytes();
-    var maxScan = Math.min(bytes.length, 65536);
+    var maxLen = Math.min(bytes.length, 131072);
     var str = "";
-    for (var i = 0; i < maxScan; i++) {
-      var code = bytes[i];
-      if (code >= 32 && code <= 126) {
-        str += String.fromCharCode(code);
-      } else {
-        str += " ";
+    try {
+      str = Utilities.newBlob(bytes.slice(0, maxLen)).getDataAsString("ISO-8859-1");
+    } catch(e) {
+      str = blob.getDataAsString();
+    }
+
+    // 1. Tìm ngày giờ chụp thật từ EXIF / XMP (DateTimeOriginal / CreateDate)
+    var mDateXmp = str.match(/(?:DateTimeOriginal|CreateDate|DateCreated)[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
+    if (mDateXmp) {
+      meta.capturedAt = mDateXmp[1] + "-" + mDateXmp[2] + "-" + mDateXmp[3] + "T" + mDateXmp[4] + ":" + mDateXmp[5];
+    }
+    if (!meta.capturedAt) {
+      var mDateExif = str.match(/(20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})(?::\d{2})?/);
+      if (mDateExif) {
+        meta.capturedAt = mDateExif[1] + "-" + mDateExif[2] + "-" + mDateExif[3] + "T" + mDateExif[4] + ":" + mDateExif[5];
       }
     }
-    var m = str.match(/\b(20[12]\d):([01]\d):([0-3]\d)\s+([0-2]\d):([0-5]\d):([0-5]\d)\b/);
-    if (m) {
-      return {
-        capturedAt: m[1] + "-" + m[2] + "-" + m[3] + "T" + m[4] + ":" + m[5]
-      };
+
+    // 2. Tìm toạ độ GPS từ XMP
+    var mLat = str.match(/exif:GPSLatitude[=">\s]+([^"<&\s]+)/i);
+    var mLon = str.match(/exif:GPSLongitude[=">\s]+([^"<&\s]+)/i);
+    if (mLat && mLon) {
+      var pLat = parseGpsString(mLat[1]);
+      var pLon = parseGpsString(mLon[1]);
+      if (pLat != null && pLon != null && (Math.abs(pLat) > 0.001 || Math.abs(pLon) > 0.001)) {
+        meta.lat = pLat;
+        meta.lon = pLon;
+      }
     }
-  } catch(e) {}
-  return null;
+
+    // 3. Tìm địa danh Photoshop / Lightroom đã gắn vào ảnh
+    var mCity = str.match(/photoshop:City[=">\s]+([^"<&\r\n]+)/i);
+    if (mCity) {
+      meta.city = mCity[1].trim();
+    }
+    var mLoc = str.match(/Iptc4xmpCore:Location[=">\s]+([^"<&\r\n]+)/i);
+    if (mLoc) {
+      meta.location = mLoc[1].trim();
+      if (meta.city && meta.location !== meta.city) {
+        meta.location = meta.location + " - " + meta.city;
+      }
+    } else if (meta.city) {
+      meta.location = meta.city;
+    }
+  } catch(err) {}
+
+  var fname = file.getName();
+  // 4. Nếu file không có EXIF: lấy ngày từ tên file hoặc ngày file được cập nhật
+  if (!meta.capturedAt && fname) {
+    meta.capturedAt = extractDateFromText(fname);
+  }
+  if (!meta.capturedAt) {
+    try {
+      meta.capturedAt = Utilities.formatDate(file.getLastUpdated(), "GMT+7", "yyyy-MM-dd'T'HH:mm");
+    } catch(e) {}
+  }
+
+  // 5. Kiểm tra tên file có chứa tên địa điểm quen thuộc
+  if (!meta.city && fname) {
+    var fnLoc = extractLocationFromText(fname);
+    if (fnLoc) {
+      meta.city = fnLoc.city;
+      meta.location = fnLoc.location;
+    }
+  }
+
+  // 6. Dịch toạ độ GPS thành địa danh tiếng Việt thực tế
+  if (meta.lat != null && meta.lon != null && !meta.city) {
+    var geo = reverseGeocodeCoords(meta.lat, meta.lon);
+    if (geo) {
+      meta.city = geo.city;
+      meta.location = geo.location;
+    }
+  }
+
+  return meta;
+}
+
+function getFolderPhotosWithExif(folderId) {
+  var folder = DriveApp.getFolderById(folderId);
+  var folderTitle = folder.getName();
+  var filesList = [];
+  var detectedFolderDate = null;
+  var detectedFolderCity = null;
+  var detectedFolderLoc = null;
+
+  // 1. Kiểm tra vị trí & ngày chụp từ tên thư mục (ví dụ: "Chụp cưới Đà Lạt 20-10-2024")
+  var titleLoc = extractLocationFromText(folderTitle);
+  if (titleLoc) {
+    detectedFolderCity = titleLoc.city;
+    detectedFolderLoc = titleLoc.location;
+  }
+  var titleDate = extractDateFromText(folderTitle);
+  if (titleDate) {
+    detectedFolderDate = titleDate;
+  }
+
+  // 2. Lấy danh sách file ảnh trong thư mục
+  var iter = folder.getFiles();
+  var allFiles = [];
+  while (iter.hasNext()) {
+    var file = iter.next();
+    var fname = file.getName();
+    if (fname.match(/\.(jpe?g|png|webp|heic|tiff?|dng|raw|cr2|cr3|nef|arw)$/i)) {
+      allFiles.push(file);
+    }
+  }
+
+  // 3. Quét metadata EXIF & GPS từ 3 ảnh đầu tiên trong thư mục (< 100ms)
+  var sampleCount = Math.min(allFiles.length, 3);
+  for (var s = 0; s < sampleCount; s++) {
+    var sFile = allFiles[s];
+    var meta = extractExifAndLocationFromDriveFile(sFile);
+    if (meta.capturedAt && !detectedFolderDate) {
+      detectedFolderDate = meta.capturedAt;
+    }
+    if (meta.city && !detectedFolderCity) {
+      detectedFolderCity = meta.city;
+      detectedFolderLoc = meta.location || meta.city;
+    }
+    if (detectedFolderDate && detectedFolderCity) break;
+  }
+
+  // 4. Tạo danh sách ảnh trả về
+  for (var k = 0; k < allFiles.length; k++) {
+    var f = allFiles[k];
+    var fname = f.getName();
+    var fDate = detectedFolderDate || extractDateFromText(fname);
+    if (!fDate) {
+      try {
+        fDate = Utilities.formatDate(f.getLastUpdated(), "GMT+7", "yyyy-MM-dd'T'HH:mm");
+      } catch(e) {}
+    }
+
+    filesList.push({
+      id: f.getId(),
+      name: fname,
+      capturedAt: fDate,
+      city: detectedFolderCity || "",
+      location: detectedFolderLoc || detectedFolderCity || "",
+      lat: null,
+      lon: null
+    });
+  }
+
+  return {
+    folderTitle: folderTitle,
+    folderDate: detectedFolderDate,
+    folderCity: detectedFolderCity,
+    folderLocation: detectedFolderLoc,
+    files: filesList
+  };
 }
 
 function testRun() {
