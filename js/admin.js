@@ -3502,70 +3502,102 @@ function testRun() {
         const album = albums.find(a => a.id === activeAdminAlbumId);
         if (!album) return;
 
-        const pendingLinkInput = document.getElementById('editAlbumNewDriveLinkInput');
-        if (pendingLinkInput && pendingLinkInput.value.trim()) {
-            if (!album.driveLinks) album.driveLinks = [];
-            const val = pendingLinkInput.value.trim();
-            if (!album.driveLinks.includes(val)) {
-                album.driveLinks.push(val);
+        const syncBtn = document.getElementById('managePageSyncBtn');
+        const syncIcon = document.getElementById('managePageSyncBtnIcon');
+        const syncLabel = document.getElementById('managePageSyncBtnLabel');
+
+        if (syncIcon) syncIcon.classList.add('fa-spin');
+        if (syncLabel) syncLabel.innerText = 'Đang cập nhật...';
+        if (syncBtn) syncBtn.disabled = true;
+
+        try {
+            const pendingLinkInput = document.getElementById('editAlbumNewDriveLinkInput');
+            if (pendingLinkInput && pendingLinkInput.value.trim()) {
+                if (!album.driveLinks) album.driveLinks = [];
+                const val = pendingLinkInput.value.trim();
+                if (!album.driveLinks.includes(val)) {
+                    album.driveLinks.push(val);
+                }
+                pendingLinkInput.value = '';
             }
-            pendingLinkInput.value = '';
-        }
 
-        if (!album.driveLinks || album.driveLinks.length === 0) {
-            App.showToast("Vui lòng dán link thư mục hoặc file Google Drive đã chia sẻ trước khi bấm Cập nhật!", "error");
-            return;
-        }
+            if (!album.driveLinks || album.driveLinks.length === 0) {
+                App.showToast("Album chưa có link Google Drive! Hãy mở Tùy chỉnh album để thêm link.", "error");
+                return;
+            }
 
-        App.showToast("Đang đồng bộ ảnh thực tế từ Google Drive...");
-        const fetchedPhotos = await fetchRealPhotosFromDriveLinks(
-            album.driveLinks,
-            album.city || "Đà Lạt",
-            album.date || "2026-11-07",
-            album.photos.length
-        );
-
-        if (!fetchedPhotos.length) {
-            App.showToast("Không tìm thấy ảnh từ link Google Drive! Hãy kiểm tra quyền chia sẻ Công khai (Anyone with the link).", "error");
-            return;
-        }
-
-        let addedCount = 0;
-        fetchedPhotos.forEach(fp => {
-            const exists = album.photos.some(
-                p => (fp.driveFileId && p.driveFileId === fp.driveFileId) || p.url === fp.url
+            App.showToast("Đang đồng bộ ảnh thực tế từ Google Drive...");
+            const fetchedPhotos = await fetchRealPhotosFromDriveLinks(
+                album.driveLinks,
+                album.city || "",
+                album.date || "",
+                album.photos.length
             );
-            if (!exists) {
-                album.photos.push(fp);
-                addedCount++;
+
+            if (!fetchedPhotos.length) {
+                App.showToast("Không tìm thấy ảnh từ link Google Drive! Hãy kiểm tra quyền chia sẻ Công khai (Bất kỳ ai có liên kết).", "error");
+                return;
             }
-        });
 
-        if (!album.coverUrl && album.photos.length > 0) {
-            album.coverUrl = album.photos[0].url;
-        }
+            let addedCount = 0;
+            let updatedCount = 0;
+            fetchedPhotos.forEach(fp => {
+                const existing = album.photos.find(
+                    p => (fp.driveFileId && p.driveFileId === fp.driveFileId) || p.url === fp.url || (p.code && p.code === fp.code)
+                );
+                if (!existing) {
+                    album.photos.push(fp);
+                    addedCount++;
+                } else {
+                    if (fp.location && existing.location !== fp.location) {
+                        existing.location = fp.location;
+                        updatedCount++;
+                    }
+                    if (fp.city && existing.city !== fp.city) existing.city = fp.city;
+                    if (fp.capturedAt && existing.capturedAt !== fp.capturedAt) existing.capturedAt = fp.capturedAt;
+                    if (fp.lat != null) existing.lat = fp.lat;
+                    if (fp.lon != null) existing.lon = fp.lon;
+                    if (fp.title && !existing.title) existing.title = fp.title;
+                }
+            });
 
-        // Update album Date & Location from the extracted photo metadata
-        const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title, album.city, album.date);
-        if (derived.date) album.date = derived.date;
-        if (derived.city && derived.city !== "Việt Nam") album.city = derived.city;
-        if (derived.location) album.location = derived.location;
+            if (!album.coverUrl && album.photos.length > 0) {
+                album.coverUrl = album.photos[0].url;
+            }
 
-        album.sourceType = 'drive';
-        saveAllAlbums(albums);
+            // Update album Date & Location from the extracted photo metadata
+            const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title, album.city, album.date);
+            if (derived.date) album.date = derived.date;
+            if (derived.city && derived.city !== "Việt Nam") album.city = derived.city;
+            if (derived.location) album.location = derived.location;
 
-        populateSelectedAlbumEditor();
-        renderEditAlbumDriveLinks();
-        renderModalCoverPhotoPicker();
-        renderAdminAlbumsTable();
-        renderAlbumManagePage();
-        App.renderHomeShowcase();
-        App.renderPublicAlbum();
+            album.sourceType = 'drive';
+            saveAllAlbums(albums);
 
-        if (addedCount > 0) {
-            App.showToast(`Đã đồng bộ thêm ${addedCount} ảnh mới (Vị trí: ${album.city} • Ngày chụp: ${album.date.split('-').reverse().join('/')})!`);
-        } else {
-            App.showToast(`Đã cập nhật thông tin Vị trí & Ngày chụp cho ${fetchedPhotos.length} ảnh từ Google Drive!`);
+            if (typeof populateSelectedAlbumEditor === 'function') populateSelectedAlbumEditor();
+            if (typeof renderEditAlbumDriveLinks === 'function') renderEditAlbumDriveLinks();
+            if (typeof renderModalCoverPhotoPicker === 'function') renderModalCoverPhotoPicker();
+            renderAdminAlbumsTable();
+            renderAlbumManagePage();
+            if (typeof App !== 'undefined') {
+                if (typeof App.renderHomeShowcase === 'function') App.renderHomeShowcase();
+                if (typeof App.renderPublicAlbum === 'function') App.renderPublicAlbum();
+            }
+
+            if (addedCount > 0) {
+                App.showToast(`Đã đồng bộ thêm ${addedCount} ảnh mới từ Google Drive!`);
+            } else if (updatedCount > 0) {
+                App.showToast(`Đã cập nhật vị trí & ngày chụp mới cho ${updatedCount} ảnh!`);
+            } else {
+                App.showToast(`Album đã đồng bộ mới nhất với Google Drive (${album.photos.length} ảnh)!`);
+            }
+        } catch (err) {
+            console.error("Lỗi cập nhật album:", err);
+            App.showToast("Có lỗi xảy ra khi cập nhật album từ Google Drive!", "error");
+        } finally {
+            if (syncIcon) syncIcon.classList.remove('fa-spin');
+            if (syncLabel) syncLabel.innerText = 'Cập nhật album';
+            if (syncBtn) syncBtn.disabled = false;
         }
     }
 

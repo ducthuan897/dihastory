@@ -699,11 +699,11 @@
                             <!-- Group 1: Cập nhật album + Tìm khuôn mặt -->
                             <div
                                 class="inline-flex items-center rounded-full border border-zinc-200 bg-white px-1 py-0.5 shadow-2xs">
-                                <button type="button" onclick="AdminModule.openCustomAlbumModal('settings')"
+                                <button id="managePageSyncBtn" type="button" onclick="AdminModule.syncUpdateAlbumDrive()"
                                     class="px-3 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-800 text-xs font-medium flex items-center gap-1.5 transition"
-                                    title="Đồng bộ thêm ảnh mới từ Google Drive hoặc tải thêm ảnh từ máy tính">
-                                    <i class="fa-solid fa-rotate text-zinc-600"></i>
-                                    <span>Cập nhật album</span>
+                                    title="Đồng bộ cập nhật ngay ảnh và vị trí/ngày chụp từ Google Drive">
+                                    <i id="managePageSyncBtnIcon" class="fa-solid fa-rotate text-zinc-600"></i>
+                                    <span id="managePageSyncBtnLabel">Cập nhật album</span>
                                 </button>
                                 <div class="w-px h-4 bg-zinc-200"></div>
                                 <div class="relative">
