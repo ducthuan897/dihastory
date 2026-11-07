@@ -1,7 +1,7 @@
 /**
  * GOOGLE APPS SCRIPT CHO ĐỨC THUẬN STUDIO (DUTUSTORY)
- * Tự động đọc danh sách ảnh Google Drive, trích xuất EXIF DateTimeOriginal (ngày giờ chụp thật từ máy ảnh)
- * và toạ độ GPS (kinh độ, vĩ độ, thành phố/địa điểm) phục vụ tạo Album trên GitHub Pages.
+ * 1. Tự động đọc ảnh Google Drive, trích xuất EXIF DateTimeOriginal (ngày giờ chụp thật) & toạ độ GPS.
+ * 2. ĐỒNG BỘ DỮ LIỆU ALBUM ĐA THIẾT BỊ (Cloud Database lưu trữ vào Google Drive miễn phí).
  * 
  * Hướng dẫn cập nhật:
  * 1. Vào script.google.com -> Mở dự án Apps Script của bạn.
@@ -12,16 +12,45 @@
 
 function doGet(e) {
   e = e || { parameter: {} };
+  var action = e.parameter.action;
   var folderId = e.parameter.id;
 
-  // Kiểm tra kết nối / Test run trong trình soạn thảo Apps Script
-  if (!folderId || folderId === 'test') {
+  // 1. ĐỒNG BỘ: Lấy toàn bộ danh sách Albums cho các thiết bị khác xem
+  if (action === 'getAlbums') {
+    var albums = loadAlbumsFromDrive();
     return ContentService.createTextOutput(JSON.stringify({
       status: "ok",
-      message: "Kết nối Google Apps Script thành công! Sẵn sàng trích xuất EXIF ảnh Google Drive."
+      albums: albums
     })).setMimeType(ContentService.MimeType.JSON);
   }
 
+  // 2. ĐỒNG BỘ: Lưu albums dự phòng qua GET
+  if (action === 'saveAlbums' && e.parameter.data) {
+    try {
+      var dataObj = JSON.parse(e.parameter.data);
+      if (Array.isArray(dataObj)) {
+        saveAlbumsToDrive(dataObj);
+      }
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "ok",
+        message: "Đã lưu albums vào Google Drive!"
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch(err) {
+      return ContentService.createTextOutput(JSON.stringify({
+        error: err.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // 3. Kiểm tra kết nối / Test run trong trình soạn thảo Apps Script
+  if (!folderId || folderId === 'test') {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "ok",
+      message: "Kết nối Google Apps Script thành công! Sẵn sàng trích xuất EXIF và đồng bộ dữ liệu đa thiết bị."
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // 4. Đọc ảnh và EXIF từ thư mục Google Drive
   try {
     var result = getFolderPhotosWithExif(folderId);
     return ContentService.createTextOutput(JSON.stringify(result))
@@ -31,6 +60,60 @@ function doGet(e) {
       error: err.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// Xử lý lưu Album khi người dùng tạo mới hoặc chỉnh sửa trên trang quản trị
+function doPost(e) {
+  try {
+    var postData = "";
+    if (e && e.postData && e.postData.contents) {
+      postData = e.postData.contents;
+    }
+    var body = JSON.parse(postData || "{}");
+    if (body.action === 'saveAlbums' && Array.isArray(body.albums)) {
+      saveAlbumsToDrive(body.albums);
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "ok",
+        message: "Đã đồng bộ " + body.albums.length + " album vào Google Drive thành công!"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      message: "Yêu cầu không hợp lệ"
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: err.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Lưu file 'dutustory_db.json' vào Google Drive
+function saveAlbumsToDrive(albums) {
+  var fileName = "dutustory_db.json";
+  var jsonStr = JSON.stringify(albums);
+  var files = DriveApp.getFilesByName(fileName);
+  if (files.hasNext()) {
+    var file = files.next();
+    file.setContent(jsonStr);
+  } else {
+    DriveApp.createFile(fileName, jsonStr, MimeType.PLAIN_TEXT);
+  }
+}
+
+// Đọc file 'dutustory_db.json' từ Google Drive
+function loadAlbumsFromDrive() {
+  var fileName = "dutustory_db.json";
+  var files = DriveApp.getFilesByName(fileName);
+  if (files.hasNext()) {
+    var file = files.next();
+    var content = file.getBlob().getDataAsString();
+    try {
+      var parsed = JSON.parse(content);
+      if (Array.isArray(parsed)) return parsed;
+    } catch(e) {}
+  }
+  return [];
 }
 
 function getFolderPhotosWithExif(folderId) {
