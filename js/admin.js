@@ -160,6 +160,7 @@ const AdminModule = (function () {
     let createModalDriveLinks = [];
     let createModalTags = [];
     let createModalLocalFilesData = [];
+    let previewedDrivePhotosCache = {};
     let activeEditModalTab = 'settings'; // 'settings' | 'selections' | 'delivered'
     let activeSelectorPersonFilter = 'ALL';
 
@@ -377,11 +378,15 @@ const AdminModule = (function () {
     }
 
     async function fetchCloudOrStaticAlbums() {
-        // 1. Try Google Apps Script cloud database
+        // 1. Try Google Apps Script cloud database (3s timeout)
         const cloudUrl = getGoogleDriveApiKey();
         if (cloudUrl && cloudUrl.startsWith('https://script.google.com/')) {
             try {
-                const resp = await fetch(`${cloudUrl}?action=getAlbums`).catch(() => null);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                const resp = await fetch(`${cloudUrl}?action=getAlbums`, { signal: controller.signal })
+                    .catch(() => null)
+                    .finally(() => clearTimeout(timeoutId));
                 if (resp && resp.ok) {
                     const data = await resp.json();
                     if (data && Array.isArray(data.albums) && data.albums.length > 0) {
@@ -391,14 +396,18 @@ const AdminModule = (function () {
             } catch (e) {}
         }
 
-        // 2. Try static data/albums.json from GitHub Pages repository
+        // 2. Try static data/albums.json from GitHub Pages repository (2.5s timeout)
         try {
             let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
             if (window.location.hostname.includes('github.io')) {
                 base = '/dutustory';
             }
             const staticUrl = `${base}/data/albums.json?v=${Date.now()}`;
-            const staticResp = await fetch(staticUrl).catch(() => null);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2500);
+            const staticResp = await fetch(staticUrl, { signal: controller.signal })
+                .catch(() => null)
+                .finally(() => clearTimeout(timeoutId));
             if (staticResp && staticResp.ok) {
                 const staticAlbums = await staticResp.json();
                 if (Array.isArray(staticAlbums) && staticAlbums.length > 0) {
@@ -578,6 +587,7 @@ const AdminModule = (function () {
 
     function closeCreateAlbumModal() {
         document.getElementById('createAlbumModal').classList.add('hidden');
+        previewedDrivePhotosCache = {};
     }
 
     function switchCreateAlbumTab(tabName) {
@@ -1127,12 +1137,16 @@ const AdminModule = (function () {
         const metaText = document.getElementById('createModalDetectedMetaText');
         const hasKey = !!getGoogleDriveApiKey();
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const folderId = extractGoogleDriveFolderId(driveLink);
 
         if (metaText) {
             metaText.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-emerald-600 mr-1"></i> Đang đọc Vị trí &amp; Ngày chụp từ thông tin ảnh Google Drive...`;
         }
         try {
             const samplePhotos = await fetchRealPhotosFromDriveLinks([driveLink], "", "", 0);
+            if (folderId && samplePhotos && samplePhotos.length > 0) {
+                previewedDrivePhotosCache[folderId] = samplePhotos;
+            }
             updateCreateModalDetectedMetaSummary(samplePhotos);
             if (!hasKey && !isLocal && (!samplePhotos || !samplePhotos.some(p => p.capturedAt || p.location))) {
                 if (metaText) {
@@ -1487,29 +1501,6 @@ const AdminModule = (function () {
                             };
                         }));
 
-                        // If no EXIF was extracted by Apps Script, sample browser EXIF extraction on first 6 photos
-                        const hasExif = processedFiles.some(f => f.capturedAt || f.lat != null || f.location);
-                        if (!hasExif && processedFiles.length > 0) {
-                            const sampleCount = Math.min(processedFiles.length, 6);
-                            await Promise.all(
-                                processedFiles.slice(0, sampleCount).map(async (f) => {
-                                    const exifMeta = await extractDriveFileMetaInBrowser(f.id);
-                                    if (exifMeta) {
-                                        if (exifMeta.capturedAt && !f.capturedAt) f.capturedAt = exifMeta.capturedAt;
-                                        if (exifMeta.lat != null && f.lat == null) {
-                                            f.lat = exifMeta.lat;
-                                            f.lon = exifMeta.lon;
-                                            const geo = await reverseGeocodeCoords(f.lat, f.lon);
-                                            if (geo) {
-                                                f.location = geo.location;
-                                                f.city = geo.city;
-                                            }
-                                        }
-                                    }
-                                })
-                            );
-                        }
-
                         return { folderTitle, files: processedFiles };
                     }
                 }
@@ -1597,15 +1588,10 @@ const AdminModule = (function () {
             }
         }
 
-        // 2. Try local server API endpoints (same-origin /api/drive-folder AND http://localhost:8080/api/drive-folder for GitHub Pages)
-        const apiEndpoints = [`/api/drive-folder?id=${encodeURIComponent(folderId)}`];
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            apiEndpoints.push(`http://localhost:8080/api/drive-folder?id=${encodeURIComponent(folderId)}`);
-        }
-
-        for (const ep of apiEndpoints) {
+        // 2. Try local server API endpoint if running locally
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             try {
-                const resp = await fetch(ep);
+                const resp = await fetch(`/api/drive-folder?id=${encodeURIComponent(folderId)}`);
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data && Array.isArray(data.files) && data.files.length > 0) {
@@ -1615,27 +1601,28 @@ const AdminModule = (function () {
             } catch (e) {}
         }
 
-        // 3. Fallback for static GitHub Pages without API key: fetch embeddedfolderview via CORS proxy + client-side EXIF extraction
+        // 3. Fallback for static GitHub Pages without API key (with strict 2.5s timeout)
         const embedUrl = `https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(folderId)}#list`;
         const proxyUrls = [
             `https://api.allorigins.win/raw?url=${encodeURIComponent(embedUrl)}`,
-            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(embedUrl)}`,
-            `https://api.allorigins.win/get?url=${encodeURIComponent(embedUrl)}`
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(embedUrl)}`
         ];
 
         let parsed = { folderTitle: "", files: [] };
         for (const pUrl of proxyUrls) {
             try {
-                const r = await fetch(pUrl);
-                if (r.ok) {
-                    let html = "";
-                    if (pUrl.includes('/get?url=')) {
-                        const j = await r.json();
-                        html = (j && j.contents) || "";
-                    } else {
-                        html = await r.text();
-                    }
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2500);
+                const r = await fetch(pUrl, { signal: controller.signal })
+                    .catch(() => null)
+                    .finally(() => clearTimeout(timeoutId));
+                if (r && r.ok) {
+                    const html = await r.text();
                     parsed = parseDriveEmbeddedFolderHtml(html);
+                    if (parsed.files && parsed.files.length > 0) break;
+                }
+            } catch (e) {}
+        }
                     if (parsed.files && parsed.files.length > 0) break;
                 }
             } catch (e) {}
@@ -1746,6 +1733,10 @@ const AdminModule = (function () {
 
             const folderId = extractGoogleDriveFolderId(rawLink);
             if (folderId) {
+                if (previewedDrivePhotosCache[folderId] && previewedDrivePhotosCache[folderId].length > 0) {
+                    photos.push(...previewedDrivePhotosCache[folderId]);
+                    continue;
+                }
                 const folderData = await fetchGoogleDriveFolderFiles(folderId);
                 const folderFiles = folderData.files || [];
 
