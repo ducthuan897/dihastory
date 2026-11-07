@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đức Thuận Studio</title>
+    <title>Đức Thuận Studio — Trả Ảnh & Chọn Ảnh Trực Tuyến</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,10 +11,17 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Cormorant Garamond', 'Georgia', 'serif']
+                    },
                     colors: {
                         brand: {
-                            50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8'
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c'
                         }
                     }
                 }
@@ -23,43 +30,86 @@
     </script>
     
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Custom CSS File -->
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+<body class="bg-zinc-50 text-zinc-900 font-sans min-h-screen flex flex-col antialiased">
 
-    <!-- NAVIGATION BAR -->
-    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- TOP NAVIGATION BAR (SHOTPIK CLIENT GALLERY HEADER) -->
+    <header class="bg-white/95 backdrop-blur-md border-b border-zinc-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <!-- Logo -->
+                <!-- Studio Brand Logo -->
                 <div class="flex items-center space-x-3 cursor-pointer" onclick="App.showView('public')">
-                    <div class="bg-red-600 p-2 rounded-lg text-white">
-                        <i class="fa-brands fa-youtube text-xl"></i>
+                    <div class="w-9 h-9 bg-zinc-900 rounded-xl text-white flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-camera-retro text-base"></i>
                     </div>
-                    <span class="font-bold text-xl tracking-tight">Đức Thuận Studio</span>
+                    <div>
+                        <span class="font-bold text-base sm:text-lg tracking-tight text-zinc-900 block leading-none">ĐỨC THUẬN STUDIO</span>
+                        <span class="text-[10px] uppercase tracking-widest text-zinc-400 font-medium">Client Photo Delivery</span>
+                    </div>
                 </div>
 
-                <!-- Navigation Controls -->
-                <div class="flex items-center space-x-4">
-                    <button onclick="App.showView('public')" class="text-slate-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
-                        <i class="fa-solid fa-house mr-1.5"></i> Trang chủ
-                    </button>
-                    
-                    <!-- Guest State -->
-                    <button id="navLoginBtn" onclick="AuthModule.openLoginModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition flex items-center">
-                        <i class="fa-solid fa-lock mr-2"></i>Admin
+                <!-- Right Controls: Client Selection Counter + Photographer Admin -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <!-- Quick Favorites Filter Button -->
+                    <button
+                        type="button"
+                        onclick="App.showView('public'); App.setCategoryFilter('SELECTED'); App.scrollToGallery()"
+                        class="hidden sm:flex items-center space-x-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3.5 py-1.5 rounded-full text-xs font-semibold transition"
+                        title="Xem các ảnh bạn đã thả tim"
+                    >
+                        <i class="fa-solid fa-heart text-rose-600"></i>
+                        <span>Đã chọn: <strong id="navSelectedCounter">0/10</strong></span>
                     </button>
 
-                    <!-- Authenticated Admin State -->
-                    <div id="navAdminControls" class="hidden flex items-center space-x-3">
-                        <button onclick="App.showView('admin')" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center shadow">
-                            <i class="fa-solid fa-sliders mr-2"></i> Trình Quản Lý
+                    <!-- Send Selection to Photographer Button -->
+                    <button
+                        type="button"
+                        onclick="App.openSubmitSelectionModal()"
+                        class="bg-zinc-900 hover:bg-zinc-800 text-white px-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition flex items-center gap-1.5 shadow-sm"
+                    >
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                        <span>Gửi ảnh chọn</span>
+                    </button>
+
+                    <!-- Share Album -->
+                    <button
+                        type="button"
+                        onclick="AdminModule.shareCurrentAlbum()"
+                        class="p-2 rounded-full text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition"
+                        title="Sao chép link Album"
+                    >
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </button>
+
+                    <div class="h-5 w-px bg-zinc-200 hidden sm:block"></div>
+
+                    <!-- Guest Photographer Login State -->
+                    <button
+                        id="navLoginBtn"
+                        onclick="AuthModule.openLoginModal()"
+                        class="border border-zinc-300 hover:border-zinc-900 text-zinc-700 hover:text-zinc-900 px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center"
+                    >
+                        <i class="fa-solid fa-user-gear mr-1.5"></i>Nhiếp ảnh gia
+                    </button>
+
+                    <!-- Authenticated Photographer Controls -->
+                    <div id="navAdminControls" class="hidden flex items-center space-x-2">
+                        <button
+                            onclick="App.showView('admin')"
+                            class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center shadow-sm"
+                        >
+                            <i class="fa-solid fa-sliders mr-1.5"></i>Quản lý Album
                         </button>
-                        <button onclick="AuthModule.logout()" class="bg-slate-700 hover:bg-slate-800 text-slate-200 px-3 py-2 rounded-lg text-sm font-medium transition" title="Đăng xuất">
+                        <button
+                            onclick="AuthModule.logout()"
+                            class="bg-zinc-100 hover:bg-zinc-200 text-zinc-700 p-2 rounded-full text-xs transition"
+                            title="Đăng xuất Admin"
+                        >
                             <i class="fa-solid fa-right-from-bracket"></i>
                         </button>
                     </div>
@@ -68,113 +118,403 @@
         </div>
     </header>
 
-    <!-- CONTENT AREA -->
+    <!-- MAIN CONTENT WRAPPER -->
     <div class="flex-grow">
-        
-        <!-- Main Content Area -->
-    <main id="publicView" class="main-wrapper">
-        
-        <!-- Hero Header -->
-        <div class="hero-section">
-            <h1>Chào mừng đến với Blog Video Của Tôi</h1>
-            <p>Nơi chia sẻ kiến thức công nghệ, trải nghiệm nhiếp ảnh và các nội dung chất lượng cao.</p>
-        </div>
 
-        <!-- Video Card -->
-        <div class="content-card">
-            <div class="section-header">
-                <h2><i class="fa-solid fa-circle-play text-red"></i> Video Nổi Bật Hôm Nay</h2>
-                <span class="badge-tag">YouTube Player</span>
-            </div>
+        <!-- =================================================================
+             1. PUBLIC CLIENT GALLERY VIEW (SHOTPIK STYLE)
+             ================================================================= -->
+        <main id="publicView">
 
-            <!-- Responsive 16:9 Video Player -->
-            <div class="video-container">
-                <iframe 
-                    id="mainVideoPlayer"
-                    src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
-                    title="YouTube video player" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    referrerpolicy="strict-origin-when-cross-origin" 
-                    allowfullscreen>
-                </iframe>
-            </div>
+            <!-- HERO COVER BANNER -->
+            <section class="album-hero">
+                <img
+                    id="heroCoverImage"
+                    src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=85"
+                    alt="Album Cover"
+                    class="album-hero-bg"
+                >
+                <div class="album-hero-overlay"></div>
 
-            <div class="card-footer">
-                <span><i class="fa-solid fa-circle-info"></i> Nội dung được cập nhật trực tiếp bởi Quản Trị Viên.</span>
-                <span class="btn-chip" onclick="AdminModule.shareCurrentVideo()"><i class="fa-solid fa-share-nodes"></i> Chia sẻ Video</span>
-            </div>
-        </div>
+                <div class="relative z-10 text-center text-white px-4 max-w-3xl mx-auto">
+                    <div class="inline-flex items-center space-x-2 bg-white/15 backdrop-blur-md border border-white/20 px-3.5 py-1 rounded-full text-xs uppercase tracking-widest mb-4">
+                        <i class="fa-solid fa-sparkles text-amber-300"></i>
+                        <span id="heroClientName">Minh Quân & Lan Anh</span>
+                    </div>
 
-        <!-- Admin Control Panel Section -->
-        <section id="adminPanel" class="admin-panel hidden">
-            <!-- Giữ nguyên phần adminPanel cũ -->
-        </section>
-    </main>
+                    <h1 id="heroAlbumTitle" class="font-serif-display text-4xl sm:text-6xl font-semibold tracking-wide leading-tight mb-4">
+                        Wedding: Minh Quân & Lan Anh
+                    </h1>
 
-        <!-- ADMIN DASHBOARD VIEW -->
-        <main id="adminView" class="hidden max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider">Khu Vực Quản Trị</span>
-                    <h1 class="text-2xl font-bold text-slate-900 mt-1">Quản Lý Video Trang Chủ</h1>
+                    <div class="flex flex-wrap items-center justify-center gap-4 text-xs sm:text-sm text-zinc-200 mb-8">
+                        <span><i class="fa-regular fa-calendar mr-1.5"></i><span id="heroShootDate">07.11.2026</span></span>
+                        <span>•</span>
+                        <span><i class="fa-solid fa-location-dot mr-1.5"></i><span id="heroLocation">Dalat Palace Heritage, Đà Lạt</span></span>
+                        <span>•</span>
+                        <span><i class="fa-regular fa-images mr-1.5"></i><span id="heroPhotoCount">12 Ảnh</span></span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <button
+                            type="button"
+                            onclick="App.scrollToGallery()"
+                            class="bg-white text-zinc-900 hover:bg-zinc-100 font-semibold px-6 py-3 rounded-full text-sm transition shadow-lg flex items-center gap-2"
+                        >
+                            <span>Mở Album & Chọn Ảnh</span>
+                            <i class="fa-solid fa-arrow-down text-xs"></i>
+                        </button>
+                        <button
+                            type="button"
+                            onclick="App.openDownloadModal()"
+                            class="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/30 text-white font-medium px-5 py-3 rounded-full text-sm transition flex items-center gap-2"
+                        >
+                            <i class="fa-solid fa-cloud-arrow-down"></i>
+                            <span>Tải Trọn Bộ Ảnh</span>
+                        </button>
+                        <button
+                            type="button"
+                            onclick="App.scrollToVideoHighlight()"
+                            class="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/30 text-white font-medium px-5 py-3 rounded-full text-sm transition flex items-center gap-2"
+                        >
+                            <i class="fa-solid fa-circle-play text-rose-400"></i>
+                            <span>Xem Phim Phóng Sự</span>
+                        </button>
+                    </div>
                 </div>
-                <button onclick="App.showView('public')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center">
-                    <i class="fa-solid fa-eye mr-2"></i> Xem Trang Chủ
-                </button>
+            </section>
+
+            <!-- CLIENT PROOFING GUIDE BANNER -->
+            <div id="galleryToolbarAnchor" class="bg-zinc-900 text-zinc-200 py-3 px-4 border-b border-zinc-800">
+                <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-rose-600 text-white px-2 py-0.5 rounded font-semibold uppercase text-[10px]">Hướng dẫn chọn ảnh</span>
+                        <span>Bấm biểu tượng <i class="fa-solid fa-heart text-rose-400 mx-0.5"></i> để chọn ảnh cần chỉnh sửa/in và bấm <i class="fa-solid fa-comment-dots text-amber-400 mx-0.5"></i> nếu muốn ghi chú dặn dò riêng cho từng tấm.</span>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <span>Đã chọn: <strong id="toolbarSelectedCounter" class="text-white">0/10</strong> ảnh</span>
+                        <button onclick="App.openSubmitSelectionModal()" class="text-amber-400 hover:text-amber-300 font-semibold underline">
+                            Gửi danh sách ngay &rarr;
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GALLERY FILTER & ACTION TOOLBAR -->
+            <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-zinc-200">
+                    <!-- Category Tabs -->
+                    <div id="categoryTabsContainer" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                        <!-- Rendered dynamically by App.js -->
+                    </div>
+
+                    <!-- Search, Grid Switcher & Download -->
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <!-- Search by photo code -->
+                        <div class="relative flex-1 sm:flex-initial sm:w-52">
+                            <input
+                                type="text"
+                                placeholder="Tìm mã ảnh (VD: IMG_1001)..."
+                                oninput="App.handleSearchInput(this.value)"
+                                class="w-full pl-9 pr-3 py-2 rounded-full bg-white border border-zinc-200 focus:border-zinc-900 outline-none text-xs"
+                            >
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-zinc-400 text-xs"></i>
+                        </div>
+
+                        <!-- Grid Density Switcher -->
+                        <div class="hidden sm:flex items-center bg-white border border-zinc-200 rounded-full p-1">
+                            <button
+                                id="gridBtn_cols-4"
+                                type="button"
+                                onclick="App.setGridCols('cols-4')"
+                                class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-900 text-white transition"
+                                title="Lưới 4 cột (Nhỏ)"
+                            >
+                                <i class="fa-solid fa-grip"></i>
+                            </button>
+                            <button
+                                id="gridBtn_cols-3"
+                                type="button"
+                                onclick="App.setGridCols('cols-3')"
+                                class="px-2.5 py-1 rounded-full text-xs font-medium text-slate-500 hover:text-slate-800 transition"
+                                title="Lưới 3 cột (Vừa)"
+                            >
+                                <i class="fa-solid fa-table-cells"></i>
+                            </button>
+                            <button
+                                id="gridBtn_cols-2"
+                                type="button"
+                                onclick="App.setGridCols('cols-2')"
+                                class="px-2.5 py-1 rounded-full text-xs font-medium text-slate-500 hover:text-slate-800 transition"
+                                title="Lưới 2 cột (Lớn)"
+                            >
+                                <i class="fa-solid fa-table-cells-large"></i>
+                            </button>
+                        </div>
+
+                        <!-- Download Button -->
+                        <button
+                            type="button"
+                            onclick="App.openDownloadModal()"
+                            class="bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-200 px-4 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5"
+                        >
+                            <i class="fa-solid fa-download"></i>
+                            <span>Tải Ảnh</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PHOTO GALLERY GRID -->
+            <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div id="galleryPhotoGrid" class="photo-grid cols-4">
+                    <!-- Rendered dynamically by App.js -->
+                </div>
+
+                <!-- Empty State when filter returns no photos -->
+                <div id="galleryEmptyState" class="hidden text-center py-16 bg-white rounded-2xl border border-zinc-200 my-4">
+                    <div class="w-14 h-14 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-3 text-xl">
+                        <i class="fa-regular fa-images"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-zinc-800">Không tìm thấy bức ảnh nào phù hợp</h3>
+                    <p class="text-xs text-zinc-500 mt-1 mb-4">Thử chuyển về danh mục "Tất cả" hoặc xoá từ khoá tìm kiếm.</p>
+                    <button
+                        type="button"
+                        onclick="App.setCategoryFilter('ALL')"
+                        class="bg-zinc-900 text-white px-4 py-2 rounded-full text-xs font-semibold"
+                    >
+                        Xem tất cả ảnh
+                    </button>
+                </div>
+            </section>
+
+            <!-- VIDEO HIGHLIGHT SECTION (INTEGRATED FILM DELIVERY) -->
+            <section id="videoHighlightSection" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div class="bg-zinc-900 rounded-3xl overflow-hidden shadow-xl border border-zinc-800">
+                    <div class="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800">
+                        <div class="flex items-center gap-3">
+                            <span class="w-9 h-9 rounded-xl bg-rose-600/20 text-rose-400 flex items-center justify-center">
+                                <i class="fa-solid fa-film"></i>
+                            </span>
+                            <div>
+                                <h2 class="text-white font-bold text-base sm:text-lg">Video Highlight / Phim Phóng Sự</h2>
+                                <p class="text-zinc-400 text-xs">Bản phim kỷ niệm đính kèm trong gói chụp của bạn</p>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full font-mono self-start sm:self-auto">4K Cinema Player</span>
+                    </div>
+                    <div class="video-container">
+                        <iframe
+                            id="mainVideoPlayer"
+                            src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                            title="YouTube video player"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allowfullscreen
+                        ></iframe>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- =================================================================
+             2. PHOTOGRAPHER ADMIN DASHBOARD VIEW
+             ================================================================= -->
+        <main id="adminView" class="hidden max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <!-- Admin Header Banner -->
+            <div class="bg-zinc-900 text-white p-6 rounded-2xl shadow-lg mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <span class="bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[11px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                        Studio Control Center
+                    </span>
+                    <h1 class="text-2xl font-bold mt-1.5">Quản Lý Album Trả Ảnh Khách Hàng (Shotpik)</h1>
+                    <p class="text-xs text-zinc-400 mt-0.5">Tuỳ chỉnh thông tin bộ ảnh, tải ảnh lên, đặt giới hạn chọn ảnh và xuất mã lọc file Lightroom.</p>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <button
+                        type="button"
+                        onclick="AdminModule.shareCurrentAlbum()"
+                        class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center gap-2"
+                    >
+                        <i class="fa-solid fa-link"></i> Copy Link Gửi Khách
+                    </button>
+                    <button
+                        type="button"
+                        onclick="App.showView('public')"
+                        class="bg-white hover:bg-zinc-100 text-zinc-900 px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2"
+                    >
+                        <i class="fa-solid fa-eye"></i> Xem Giao Diện Khách
+                    </button>
+                </div>
             </div>
 
             <div class="grid lg:grid-cols-12 gap-8">
-                <!-- Inputs & Presets -->
+                <!-- LEFT COLUMN: ALBUM SETTINGS & PHOTO UPLOAD (7 COLS) -->
                 <div class="lg:col-span-7 space-y-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center">
-                            <i class="fa-solid fa-link text-brand-600 mr-2"></i> Đường Dẫn Hoặc Video ID
-                        </h2>
-                        <div class="space-y-4">
-                            <div>
-                                <label for="youtubeUrlInput" class="block text-sm font-medium text-slate-700 mb-1">Dán link YouTube</label>
-                                <div class="relative">
-                                    <input 
-                                        type="text" 
-                                        id="youtubeUrlInput" 
-                                        placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-sm"
-                                        oninput="AdminModule.handleUrlInputChange()"
-                                    >
-                                    <i class="fa-brands fa-youtube absolute left-3 top-3.5 text-slate-400 text-base"></i>
-                                </div>
-                                <p id="urlErrorMsg" class="hidden text-xs text-red-500 mt-1">Đường dẫn YouTube không hợp lệ!</p>
-                            </div>
 
-                            <button onclick="AdminModule.applyVideoFromInput()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-xl shadow transition text-sm flex items-center justify-center">
-                                <i class="fa-solid fa-floppy-disk mr-2"></i> Lưu & Cập Nhật Trang Chủ
-                            </button>
+                    <!-- Card 1: Quick Preset Albums -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-base font-bold text-zinc-900 flex items-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles text-rose-600"></i>
+                                <span>Bộ Album Mẫu (Nạp Nhanh Để Trải Nghiệm)</span>
+                            </h2>
+                            <span class="text-xs text-zinc-400">3 Concept có sẵn</span>
                         </div>
+                        <div id="presetAlbumsList" class="space-y-3"></div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <h2 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
-                            <i class="fa-solid fa-list-check text-emerald-600 mr-2"></i> Chọn Nhanh Video Mẫu
+                    <!-- Card 2: Album Information Settings -->
+                    <form onsubmit="AdminModule.saveAlbumSettings(event)" class="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 space-y-4">
+                        <h2 class="text-base font-bold text-zinc-900 flex items-center gap-2 pb-2 border-b border-zinc-100">
+                            <i class="fa-solid fa-sliders text-amber-500"></i>
+                            <span>Cài Đặt Thông Tin Album & Quyền Chọn Ảnh</span>
                         </h2>
-                        <div class="space-y-3" id="presetList"></div>
+
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-zinc-700 mb-1">Tên Album hiển thị</label>
+                                <input type="text" id="adminAlbumTitle" required class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-zinc-700 mb-1">Tên Khách Hàng / Cặp Đôi</label>
+                                <input type="text" id="adminClientName" required class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-zinc-700 mb-1">Ngày chụp</label>
+                                <input type="text" id="adminShootDate" placeholder="07.11.2026" class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-zinc-700 mb-1">Địa điểm chụp</label>
+                                <input type="text" id="adminLocation" placeholder="Đà Lạt, Việt Nam" class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-zinc-700 mb-1">Giới hạn số ảnh khách chọn in/retouch (0 = Không giới hạn)</label>
+                                <input type="number" min="0" id="adminSelectionLimit" class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-zinc-700 mb-1">Mã PIN khoá Album riêng tư (Để trống = Công khai)</label>
+                                <input type="text" id="adminPinCode" placeholder="VD: 6868 (Bỏ trống nếu không khoá)" class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-700 mb-1">URL Ảnh bìa lớn (Hero Cover)</label>
+                            <input type="text" id="adminCoverUrl" class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-700 mb-1">Link YouTube Video Phóng Sự đính kèm (Để trống nếu chỉ trả ảnh)</label>
+                            <input type="text" id="adminYoutubeUrl" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                        </div>
+
+                        <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-floppy-disk"></i> Lưu Cài Đặt Album
+                        </button>
+                    </form>
+
+                    <!-- Card 3: Upload & Manage Photos in Album -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 space-y-5">
+                        <div class="flex items-center justify-between pb-2 border-b border-zinc-100">
+                            <h2 class="text-base font-bold text-zinc-900 flex items-center gap-2">
+                                <i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i>
+                                <span>Tải Ảnh Lên Album & Quản Lý Kho Ảnh</span>
+                            </h2>
+                            <span id="adminPhotoCountBadge" class="text-xs bg-zinc-100 text-zinc-700 px-2.5 py-1 rounded-full font-semibold">0 ảnh</span>
+                        </div>
+
+                        <!-- Upload from Local Computer -->
+                        <div class="p-4 rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 hover:border-zinc-900 transition text-center">
+                            <label class="cursor-pointer block">
+                                <i class="fa-solid fa-images text-2xl text-zinc-500 mb-1.5 block"></i>
+                                <span class="text-sm font-bold text-zinc-800 block">Chọn nhiều ảnh trực tiếp từ máy tính</span>
+                                <span class="text-xs text-zinc-500 block mt-0.5">Tự động lấy tên file gốc (VD: DSC_0012.JPG) làm mã ảnh để lọc Lightroom</span>
+                                <input type="file" accept="image/*" multiple onchange="AdminModule.handleLocalFilesUpload(event)" class="hidden">
+                            </label>
+                        </div>
+
+                        <!-- Or Add by Image URL -->
+                        <form onsubmit="AdminModule.addPhotoByUrl(event)" class="space-y-3 bg-zinc-50 p-4 rounded-xl border border-zinc-200">
+                            <span class="text-xs font-bold uppercase text-zinc-500 block">Hoặc thêm ảnh qua đường dẫn URL</span>
+                            <div class="grid sm:grid-cols-3 gap-2.5">
+                                <input type="text" id="newPhotoCode" placeholder="Mã file (VD: IMG_1015)" class="px-3 py-2 rounded-lg border border-zinc-300 text-xs outline-none">
+                                <input type="text" id="newPhotoCategory" placeholder="Danh mục (VD: Lễ Cưới)" class="px-3 py-2 rounded-lg border border-zinc-300 text-xs outline-none">
+                                <input type="text" id="newPhotoTitle" placeholder="Tiêu đề / Mô tả ngắn" class="px-3 py-2 rounded-lg border border-zinc-300 text-xs outline-none">
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="url" id="newPhotoUrl" placeholder="Dán link ảnh trực tiếp (https://...)" class="flex-1 px-3 py-2 rounded-lg border border-zinc-300 text-xs outline-none">
+                                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold transition shrink-0">
+                                    <i class="fa-solid fa-plus mr-1"></i>Thêm Ảnh
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Existing Photos Grid -->
+                        <div id="adminPhotosGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-96 overflow-y-auto p-1">
+                            <!-- Rendered by AdminModule -->
+                        </div>
                     </div>
                 </div>
 
-                <!-- Admin Preview Player -->
-                <div class="lg:col-span-5">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-24">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-bold text-slate-900 flex items-center">
-                                <i class="fa-solid fa-desktop text-amber-500 mr-2"></i> Xem Trước (Preview)
-                            </h2>
-                            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-mono" id="previewIdLabel">ID: -</span>
+                <!-- RIGHT COLUMN: CLIENT PROOFING & LIGHTROOM EXPORT (5 COLS) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 sticky top-20 space-y-5">
+                        <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
+                            <div>
+                                <h2 class="text-base font-bold text-zinc-900 flex items-center gap-2">
+                                    <i class="fa-solid fa-heart-circle-check text-rose-600"></i>
+                                    <span>Danh Sách Ảnh Khách Đã Chọn</span>
+                                </h2>
+                                <p class="text-xs text-zinc-500 mt-0.5">Tự động đồng bộ khi khách thả tim & ghi chú</p>
+                            </div>
+                            <span id="adminSelectedCountLabel" class="text-xs bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-full font-bold">0/10</span>
                         </div>
-                        <div class="aspect-video-container bg-slate-900 rounded-xl overflow-hidden shadow-inner mb-4">
-                            <iframe id="adminPreviewPlayer" src="" title="Admin Preview" allowfullscreen></iframe>
+
+                        <!-- Lightroom / Capture One Filter String Copy Box -->
+                        <div class="bg-zinc-900 text-white p-4 rounded-xl space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-filter"></i> Chuỗi lọc file Lightroom / Capture One
+                                </span>
+                                <button
+                                    type="button"
+                                    onclick="AdminModule.copyLightroomCodes()"
+                                    class="bg-white/15 hover:bg-white/25 text-white px-2.5 py-1 rounded-lg text-[11px] font-semibold transition"
+                                >
+                                    <i class="fa-regular fa-copy mr-1"></i>Copy mã
+                                </button>
+                            </div>
+                            <textarea
+                                id="lightroomCodesOutput"
+                                readonly
+                                rows="2"
+                                placeholder="Khi khách thả tim ảnh, danh sách mã file (VD: IMG_1001, IMG_1005) sẽ hiện tại đây..."
+                                class="w-full bg-zinc-950 text-emerald-400 font-mono text-xs p-2.5 rounded-lg border border-zinc-800 outline-none resize-none"
+                            ></textarea>
+                            <p class="text-[11px] text-zinc-400">
+                                Dán trực tiếp vào ô <strong>Library Filter &rarr; Text &rarr; Filename</strong> trong Adobe Lightroom để lọc nhanh ảnh cần retouch.
+                            </p>
                         </div>
-                        <p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                            <i class="fa-solid fa-circle-exclamation mr-1"></i> Bấm "Lưu & Cập Nhật" để áp dụng ra Trang chủ.
-                        </p>
+
+                        <!-- Client Submissions History -->
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Lượt Gửi Xác Nhận Từ Khách Hàng</h3>
+                            <div id="adminSubmissionsHistory" class="space-y-2 max-h-44 overflow-y-auto"></div>
+                        </div>
+
+                        <!-- Detailed Selected Photos & Retouch Notes -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-500">Chi Tiết Ảnh Đang Chọn & Ghi Chú Retouch</h3>
+                                <button
+                                    type="button"
+                                    onclick="AdminModule.clearClientSelections()"
+                                    class="text-[11px] text-rose-600 hover:underline font-medium"
+                                >
+                                    Xoá chọn lại từ đầu
+                                </button>
+                            </div>
+                            <div id="adminClientSelectedList" class="space-y-2.5 max-h-80 overflow-y-auto pr-1"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -182,45 +522,333 @@
     </div>
 
     <!-- FOOTER -->
-    <footer class="bg-white border-t border-slate-200 py-6 mt-auto">
-        <div class="max-w-6xl mx-auto px-4 text-center text-slate-500 text-sm">
-            <p>&copy; 2026 Đức Thuận Studio. Tất cả các quyền được bảo lưu.</p>
+    <footer class="bg-white border-t border-zinc-200 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-zinc-500 text-xs">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-zinc-900">ĐỨC THUẬN STUDIO</span>
+                <span>•</span>
+                <span>Hệ thống Bàn Giao & Chọn Ảnh Trực Tuyến (Shotpik Style)</span>
+            </div>
+            <p>&copy; 2026 Đức Thuận Studio. Bảo lưu mọi quyền.</p>
         </div>
     </footer>
 
-    <!-- LOGIN MODAL -->
+    <!-- =================================================================
+         MODALS & OVERLAYS
+         ================================================================= -->
+
+    <!-- 1. FULLSCREEN LIGHTBOX MODAL -->
+    <div id="lightboxModal" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-md flex flex-col justify-between select-none">
+        <!-- Top Bar -->
+        <div class="flex items-center justify-between px-4 sm:px-6 py-3.5 bg-gradient-to-b from-black/80 to-transparent text-white z-20">
+            <div class="flex items-center gap-3">
+                <span id="lightboxCode" class="font-mono font-bold text-sm bg-white/15 px-3 py-1 rounded-full">IMG_1001</span>
+                <span id="lightboxCounter" class="text-xs text-zinc-400">1 / 12</span>
+                <span id="lightboxTitle" class="hidden sm:inline text-xs text-zinc-300"></span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button
+                    id="lightboxSlideshowBtn"
+                    type="button"
+                    onclick="App.toggleSlideshow()"
+                    class="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-medium transition flex items-center gap-1.5"
+                >
+                    <i class="fa-solid fa-play"></i>
+                    <span class="hidden sm:inline">Slideshow</span>
+                </button>
+                <button
+                    type="button"
+                    onclick="App.toggleLightboxZoom()"
+                    class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+                    title="Phóng to / Thu nhỏ"
+                >
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </button>
+                <button
+                    type="button"
+                    onclick="App.downloadLightboxCurrentPhoto()"
+                    class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+                    title="Tải ảnh này"
+                >
+                    <i class="fa-solid fa-download"></i>
+                </button>
+                <button
+                    type="button"
+                    onclick="App.closeLightbox()"
+                    class="w-9 h-9 rounded-full bg-white/15 hover:bg-rose-600 flex items-center justify-center transition ml-1"
+                    title="Đóng (Esc)"
+                >
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Center Image & Prev/Next Arrows -->
+        <div class="relative flex-1 flex items-center justify-center overflow-hidden px-4 sm:px-16">
+            <button
+                type="button"
+                onclick="App.prevLightboxPhoto()"
+                class="absolute left-3 sm:left-6 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-white hover:text-black text-white border border-white/20 flex items-center justify-center transition"
+            >
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+
+            <img
+                id="lightboxImage"
+                src=""
+                alt="Lightbox Preview"
+                onclick="App.toggleLightboxZoom()"
+                class="max-h-[75vh] max-w-full object-contain rounded shadow-2xl transition-transform duration-300 cursor-zoom-in"
+            >
+
+            <button
+                type="button"
+                onclick="App.nextLightboxPhoto()"
+                class="absolute right-3 sm:right-6 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-white hover:text-black text-white border border-white/20 flex items-center justify-center transition"
+            >
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Bottom Proofing Bar -->
+        <div class="px-4 sm:px-6 py-4 bg-gradient-to-t from-black/90 to-transparent text-white z-20 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div id="lightboxNotePreview" class="hidden text-xs bg-amber-500/20 border border-amber-400/40 text-amber-200 px-3.5 py-1.5 rounded-full"></div>
+            <div class="flex items-center gap-3 mx-auto sm:mx-0 sm:ml-auto">
+                <button
+                    type="button"
+                    onclick="App.openLightboxCurrentNote()"
+                    class="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-2 transition"
+                >
+                    <i class="fa-solid fa-comment-dots text-amber-400"></i>
+                    <span>Ghi chú chỉnh sửa</span>
+                </button>
+                <button
+                    id="lightboxHeartBtn"
+                    type="button"
+                    onclick="App.toggleLightboxCurrentHeart()"
+                    class="px-4 py-2 rounded-full bg-rose-600 text-white text-xs font-semibold flex items-center gap-2 transition"
+                >
+                    <i class="fa-regular fa-heart"></i>
+                    <span>Chọn ảnh</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. PHOTO RETOUCH NOTE MODAL -->
+    <div id="photoNoteModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="App.closePhotoNoteModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <form onsubmit="App.savePhotoNote(event)" class="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 z-10 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <img id="noteModalPhotoThumb" src="" alt="" class="w-12 h-12 rounded-xl object-cover border border-zinc-200">
+                        <div>
+                            <span id="noteModalPhotoCode" class="font-mono font-bold text-sm text-zinc-900 block">IMG_1001</span>
+                            <span class="text-xs text-zinc-500">Yêu cầu chỉnh sửa / in ấn riêng cho ảnh này</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="App.closePhotoNoteModal()" class="text-zinc-400 hover:text-zinc-700">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <div>
+                    <textarea
+                        id="noteModalInput"
+                        rows="3"
+                        placeholder="Nhập yêu cầu của bạn (VD: Chỉnh sáng da, xoá người phía sau, chọn làm ảnh cổng 60x90...)"
+                        class="w-full p-3 rounded-xl border border-zinc-300 focus:border-zinc-900 outline-none text-sm"
+                    ></textarea>
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        <button type="button" onclick="App.fillQuickNoteChip('Cà mịn da tự nhiên')" class="text-[11px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-2.5 py-1 rounded-full transition">+ Cà mịn da</button>
+                        <button type="button" onclick="App.fillQuickNoteChip('Bóp gọn dáng nhẹ')" class="text-[11px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-2.5 py-1 rounded-full transition">+ Bóp gọn dáng</button>
+                        <button type="button" onclick="App.fillQuickNoteChip('Xoá chi tiết thừa phía sau')" class="text-[11px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-2.5 py-1 rounded-full transition">+ Xoá vật thừa</button>
+                        <button type="button" onclick="App.fillQuickNoteChip('Chọn in ảnh phóng 60x90')" class="text-[11px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-2.5 py-1 rounded-full transition">+ Ảnh phóng 60x90</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="App.closePhotoNoteModal()" class="px-4 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-semibold">Huỷ</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold">Lưu ghi chú & Chọn ảnh</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. SUBMIT SELECTION TO PHOTOGRAPHER MODAL -->
+    <div id="submitSelectionModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="App.closeSubmitSelectionModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <form onsubmit="App.handleClientSubmitSelections(event)" class="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 z-10 space-y-4">
+                <div class="flex items-center justify-between border-b border-zinc-100 pb-3">
+                    <div>
+                        <h3 class="text-lg font-bold text-zinc-900">Gửi Danh Sách Ảnh Đã Chọn</h3>
+                        <p class="text-xs text-zinc-500">Xác nhận các bức ảnh bạn muốn Studio hậu kỳ / in ấn</p>
+                    </div>
+                    <span id="submitModalCountBadge" class="text-xs bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1 rounded-full font-bold">0/10</span>
+                </div>
+
+                <!-- Selected photos list preview -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-semibold text-zinc-700">Danh sách mã ảnh bạn đã thả tim:</span>
+                        <button type="button" onclick="App.copyClientSelectionSummary()" class="text-xs text-brand-600 hover:underline font-semibold">
+                            <i class="fa-regular fa-copy mr-1"></i>Copy gửi Zalo
+                        </button>
+                    </div>
+                    <div id="submitModalCodesPreview" class="max-h-44 overflow-y-auto bg-zinc-50 rounded-xl p-3 border border-zinc-200"></div>
+                </div>
+
+                <div class="grid sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 mb-1">Họ tên của bạn</label>
+                        <input type="text" id="submitClientName" required placeholder="VD: Lan Anh" class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 mb-1">Số điện thoại / Zalo</label>
+                        <input type="text" id="submitClientPhone" required placeholder="VD: 0909 123 456" class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-700 mb-1">Lời nhắn chung cho Nhiếp ảnh gia (Tuỳ chọn)</label>
+                    <textarea id="submitGeneralNote" rows="2" placeholder="VD: Nhờ anh chỉnh tone màu ấm Hàn Quốc giúp vợ chồng em nhé!" class="w-full p-3 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="App.closeSubmitSelectionModal()" class="px-4 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-semibold">Đóng</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md">
+                        <i class="fa-solid fa-paper-plane"></i> Hoàn Tất & Gửi Cho Studio
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. DOWNLOAD OPTIONS MODAL (SHOTPIK STYLE) -->
+    <div id="downloadModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="App.closeDownloadModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <form onsubmit="App.handleBatchDownload(event)" class="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 z-10 space-y-5">
+                <div class="flex items-center justify-between border-b border-zinc-100 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center">
+                            <i class="fa-solid fa-cloud-arrow-down"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-zinc-900">Tải Ảnh Về Máy</h3>
+                            <p class="text-xs text-zinc-500">Chọn phạm vi và chất lượng ảnh tải xuống</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="App.closeDownloadModal()" class="text-zinc-400 hover:text-zinc-700">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-2.5">
+                    <label class="block text-xs font-bold uppercase text-zinc-500">1. Phạm vi tải xuống</label>
+                    <label class="flex items-center justify-between p-3 rounded-xl border border-zinc-200 cursor-pointer hover:border-zinc-900 transition">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="dlScope" value="all" checked class="accent-zinc-900">
+                            <span class="text-sm font-medium text-zinc-800">Toàn bộ ảnh trong Album</span>
+                        </div>
+                        <span id="dlModalTotalCount" class="text-xs bg-zinc-100 px-2.5 py-0.5 rounded-full font-semibold">12 ảnh</span>
+                    </label>
+                    <label class="flex items-center justify-between p-3 rounded-xl border border-zinc-200 cursor-pointer hover:border-zinc-900 transition">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="dlScope" value="selected" class="accent-zinc-900">
+                            <span class="text-sm font-medium text-zinc-800">Chỉ tải các ảnh đã thả tim (<i class="fa-solid fa-heart text-rose-500 text-xs"></i>)</span>
+                        </div>
+                        <span id="dlModalSelectedCount" class="text-xs bg-rose-50 text-rose-700 px-2.5 py-0.5 rounded-full font-semibold">0 ảnh</span>
+                    </label>
+                </div>
+
+                <div class="space-y-2.5">
+                    <label class="block text-xs font-bold uppercase text-zinc-500">2. Độ phân giải ảnh</label>
+                    <label class="flex items-start gap-2.5 p-3 rounded-xl border border-zinc-200 cursor-pointer hover:border-zinc-900 transition">
+                        <input type="radio" name="dlQuality" value="original" checked class="accent-zinc-900 mt-1">
+                        <div>
+                            <span class="text-sm font-semibold text-zinc-900 block">Chất lượng Gốc (High-Res In Ấn)</span>
+                            <span class="text-xs text-zinc-500">Độ phân giải tối đa để lưu trữ và in phóng lớn</span>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-2.5 p-3 rounded-xl border border-zinc-200 cursor-pointer hover:border-zinc-900 transition">
+                        <input type="radio" name="dlQuality" value="web" class="accent-zinc-900 mt-1">
+                        <div>
+                            <span class="text-sm font-semibold text-zinc-900 block">Chuẩn Mạng Xã Hội (Web Optimized)</span>
+                            <span class="text-xs text-zinc-500">Tối ưu dung lượng để đăng Facebook, Instagram không bị vỡ nét</span>
+                        </div>
+                    </label>
+                </div>
+
+                <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-semibold py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Bắt Đầu Tải Xuống
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. ALBUM PIN LOCK OVERLAY (OPTIONAL PRIVACY PROTECTION) -->
+    <div id="pinLockOverlay" class="fixed inset-0 z-50 hidden bg-zinc-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+        <form onsubmit="App.handlePinUnlock(event)" class="bg-white w-full max-w-sm rounded-2xl p-6 sm:p-8 text-center shadow-2xl space-y-4">
+            <div class="w-14 h-14 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+                <span class="text-[11px] uppercase tracking-widest text-zinc-400 font-semibold">Album Riêng Tư</span>
+                <h3 id="pinLockAlbumTitle" class="text-lg font-bold text-zinc-900 mt-1">Album Khách Hàng</h3>
+                <p class="text-xs text-zinc-500 mt-1">Vui lòng nhập mã PIN do Đức Thuận Studio cung cấp để xem và tải ảnh.</p>
+            </div>
+            <input
+                type="password"
+                id="pinCodeInput"
+                required
+                placeholder="Nhập mã PIN..."
+                class="w-full text-center tracking-widest font-mono text-lg py-2.5 px-4 rounded-xl border border-zinc-300 outline-none focus:border-zinc-900"
+            >
+            <p id="pinErrorMsg" class="hidden text-xs text-rose-600 font-medium">Mã PIN chưa chính xác!</p>
+            <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-semibold py-2.5 rounded-xl text-sm transition">
+                Mở Khoá Album
+            </button>
+        </form>
+    </div>
+
+    <!-- 6. PHOTOGRAPHER LOGIN MODAL -->
     <div id="loginModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="AuthModule.closeLoginModal()"></div>
+        <div class="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm" onclick="AuthModule.closeLoginModal()"></div>
         <div class="flex min-h-full items-center justify-center p-4">
             <div class="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8 z-10">
-                <button onclick="AuthModule.closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <button onclick="AuthModule.closeLoginModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
 
                 <div class="text-center mb-6">
-                    <div class="w-14 h-14 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
-                        <i class="fa-solid fa-user-shield"></i>
+                    <div class="w-14 h-14 bg-zinc-100 text-zinc-900 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                        <i class="fa-solid fa-camera-retro"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-900">Đăng Nhập Quản Trị Viên</h3>
+                    <h3 class="text-xl font-bold text-zinc-900">Đăng Nhập Nhiếp Ảnh Gia</h3>
+                    <p class="text-xs text-zinc-500 mt-1">Tài khoản mặc định: <code class="bg-zinc-100 px-1.5 py-0.5 rounded">admin</code> / Mật khẩu: <code class="bg-zinc-100 px-1.5 py-0.5 rounded">123456</code></p>
                 </div>
 
-                <div id="loginAlert" class="hidden mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-xs border border-red-200">
+                <div id="loginAlert" class="hidden mb-4 p-3 rounded-lg bg-rose-50 text-rose-600 text-xs border border-rose-200">
                     Tài khoản hoặc mật khẩu không đúng!
                 </div>
 
                 <form onsubmit="AuthModule.handleLoginSubmit(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Tài khoản</label>
-                        <input type="text" id="usernameInput" required placeholder="admin" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 outline-none text-sm">
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Tài khoản</label>
+                        <input type="text" id="usernameInput" required placeholder="admin" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-zinc-900">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Mật khẩu</label>
-                        <input type="password" id="passwordInput" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 outline-none text-sm">
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Mật khẩu</label>
+                        <input type="password" id="passwordInput" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-zinc-900">
                     </div>
 
-                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl transition text-sm">
-                        Đăng Nhập
+                    <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-semibold py-2.5 rounded-xl transition text-sm">
+                        Đăng Nhập Quản Trị Studio
                     </button>
                 </form>
             </div>
@@ -228,7 +856,7 @@
     </div>
 
     <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 text-sm border border-slate-700">
+    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-zinc-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 text-sm border border-zinc-700">
         <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
         <span id="toastMessage">Đã thực hiện thao tác thành công!</span>
     </div>
