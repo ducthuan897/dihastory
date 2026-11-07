@@ -23,10 +23,12 @@ const App = (function () {
     let currentFilteredPhotos = [];
     let currentLightboxIndex = -1;
     let isLightboxZoomed = false;
+    let isLightboxShowingBefore = false;
     let slideshowTimer = null;
     let countdownInterval = null;
     let unlockedPinMap = {};
     let shownReminderSessionMap = {};
+    let sessionSelectorNameMap = {};
     let activeNotePhotoId = null;
 
     function init() {
@@ -580,10 +582,15 @@ const App = (function () {
             }
         });
 
+        const deliveredCount = (album.deliveredPhotos || []).length;
         const tabs = [
             { id: 'ALL', label: `Tất cả địa điểm (${album.photos.length})`, icon: 'fa-solid fa-layer-group' },
             { id: 'SELECTED', label: `Ảnh đã chọn (${selectedCount})`, icon: 'fa-solid fa-heart text-rose-500' }
         ];
+
+        if (deliveredCount > 0) {
+            tabs.push({ id: 'DELIVERED', label: `Ảnh đã chỉnh (${deliveredCount})`, icon: 'fa-solid fa-wand-magic-sparkles text-emerald-500' });
+        }
 
         if (notedCount > 0) {
             tabs.push({ id: 'NOTED', label: `Có ghi chú (${notedCount})`, icon: 'fa-solid fa-comment-dots text-amber-500' });
@@ -650,7 +657,9 @@ const App = (function () {
         const emptyState = document.getElementById('galleryEmptyState');
         if (!wrapper) return;
 
-        let filtered = album.photos.filter(p => {
+        let sourceList = activeCategory === 'DELIVERED' ? (album.deliveredPhotos || []) : album.photos;
+
+        let filtered = sourceList.filter(p => {
             const st = selections[p.id] || {};
             const loc = p.location || album.city || 'Khác';
             if (activeCategory === 'SELECTED' && !st.selected) return false;
@@ -731,18 +740,23 @@ const App = (function () {
     }
 
     function renderSinglePhotoCard(photo, selections, lightboxIdx) {
+        const album = AdminModule.getAlbumById(currentAlbumId);
         const st = selections[photo.id] || {};
         const isSelected = !!st.selected;
         const hasNote = !!(st.note && st.note.trim());
         const timeStr = AdminModule.formatTimeShort(photo.capturedAt);
+        const isDeliveredItem = !!photo.beforeUrl || activeCategory === 'DELIVERED';
+        const showWatermark = !!(album && album.watermarkEnabled);
 
         return `
             <div class="photo-card ${isSelected ? 'is-selected' : ''} ${hasNote ? 'has-note' : ''}" onclick="App.openLightbox(${lightboxIdx})">
                 <img src="${photo.url}" alt="${photo.code}" loading="lazy">
+                ${showWatermark ? `<div class="pointer-events-none absolute inset-0 flex items-center justify-center"><span class="text-white/35 font-serif-display text-sm sm:text-base font-bold tracking-widest uppercase -rotate-12 border border-white/25 px-3 py-1 rounded select-none">ĐỨC THUẬN STUDIO</span></div>` : ''}
                 <div class="photo-card-overlay">
                     <div class="flex items-center justify-between">
-                        <span class="bg-black/65 backdrop-blur-md text-white text-[11px] font-mono px-2.5 py-1 rounded-full tracking-wide">
-                            ${photo.code}
+                        <span class="bg-black/65 backdrop-blur-md text-white text-[11px] font-mono px-2.5 py-1 rounded-full tracking-wide flex items-center gap-1">
+                            ${isDeliveredItem ? '<i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i>' : ''}
+                            <span>${photo.code}</span>
                         </span>
                         <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
                             <button
@@ -771,6 +785,7 @@ const App = (function () {
                             </span>
                             <p class="text-xs sm:text-sm text-white font-medium truncate">${photo.title || photo.code}</p>
                             <span class="text-[10px] text-zinc-300 block"><i class="fa-regular fa-clock mr-1"></i>${timeStr}</span>
+                            ${st.selectorName ? `<span class="text-[10px] text-sky-300 block"><i class="fa-regular fa-user mr-1"></i>Người chọn: ${st.selectorName}</span>` : ''}
                             ${hasNote ? `<p class="text-[11px] text-amber-200 bg-black/50 px-1.5 py-0.5 rounded truncate mt-1"><i class="fa-regular fa-note-sticky mr-1"></i>${st.note}</p>` : ''}
                         </div>
                         <button
@@ -803,7 +818,14 @@ const App = (function () {
                 showToast(`Gói chụp cho phép chọn tối đa ${album.selectionLimit} ảnh! Bạn hãy bỏ chọn ảnh khác trước nhé.`, 'error');
                 return;
             }
+
+            if (album.multiSelectorEnabled && !sessionSelectorNameMap[album.id]) {
+                const entered = window.prompt("Nhập tên của bạn (VD: Cô dâu, Chú rể, Gia đình...) để phân loại danh sách chọn:", album.clientName || "Cô dâu");
+                sessionSelectorNameMap[album.id] = (entered && entered.trim()) ? entered.trim() : (album.clientName || "Khách hàng");
+            }
+
             current.selected = true;
+            current.selectorName = sessionSelectorNameMap[album.id] || current.selectorName || album.clientName || "Khách hàng";
             selections[photoId] = current;
             AdminModule.saveSelections(selections, album.id);
             const p = album.photos.find(x => x.id === photoId);
@@ -899,10 +921,12 @@ const App = (function () {
         const photo = currentFilteredPhotos[currentLightboxIndex];
         if (!photo) return;
 
+        const album = AdminModule.getAlbumById(currentAlbumId);
         const selections = AdminModule.getSelections(currentAlbumId);
         const st = selections[photo.id] || { selected: false, note: "" };
         const timeStr = AdminModule.formatTimeShort(photo.capturedAt);
 
+        isLightboxShowingBefore = false;
         const img = document.getElementById('lightboxImage');
         img.src = photo.url;
         img.classList.remove('lightbox-img-zoomed');
@@ -911,6 +935,16 @@ const App = (function () {
         document.getElementById('lightboxCode').innerText = photo.code;
         document.getElementById('lightboxTitle').innerText = `${photo.location || ''} • ${timeStr}`;
         document.getElementById('lightboxCounter').innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
+
+        // Check if Before/After comparison is available for this photo
+        const compareBtn = document.getElementById('lightboxCompareBtn');
+        const compareLabel = document.getElementById('lightboxCompareBtnLabel');
+        const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
+        const hasComparison = !!(photo.beforeUrl || matchedDelivered);
+        if (compareBtn) {
+            compareBtn.classList.toggle('hidden', !hasComparison);
+            if (compareLabel) compareLabel.innerText = 'So sánh Trước / Sau';
+        }
 
         const heartBtn = document.getElementById('lightboxHeartBtn');
         if (st.selected) {
@@ -927,6 +961,27 @@ const App = (function () {
             noteBadge.innerHTML = `<i class="fa-regular fa-comment-dots mr-1.5 text-amber-400"></i>Ghi chú: "${st.note}"`;
         } else {
             noteBadge.classList.add('hidden');
+        }
+    }
+
+    function toggleLightboxBeforeAfter() {
+        const photo = currentFilteredPhotos[currentLightboxIndex];
+        if (!photo) return;
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
+        const img = document.getElementById('lightboxImage');
+        const compareLabel = document.getElementById('lightboxCompareBtnLabel');
+
+        isLightboxShowingBefore = !isLightboxShowingBefore;
+        if (photo.beforeUrl) {
+            img.src = isLightboxShowingBefore ? photo.beforeUrl : photo.url;
+            img.style.filter = isLightboxShowingBefore ? 'saturate(0.75) contrast(0.92)' : 'none';
+        } else if (matchedDelivered) {
+            img.src = isLightboxShowingBefore ? photo.url : matchedDelivered.url;
+            img.style.filter = isLightboxShowingBefore ? 'saturate(0.75) contrast(0.92)' : 'none';
+        }
+        if (compareLabel) {
+            compareLabel.innerText = isLightboxShowingBefore ? 'Đang xem: Ảnh Gốc (Trước)' : 'Đang xem: Ảnh Đã Chỉnh (Sau)';
         }
     }
 
@@ -1254,6 +1309,7 @@ const App = (function () {
         fillQuickNoteChip,
         openLightbox,
         closeLightbox,
+        toggleLightboxBeforeAfter,
         setLightboxCurrentAsCover,
         nextLightboxPhoto,
         prevLightboxPhoto,
