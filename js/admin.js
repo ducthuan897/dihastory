@@ -1788,7 +1788,7 @@ const AdminModule = (function () {
         return photos;
     }
 
-    function deriveAlbumDateAndLocation(photos, tags, title) {
+    function deriveAlbumDateAndLocation(photos, tags, title, hintCity = "", hintDate = "") {
         // 1. Find earliest or primary capture date from the photos' EXIF metadata
         let detectedDate = "";
         const validDates = photos
@@ -1797,6 +1797,8 @@ const AdminModule = (function () {
             .sort();
         if (validDates.length > 0) {
             detectedDate = validDates[0];
+        } else if (hintDate) {
+            detectedDate = hintDate;
         } else {
             detectedDate = new Date().toISOString().slice(0, 10);
         }
@@ -1809,13 +1811,14 @@ const AdminModule = (function () {
         let city =
             (photoWithCity && photoWithCity.city.trim()) ||
             (photoWithLoc && photoWithLoc.location.split("-").pop().trim()) ||
+            (hintCity && hintCity.trim()) ||
             (titleOrTagHint && titleOrTagHint.city) ||
             (tags && tags[0]) ||
             "Việt Nam";
 
         let fullLocation =
             (photoWithLoc && photoWithLoc.location.trim()) ||
-            `${city}, Việt Nam`;
+            (hintCity ? `${hintCity}, Việt Nam` : `${city}, Việt Nam`);
 
         // Ensure every photo has a non-empty location for grouping
         photos.forEach(p => {
@@ -1824,6 +1827,9 @@ const AdminModule = (function () {
             }
             if (!p.city || !p.city.trim()) {
                 p.city = city;
+            }
+            if (!p.capturedAt && detectedDate) {
+                p.capturedAt = `${detectedDate}T09:00`;
             }
         });
 
@@ -1910,7 +1916,7 @@ const AdminModule = (function () {
         }
 
         // Automatically derive album's Date, City, and Location from the shared photos' metadata
-        const derivedMeta = deriveAlbumDateAndLocation(initialPhotos, createModalTags, title);
+        const derivedMeta = deriveAlbumDateAndLocation(initialPhotos, createModalTags, title, hintCity, hintDate);
         const date = derivedMeta.date;
         const city = derivedMeta.city;
         const albumLocation = derivedMeta.location;
@@ -2820,7 +2826,7 @@ const AdminModule = (function () {
         }
 
         // Update album Date & Location from the extracted photo metadata
-        const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title);
+        const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title, album.city, album.date);
         if (derived.date) album.date = derived.date;
         if (derived.city && derived.city !== "Việt Nam") album.city = derived.city;
         if (derived.location) album.location = derived.location;
