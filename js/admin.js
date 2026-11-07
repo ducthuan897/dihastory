@@ -341,8 +341,12 @@ const AdminModule = (function () {
     }
 
     function getClientShareUrl(albumId) {
-        const base = window.location.origin + window.location.pathname;
-        return `${base}?album=${encodeURIComponent(albumId)}`;
+        let base = window.location.origin + window.location.pathname;
+        base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+        if (window.location.hostname.includes('github.io')) {
+            return `https://ducthuan897.github.io/dutustory/${encodeURIComponent(albumId)}`;
+        }
+        return `${base}/${encodeURIComponent(albumId)}`;
     }
 
     function getSelectionsMap() {
@@ -435,6 +439,15 @@ const AdminModule = (function () {
 
         const slugInput = document.getElementById('createAlbumSlugInput');
         if (slugInput) slugInput.dataset.manual = '';
+
+        const prefixEl = document.getElementById('createAlbumDomainPrefix');
+        if (prefixEl) {
+            let base = window.location.origin + window.location.pathname;
+            base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+            prefixEl.innerText = window.location.hostname.includes('github.io')
+                ? "https://ducthuan897.github.io/dutustory/"
+                : `${base}/`;
+        }
 
         const dateInput = document.getElementById('createAlbumDateInput');
         if (dateInput) dateInput.value = '';

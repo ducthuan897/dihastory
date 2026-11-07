@@ -42,9 +42,39 @@ const App = (function () {
     }
 
     function handleUrlRouting(skipPush) {
+        // 1. Check if redirected from GitHub Pages 404.html
+        const savedCleanPath = sessionStorage.getItem('spa_clean_path');
+        if (savedCleanPath) {
+            sessionStorage.removeItem('spa_clean_path');
+            const found = AdminModule.getAlbumById(savedCleanPath);
+            if (found) {
+                currentAlbumId = found.id;
+                showView('album', true);
+                let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+                window.history.replaceState(null, '', `${base}/${savedCleanPath}`);
+                return;
+            }
+        }
+
         const params = new URLSearchParams(window.location.search);
-        const albumParam = params.get('album');
+        let albumParam = params.get('album');
         const viewParam = params.get('view');
+
+        // 2. Check if clean URL path /dutustory/<album-slug> or hash was visited
+        if (!albumParam && !viewParam) {
+            const rawPath = window.location.pathname.replace(/^\/dutustory\/?/i, '').replace(/^\/+|\/+$/g, '');
+            if (rawPath && !rawPath.includes('.') && rawPath !== 'index.html') {
+                const found = AdminModule.getAlbumById(decodeURIComponent(rawPath));
+                if (found) albumParam = found.id;
+            }
+            if (!albumParam && window.location.hash) {
+                const cleanHash = window.location.hash.replace(/^#\/?/, '').trim();
+                if (cleanHash && !cleanHash.startsWith('view=')) {
+                    const found = AdminModule.getAlbumById(decodeURIComponent(cleanHash));
+                    if (found) albumParam = found.id;
+                }
+            }
+        }
 
         if (viewParam === 'manage-album') {
             if (albumParam) {
@@ -125,7 +155,11 @@ const App = (function () {
             if (navAlbumContextual) navAlbumContextual.classList.remove('hidden');
 
             if (!skipHistoryPush) {
-                const url = `${window.location.pathname}?album=${encodeURIComponent(currentAlbumId)}`;
+                let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+                if (window.location.hostname.includes('github.io')) {
+                    base = '/dutustory';
+                }
+                const url = `${base}/${encodeURIComponent(currentAlbumId)}`;
                 window.history.pushState({ view: 'album', albumId: currentAlbumId }, '', url);
             }
             renderPublicAlbum();
@@ -140,7 +174,12 @@ const App = (function () {
             if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
 
             if (!skipHistoryPush) {
-                window.history.pushState({ view: 'home' }, '', window.location.pathname);
+                let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+                if (window.location.hostname.includes('github.io')) {
+                    base = '/dutustory';
+                }
+                const homeUrl = base ? `${base}/` : '/';
+                window.history.pushState({ view: 'home' }, '', homeUrl);
             }
             renderHomeShowcase();
         }

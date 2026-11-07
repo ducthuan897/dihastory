@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đức Thuận Studio - Đang chuyển hướng...</title>
+    <script>
+        (function () {
+            var path = window.location.pathname;
+            var repo = "/dutustory";
+            var sub = path;
+            if (sub.indexOf(repo) === 0) {
+                sub = sub.substring(repo.length);
+            }
+            sub = sub.replace(/^\/+|\/+$/g, "");
+            var search = window.location.search || "";
+            var hash = window.location.hash || "";
+
+            if (sub && sub.indexOf(".") === -1 && sub !== "index.html") {
+                // Save clean path into sessionStorage so app.js can restore clean URL in address bar
+                sessionStorage.setItem("spa_clean_path", sub);
+                var target = repo + "/?album=" + encodeURIComponent(sub) + (hash ? hash : "");
+                window.location.replace(target);
+            } else {
+                window.location.replace(repo + "/" + search + hash);
+            }
+        })();
+    </script>
+</head>
+
+<body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #fafafa; color: #52525b;">
+    <div style="text-align: center;">
+        <p style="font-size: 15px; font-weight: 600;">Đang tải Album Đức Thuận Studio...</p>
+    </div>
+</body>
+
+</html>
