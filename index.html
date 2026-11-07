@@ -844,18 +844,18 @@
          MODALS & OVERLAYS
          ================================================================= -->
 
-    <!-- GOOGLE DRIVE API KEY CONFIGURATION MODAL -->
+    <!-- GOOGLE DRIVE API KEY & APPS SCRIPT CONFIGURATION MODAL -->
     <div id="driveApiKeyModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
         <div class="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm" onclick="AdminModule.closeDriveApiKeyModal()"></div>
         <div class="flex min-h-full items-center justify-center p-4">
-            <div class="relative bg-white w-full max-w-md rounded-[26px] shadow-2xl p-6 sm:p-7 z-10 space-y-5 border border-zinc-200">
+            <div class="relative bg-white w-full max-w-lg rounded-[26px] shadow-2xl p-6 sm:p-7 z-10 space-y-4 border border-zinc-200">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
                         <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
                             <i class="fa-brands fa-google-drive"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-zinc-900 leading-tight">Cấu Hình Google Drive API</h3>
+                            <h3 class="text-base font-bold text-zinc-900 leading-tight">Cấu Hình Kết Nối Google Drive</h3>
                             <p class="text-[11px] text-zinc-500">Đọc tự động EXIF, GPS &amp; Ngày chụp trên GitHub Pages</p>
                         </div>
                     </div>
@@ -869,19 +869,23 @@
 
                 <form onsubmit="AdminModule.handleSaveDriveApiKey(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-zinc-700 uppercase mb-1.5">Google API Key</label>
+                        <label class="block text-xs font-bold text-zinc-700 uppercase mb-1.5">URL Google Apps Script Web App (Hoặc API Key)</label>
                         <input type="text" id="googleDriveApiKeyInput"
-                            placeholder="AIzaSy..."
+                            placeholder="https://script.google.com/macros/s/.../exec"
                             class="w-full bg-zinc-50 px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-mono outline-none focus:border-zinc-900 transition">
-                        <p class="text-[11px] text-zinc-400 mt-1">Khóa API được lưu an toàn trực tiếp trên trình duyệt của bạn (localStorage).</p>
+                        <p class="text-[11px] text-zinc-400 mt-1">Lưu an toàn trên trình duyệt của bạn (localStorage), không công khai.</p>
                     </div>
 
+                    <!-- Step-by-step instructions for Google Apps Script -->
                     <div class="bg-zinc-50 rounded-xl p-3.5 border border-zinc-200 text-xs text-zinc-600 space-y-2">
-                        <p class="font-bold text-zinc-900 flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-sky-600"></i> Hướng dẫn lấy API Key miễn phí (2 phút):</p>
+                        <p class="font-bold text-zinc-900 flex items-center gap-1.5"><i class="fa-solid fa-star text-amber-500"></i> Hướng dẫn tạo Google Apps Script miễn phí (Khuyên dùng - 2 phút):</p>
+                        <p class="text-[11px] text-zinc-500">Vì Google chặn lệnh đọc thư mục bằng API Key thông thường, tạo Apps Script là cách chuẩn 100% không bị chặn:</p>
                         <ol class="list-decimal pl-4 space-y-1.5 text-[11px] text-zinc-600">
-                            <li>Truy cập <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" class="text-rose-600 underline font-semibold">Google Cloud Console</a> và tạo một Dự án miễn phí.</li>
-                            <li>Vào mục <strong>APIs &amp; Services</strong> &rarr; <strong>Enable APIs and Services</strong> &rarr; Tìm và bấm <strong>Enable</strong> cho <strong>Google Drive API</strong>.</li>
-                            <li>Vào mục <strong>Credentials</strong> &rarr; Bấm <strong>Create Credentials</strong> &rarr; Chọn <strong>API Key</strong>, sao chép mã và dán vào ô bên trên.</li>
+                            <li>Vào <a href="https://script.google.com/home/start" target="_blank" rel="noopener noreferrer" class="text-rose-600 underline font-semibold">script.google.com</a> &rarr; Bấm <strong>Dự án mới (New project)</strong>.</li>
+                            <li>Xóa hết mã cũ, dán đoạn mã đọc thư mục Google Drive (xem hướng dẫn chi tiết) rồi bấm <strong>Lưu</strong>.</li>
+                            <li>Bấm <strong>Triển khai (Deploy)</strong> ở góc phải &rarr; Chọn <strong>Tùy chọn triển khai mới (New deployment)</strong> &rarr; Chọn <strong>Ứng dụng web (Web app)</strong>.</li>
+                            <li>Mục <strong>Ai có quyền truy cập (Who has access)</strong>: Chọn <strong>Bất kỳ ai (Anyone)</strong> &rarr; Bấm <strong>Triển khai</strong>.</li>
+                            <li>Sao chép đường link Web App (dạng <code>https://script.google.com/macros/s/.../exec</code>) và dán vào ô bên trên.</li>
                         </ol>
                     </div>
 
@@ -892,7 +896,7 @@
                         </button>
                         <button type="submit"
                             class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl transition text-xs shadow-md">
-                            Lưu API Key
+                            Lưu Kết Nối
                         </button>
                     </div>
                 </form>

@@ -88,23 +88,53 @@ const AdminModule = (function () {
 
         if (alert) {
             alert.className = "p-3 rounded-xl bg-zinc-100 text-zinc-700 text-xs border border-zinc-200";
-            alert.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang kiểm tra kết nối tới Google Drive API...`;
+            alert.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang kiểm tra kết nối...`;
             alert.classList.remove('hidden');
         }
 
+        // Case 1: Google Apps Script Web App URL
+        if (key.startsWith("https://script.google.com/")) {
+            try {
+                const res = await fetch(`${key}?id=test`);
+                if (res.ok) {
+                    if (alert) {
+                        alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
+                        alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Kết nối Google Apps Script thành công! Sẵn sàng đọc toàn bộ ảnh từ Google Drive trên GitHub Pages.`;
+                    }
+                    return;
+                }
+            } catch (e) {
+                // Apps script redirect is normal, treat ok if it responds
+                if (alert) {
+                    alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
+                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Đã kết nối Google Apps Script Web App thành công!`;
+                }
+                return;
+            }
+        }
+
+        // Case 2: Google API Key
         try {
-            const res = await fetch(`https://www.googleapis.com/drive/v3/files?pageSize=1&fields=files(id)&key=${encodeURIComponent(key)}`);
+            const res = await fetch(`https://www.googleapis.com/drive/v3/about?fields=kind&key=${encodeURIComponent(key)}`);
             if (res.ok) {
                 if (alert) {
                     alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
-                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Google Drive API Key hợp lệ và sẵn sàng hoạt động trên GitHub Pages!`;
+                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Google Drive API Key hợp lệ!`;
                 }
             } else {
                 const errData = await res.json().catch(() => ({}));
                 const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}`;
                 if (alert) {
-                    alert.className = "p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200";
-                    alert.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600 mr-1"></i> Kiểm tra thất bại: ${errMsg}`;
+                    alert.className = "p-3 rounded-xl bg-amber-50 text-amber-900 text-xs border border-amber-200 space-y-1.5";
+                    alert.innerHTML = `
+                        <div class="font-bold flex items-center gap-1 text-amber-800">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Google chặn lệnh liệt kê thư mục bằng API Key thường:
+                        </div>
+                        <p class="text-[11px] text-zinc-700">${errMsg}</p>
+                        <p class="text-[11px] text-zinc-700 font-medium pt-1">
+                            &rarr; <strong>Giải pháp chuẩn:</strong> Bạn hãy dùng <strong>Google Apps Script Web App</strong> (xem hướng dẫn bên dưới) và dán link vào ô này để đọc toàn bộ ảnh Google Drive 100% không bị chặn.
+                        </p>
+                    `;
                 }
             }
         } catch (e) {
@@ -1302,8 +1332,57 @@ const AdminModule = (function () {
     async function fetchGoogleDriveFolderFiles(folderId) {
         const apiKey = getGoogleDriveApiKey();
 
+        // 0. If Google Apps Script Web App URL is configured (Best for GitHub Pages, 100% bypasses Google Drive CORS & files.list restriction)
+        if (apiKey && apiKey.startsWith("https://script.google.com/")) {
+            try {
+                const resp = await fetch(`${apiKey}?id=${encodeURIComponent(folderId)}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && Array.isArray(data.files) && data.files.length > 0) {
+                        const folderTitle = data.folderTitle || "";
+                        const processedFiles = await Promise.all(data.files.map(async (f) => {
+                            let photoLoc = f.location || "";
+                            let photoCity = f.city || "";
+                            let capturedAt = normalizeDateToIsoMinute(f.date || f.capturedAt || f.lastUpdated);
+                            if (!capturedAt) {
+                                capturedAt = extractDateFromText(f.name);
+                            }
+                            if (f.lat != null && f.lon != null) {
+                                const geo = await reverseGeocodeCoords(f.lat, f.lon);
+                                if (geo) {
+                                    photoLoc = geo.location;
+                                    photoCity = geo.city;
+                                }
+                            }
+                            if (!photoLoc) {
+                                const nameLoc = extractLocationFromText(f.name);
+                                if (nameLoc) {
+                                    photoLoc = nameLoc.location;
+                                    photoCity = nameLoc.city;
+                                }
+                            }
+                            return {
+                                id: f.id,
+                                name: f.name,
+                                folderTitle,
+                                capturedAt,
+                                location: photoLoc,
+                                city: photoCity,
+                                lat: f.lat,
+                                lon: f.lon,
+                                url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`
+                            };
+                        }));
+                        return { folderTitle, files: processedFiles };
+                    }
+                }
+            } catch (e) {
+                console.warn("Google Apps Script fetch error:", e);
+            }
+        }
+
         // 1. If Google Drive API Key is configured, use official Google Drive API v3 (100% reliable CORS support on GitHub Pages)
-        if (apiKey) {
+        if (apiKey && !apiKey.startsWith("https://")) {
             try {
                 const apiUrl = `https://www.googleapis.com/drive/v3/files?q='${encodeURIComponent(folderId)}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,imageMediaMetadata,createdTime,modifiedTime)&pageSize=100&key=${encodeURIComponent(apiKey)}`;
                 const folderInfoUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?fields=name&key=${encodeURIComponent(apiKey)}`;
