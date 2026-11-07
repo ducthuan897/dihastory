@@ -315,6 +315,7 @@ const App = (function () {
                     <img
                         src="${album.coverUrl}"
                         alt="${album.title}"
+                        referrerpolicy="no-referrer"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     >
                     <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent"></div>
@@ -750,7 +751,7 @@ const App = (function () {
 
         return `
             <div class="photo-card ${isSelected ? 'is-selected' : ''} ${hasNote ? 'has-note' : ''}" onclick="App.openLightbox(${lightboxIdx})">
-                <img src="${photo.url}" alt="${photo.code}" loading="lazy">
+                <img src="${photo.url}" alt="${photo.code}" referrerpolicy="no-referrer" loading="lazy">
                 ${showWatermark ? `<div class="pointer-events-none absolute inset-0 flex items-center justify-center"><span class="text-white/35 font-serif-display text-sm sm:text-base font-bold tracking-widest uppercase -rotate-12 border border-white/25 px-3 py-1 rounded select-none">ĐỨC THUẬN STUDIO</span></div>` : ''}
                 <div class="photo-card-overlay">
                     <div class="flex items-center justify-between">
@@ -1062,10 +1063,39 @@ const App = (function () {
 
     async function downloadSinglePhoto(photoId) {
         const album = AdminModule.getAlbumById(currentAlbumId);
-        const photo = album.photos.find(p => p.id === photoId);
+        const photo =
+            album.photos.find(p => p.id === photoId) ||
+            (album.deliveredPhotos || []).find(p => p.id === photoId);
         if (!photo) return;
 
         showToast(`Đang chuẩn bị lưu ảnh ${photo.code} về máy...`);
+
+        // Handle Base64 local computer images directly
+        if (photo.url && photo.url.startsWith('data:image')) {
+            const link = document.createElement('a');
+            link.href = photo.url;
+            link.download = `${photo.code}-DucThuanStudio.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
+        }
+
+        // Handle Google Drive photos with direct download link
+        const driveIdMatch = photo.driveFileId || (photo.url && (photo.url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/) || [])[1]);
+        if (driveIdMatch) {
+            const dlUrl = `https://drive.google.com/uc?export=download&id=${driveIdMatch}`;
+            const link = document.createElement('a');
+            link.href = dlUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.download = `${photo.code}-DucThuanStudio.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
+        }
+
         try {
             const response = await fetch(photo.url);
             const blob = await response.blob();

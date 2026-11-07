@@ -158,13 +158,20 @@ const AdminModule = (function () {
     ];
 
     let activeAdminAlbumId = DEFAULT_ALBUMS[0].id;
+    let memoryAlbumsCache = null;
 
     function getAllAlbums() {
+        if (memoryAlbumsCache && Array.isArray(memoryAlbumsCache) && memoryAlbumsCache.length > 0) {
+            return memoryAlbumsCache;
+        }
         try {
             const raw = localStorage.getItem(STORAGE_KEY_ALBUMS);
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    memoryAlbumsCache = parsed;
+                    return parsed;
+                }
             }
         } catch (e) {
             console.error(e);
@@ -175,7 +182,12 @@ const AdminModule = (function () {
     }
 
     function saveAllAlbums(albums) {
-        localStorage.setItem(STORAGE_KEY_ALBUMS, JSON.stringify(albums));
+        memoryAlbumsCache = albums;
+        try {
+            localStorage.setItem(STORAGE_KEY_ALBUMS, JSON.stringify(albums));
+        } catch (err) {
+            console.warn("Bộ nhớ trình duyệt vượt giới hạn, dữ liệu ảnh độ phân giải cao được giữ trong phiên hiện tại:", err);
+        }
     }
 
     function getAlbumById(albumId) {
@@ -284,7 +296,12 @@ const AdminModule = (function () {
         if (slugInput) slugInput.dataset.manual = '';
 
         const dateInput = document.getElementById('createAlbumDateInput');
-        if (dateInput) dateInput.value = "2026-11-07";
+        if (dateInput) dateInput.value = '';
+
+        const metaText = document.getElementById('createModalDetectedMetaText');
+        if (metaText) {
+            metaText.innerHTML = `Vị trí &amp; Ngày chụp sẽ tự động trích xuất từ thông tin ảnh (EXIF / GPS)`;
+        }
 
         const deadlineInput = document.getElementById('createAlbumDeadlineInput');
         if (deadlineInput) deadlineInput.value = "2026-11-15T23:59";
@@ -341,7 +358,7 @@ const AdminModule = (function () {
         }
     }
 
-    function addDriveLinkToCreateModal() {
+    async function addDriveLinkToCreateModal() {
         const input = document.getElementById('createAlbumDriveInput');
         if (!input) return;
         const val = input.value.trim();
@@ -352,11 +369,13 @@ const AdminModule = (function () {
         createModalDriveLinks.push(val);
         input.value = '';
         renderCreateModalDriveLinks();
+        previewDriveMetadataInCreateModal(val);
     }
 
     function removeDriveLinkFromCreateModal(idx) {
         createModalDriveLinks.splice(idx, 1);
         renderCreateModalDriveLinks();
+        updateCreateModalDetectedMetaSummary();
     }
 
     function renderCreateModalDriveLinks() {
@@ -418,42 +437,447 @@ const AdminModule = (function () {
         `).join('');
     }
 
-    function handleCreateModalLocalFiles(event) {
-        const files = event.target.files;
-        if (!files || !files.length) return;
+    // ==================== PHOTO METADATA (EXIF / GPS / DATE & LOCATION) EXTRACTOR ====================
 
-        let loaded = 0;
-        Array.from(files).forEach((file, idx) => {
+    const clientGeoCache = {};
+
+    const KNOWN_VN_LOCATIONS = [
+        { keywords: ["da lat", "dalat", "đà lạt", "tuyen lam", "đa phú", "da phu", "con ga", "cầu đất", "cau dat", "langbiang", "xuan huong"], city: "Đà Lạt" },
+        { keywords: ["phu quoc", "phú quốc", "bai sao", "bãi sao", "sanato", "hon thom", "hòn thơm", "rach vem"], city: "Phú Quốc" },
+        { keywords: ["ha noi", "hanoi", "hà nội", "ho guom", "hồ gươm", "pho co", "phố cổ", "phan dinh phung", "ho tay", "hồ tây"], city: "Hà Nội" },
+        { keywords: ["sai gon", "saigon", "sài gòn", "tp hcm", "tphcm", "ho chi minh", "hồ chí minh", "quan 1", "quận 1", "thu thiêm"], city: "TP. Hồ Chí Minh" },
+        { keywords: ["da nang", "danang", "đà nẵng", "ba na", "bà nà", "my khe", "mỹ khê", "son tra", "sơn trà"], city: "Đà Nẵng" },
+        { keywords: ["hoi an", "hội an", "cua dai", "an bang"], city: "Hội An" },
+        { keywords: ["nha trang", "cam ranh", "bai dai"], city: "Nha Trang" },
+        { keywords: ["sapa", "sa pa", "fansipan", "muong hoa"], city: "Sa Pa" },
+        { keywords: ["ninh binh", "ninh bình", "trang an", "tràng an", "tam coc", "hang mua"], city: "Ninh Bình" },
+        { keywords: ["hue", "huế", "dai noi", "đại nội", "huong giang"], city: "Huế" },
+        { keywords: ["vung tau", "vũng tàu", "ho tram", "hồ tràm"], city: "Vũng Tàu" },
+        { keywords: ["ha long", "hạ long", "quang ninh", "quảng ninh", "tuan chau"], city: "Hạ Long" },
+        { keywords: ["phan thiet", "phan thiết", "mui ne", "mũi né", "bau trang", "bàu trắng"], city: "Phan Thiết" },
+        { keywords: ["quy nhon", "quy nhơn", "ky co", "kỳ co", "eo gio", "eo gió"], city: "Quy Nhơn" }
+    ];
+
+    function extractLocationFromText(text) {
+        if (!text) return null;
+        const norm = text
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/[_.\-]+/g, " ");
+
+        for (const item of KNOWN_VN_LOCATIONS) {
+            for (const kw of item.keywords) {
+                const kwNorm = kw
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/đ/g, "d");
+                if (norm.includes(kwNorm)) {
+                    return { city: item.city, location: item.city };
+                }
+            }
+        }
+        return null;
+    }
+
+    function extractDateFromText(text) {
+        if (!text) return null;
+        // Match YYYYMMDD_HHMMSS or YYYY-MM-DD_HH-MM
+        const m1 = text.match(/(20\d{2})[-_.]?(0[1-9]|1[0-2])[-_.]?(0[1-9]|[12]\d|3[01])(?:[-_ T]?([01]\d|2[0-3])[-_:]?([0-5]\d))?/);
+        if (m1) {
+            const yyyy = m1[1];
+            const mm = m1[2];
+            const dd = m1[3];
+            const hh = m1[4] || "08";
+            const min = m1[5] || "30";
+            return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+        }
+        return null;
+    }
+
+    function normalizeDateToIsoMinute(val) {
+        if (!val) return null;
+        if (val instanceof Date && !isNaN(val.getTime())) {
+            const local = new Date(val.getTime() - val.getTimezoneOffset() * 60000);
+            return local.toISOString().slice(0, 16);
+        }
+        const str = String(val).trim();
+        // EXIF format "YYYY:MM:DD HH:MM:SS" or ISO "YYYY-MM-DDTHH:MM"
+        const m = str.match(/^(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s]+(\d{2}):(\d{2})/);
+        if (m) {
+            return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}`;
+        }
+        const mDateOnly = str.match(/^(\d{4})[:\-](\d{2})[:\-](\d{2})$/);
+        if (mDateOnly) {
+            return `${mDateOnly[1]}-${mDateOnly[2]}-${mDateOnly[3]}T08:30`;
+        }
+        const parsed = new Date(str);
+        if (!isNaN(parsed.getTime())) {
+            const local = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000);
+            return local.toISOString().slice(0, 16);
+        }
+        return null;
+    }
+
+    async function reverseGeocodeCoords(lat, lon) {
+        if (lat == null || lon == null || isNaN(lat) || isNaN(lon)) return null;
+        const key = `${Number(lat).toFixed(3)},${Number(lon).toFixed(3)}`;
+        if (clientGeoCache[key]) return clientGeoCache[key];
+
+        try {
+            const resp = await fetch(
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&localityLanguage=vi`
+            );
+            if (resp.ok) {
+                const data = await resp.json();
+                const rawCity = (data.city || data.principalSubdivision || "").replace(/^(Tỉnh|Thành phố)\s+/i, "").trim();
+                const rawLocality = (data.locality || "").replace(/^(Phường|Xã|Thị trấn|Quận|Huyện)\s+/i, "").trim();
+                const city = rawCity || rawLocality || "";
+                const location =
+                    rawLocality && rawCity && rawLocality.toLowerCase() !== rawCity.toLowerCase()
+                        ? `${data.locality} - ${rawCity}`
+                        : (city || `${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}`);
+                const res = { city: city || location, location };
+                clientGeoCache[key] = res;
+                return res;
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    function parseExifFromArrayBuffer(buffer) {
+        const out = { capturedAt: null, lat: null, lon: null, city: null, location: null };
+        if (!buffer || buffer.byteLength < 12) return out;
+        const view = new DataView(buffer);
+        if (view.getUint8(0) !== 0xFF || view.getUint8(1) !== 0xD8) return out;
+
+        let offset = 2;
+        const len = view.byteLength;
+        while (offset + 4 < len) {
+            if (view.getUint8(offset) !== 0xFF) break;
+            const marker = view.getUint8(offset + 1);
+            if (marker === 0xDA || marker === 0xD9) break;
+            const segLen = view.getUint16(offset + 2, false);
+            if (segLen < 2 || offset + 2 + segLen > len) break;
+
+            if (
+                marker === 0xE1 &&
+                segLen >= 8 &&
+                view.getUint8(offset + 4) === 0x45 &&
+                view.getUint8(offset + 5) === 0x78 &&
+                view.getUint8(offset + 6) === 0x69 &&
+                view.getUint8(offset + 7) === 0x66
+            ) {
+                const tiffStart = offset + 10;
+                const le = view.getUint16(tiffStart, false) === 0x4949;
+                const ifd0 = view.getUint32(tiffStart + 4, le);
+                let exifOffset = 0;
+                let gpsOffset = 0;
+
+                const readAscii = (valPos, count) => {
+                    if (count <= 0 || count > 300) return "";
+                    const p = count <= 4 ? valPos : tiffStart + view.getUint32(valPos, le);
+                    if (p < 0 || p + count > len) return "";
+                    let s = "";
+                    for (let i = 0; i < count - 1; i++) {
+                        const c = view.getUint8(p + i);
+                        if (c === 0) break;
+                        s += String.fromCharCode(c);
+                    }
+                    return s.trim();
+                };
+
+                const readRationals = (valPos, count) => {
+                    const p = tiffStart + view.getUint32(valPos, le);
+                    if (p < 0 || p + count * 8 > len) return null;
+                    const arr = [];
+                    for (let i = 0; i < count; i++) {
+                        const num = view.getUint32(p + i * 8, le);
+                        const den = view.getUint32(p + i * 8 + 4, le);
+                        arr.push(den === 0 ? 0 : num / den);
+                    }
+                    return arr;
+                };
+
+                const scanIfd = (ifdPos, isGps) => {
+                    if (ifdPos + 2 > len) return;
+                    const entries = view.getUint16(ifdPos, le);
+                    let latRef = "N", lonRef = "E", latArr = null, lonArr = null;
+                    for (let i = 0; i < entries; i++) {
+                        const ep = ifdPos + 2 + i * 12;
+                        if (ep + 12 > len) break;
+                        const tag = view.getUint16(ep, le);
+                        const count = view.getUint32(ep + 4, le);
+                        const vp = ep + 8;
+                        if (!isGps) {
+                            if (tag === 0x8769) exifOffset = view.getUint32(vp, le);
+                            else if (tag === 0x8825) gpsOffset = view.getUint32(vp, le);
+                            else if (tag === 0x9003 || tag === 0x9004 || tag === 0x0132) {
+                                const dt = normalizeDateToIsoMinute(readAscii(vp, count));
+                                if (dt && (!out.capturedAt || tag === 0x9003)) out.capturedAt = dt;
+                            }
+                        } else {
+                            if (tag === 0x0001) latRef = (readAscii(vp, count) || "N").toUpperCase();
+                            else if (tag === 0x0002 && count === 3) latArr = readRationals(vp, 3);
+                            else if (tag === 0x0003) lonRef = (readAscii(vp, count) || "E").toUpperCase();
+                            else if (tag === 0x0004 && count === 3) lonArr = readRationals(vp, 3);
+                        }
+                    }
+                    if (isGps && latArr && lonArr) {
+                        let lat = latArr[0] + latArr[1] / 60 + latArr[2] / 3600;
+                        let lon = lonArr[0] + lonArr[1] / 60 + lonArr[2] / 3600;
+                        if (latRef.startsWith("S")) lat = -lat;
+                        if (lonRef.startsWith("W")) lon = -lon;
+                        if (Math.abs(lat) > 0.0001 || Math.abs(lon) > 0.0001) {
+                            out.lat = lat;
+                            out.lon = lon;
+                        }
+                    }
+                };
+
+                scanIfd(tiffStart + ifd0, false);
+                if (exifOffset > 0) scanIfd(tiffStart + exifOffset, false);
+                if (gpsOffset > 0) scanIfd(tiffStart + gpsOffset, true);
+            }
+            offset += 2 + segLen;
+        }
+        return out;
+    }
+
+    async function extractMetadataFromLocalFile(file) {
+        let capturedAt = null;
+        let lat = null;
+        let lon = null;
+        let location = null;
+        let city = null;
+
+        // 1. Try exifr library if available
+        if (window.exifr && typeof window.exifr.parse === "function") {
+            try {
+                const parsed = await window.exifr.parse(file, {
+                    tiff: true,
+                    exif: true,
+                    gps: true,
+                    iptc: true,
+                    xmp: true
+                });
+                if (parsed) {
+                    const rawDt = parsed.DateTimeOriginal || parsed.CreateDate || parsed.ModifyDate || parsed.DateCreated;
+                    capturedAt = normalizeDateToIsoMinute(rawDt);
+                    if (typeof parsed.latitude === "number" && typeof parsed.longitude === "number") {
+                        lat = parsed.latitude;
+                        lon = parsed.longitude;
+                    }
+                    const metaCity = parsed.City || parsed.city || parsed.State || "";
+                    const metaSubloc = parsed.Sublocation || parsed.Location || parsed.ObjectName || "";
+                    if (metaCity) city = String(metaCity).trim();
+                    if (metaSubloc && city) location = `${String(metaSubloc).trim()} - ${city}`;
+                    else if (metaSubloc) location = String(metaSubloc).trim();
+                    else if (city) location = city;
+                }
+            } catch (e) {}
+        }
+
+        // 2. Fallback to built-in binary EXIF parser on first 128KB
+        if (!capturedAt || (lat == null && !location)) {
+            try {
+                const slice = file.slice(0, 131072);
+                const buf = await slice.arrayBuffer();
+                const binExif = parseExifFromArrayBuffer(buf);
+                if (!capturedAt && binExif.capturedAt) capturedAt = binExif.capturedAt;
+                if (lat == null && binExif.lat != null) {
+                    lat = binExif.lat;
+                    lon = binExif.lon;
+                }
+            } catch (e) {}
+        }
+
+        // 3. Reverse geocode GPS coordinates if found
+        if (!location && lat != null && lon != null) {
+            const geo = await reverseGeocodeCoords(lat, lon);
+            if (geo) {
+                location = geo.location;
+                city = geo.city;
+            }
+        }
+
+        // 4. Fallback to filename date / location or file.lastModified
+        if (!capturedAt) {
+            capturedAt = extractDateFromText(file.name);
+        }
+        if (!capturedAt && file.lastModified) {
+            capturedAt = normalizeDateToIsoMinute(new Date(file.lastModified));
+        }
+        if (!capturedAt) {
+            capturedAt = new Date().toISOString().slice(0, 16);
+        }
+
+        if (!location) {
+            const textLoc = extractLocationFromText(file.name);
+            if (textLoc) {
+                location = textLoc.location;
+                city = textLoc.city;
+            }
+        }
+
+        return {
+            capturedAt,
+            location: location || "",
+            city: city || ""
+        };
+    }
+
+    function updateCreateModalDetectedMetaSummary(extraPhotos = []) {
+        const metaText = document.getElementById('createModalDetectedMetaText');
+        const cityInput = document.getElementById('createAlbumCityInput');
+        const dateInput = document.getElementById('createAlbumDateInput');
+
+        const allKnown = [...createModalLocalFilesData, ...extraPhotos];
+        const foundLocPhoto = allKnown.find(p => p.location || p.city);
+        const foundDatePhoto = allKnown.find(p => p.capturedAt);
+
+        const detectedCity = foundLocPhoto ? (foundLocPhoto.city || foundLocPhoto.location) : "";
+        const detectedLoc = foundLocPhoto ? (foundLocPhoto.location || foundLocPhoto.city) : "";
+        const detectedDate = foundDatePhoto && foundDatePhoto.capturedAt ? foundDatePhoto.capturedAt.slice(0, 10) : "";
+
+        if (cityInput && detectedCity) cityInput.value = detectedCity;
+        if (dateInput && detectedDate) dateInput.value = detectedDate;
+
+        if (metaText) {
+            if (detectedLoc || detectedDate) {
+                const dateFormatted = detectedDate ? detectedDate.split('-').reverse().join('/') : 'Tự động từ ảnh';
+                const locFormatted = detectedLoc || 'Tự động từ ảnh / 태그';
+                metaText.innerHTML = `Đã lấy từ ảnh: <strong class="text-zinc-900"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>${locFormatted}</strong> • <strong class="text-zinc-900"><i class="fa-regular fa-calendar mr-1 text-emerald-600"></i>${dateFormatted}</strong>`;
+            } else if (createModalDriveLinks.length > 0) {
+                metaText.innerHTML = `Đã gắn <strong>${createModalDriveLinks.length}</strong> link Google Drive — Vị trí &amp; Ngày chụp sẽ lấy trực tiếp từ thông tin ảnh chia sẻ`;
+            } else {
+                metaText.innerHTML = `Vị trí &amp; Ngày chụp sẽ tự động trích xuất từ thông tin ảnh (EXIF / GPS)`;
+            }
+        }
+    }
+
+    async function previewDriveMetadataInCreateModal(driveLink) {
+        const metaText = document.getElementById('createModalDetectedMetaText');
+        if (metaText) {
+            metaText.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-emerald-600 mr-1"></i> Đang đọc Vị trí &amp; Ngày chụp từ thông tin ảnh Google Drive...`;
+        }
+        try {
+            const samplePhotos = await fetchRealPhotosFromDriveLinks([driveLink], "", "", 0);
+            updateCreateModalDetectedMetaSummary(samplePhotos);
+        } catch (e) {
+            updateCreateModalDetectedMetaSummary();
+        }
+    }
+
+    function compressImageFile(file, maxDim = 1600, quality = 0.82) {
+        return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = function (e) {
-                const cleanName = file.name.replace(/\.[^/.]+$/, "").toUpperCase();
-                let capturedAt = "2026-11-07T08:30";
-                if (file.lastModified) {
-                    const d = new Date(file.lastModified);
-                    capturedAt = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-                }
-                createModalLocalFilesData.push({
-                    code: cleanName.length <= 16 ? cleanName : `IMG_${1001 + idx}`,
-                    title: file.name,
-                    capturedAt,
-                    url: e.target.result
-                });
-                loaded++;
-                if (loaded === files.length) {
-                    renderCreateModalLocalPreview();
-                }
+                const dataUrl = e.target.result;
+                const img = new Image();
+                img.onload = function () {
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > maxDim || h > maxDim) {
+                        if (w >= h) {
+                            h = Math.round((h * maxDim) / w);
+                            w = maxDim;
+                        } else {
+                            w = Math.round((w * maxDim) / h);
+                            h = maxDim;
+                        }
+                    }
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    } catch (err) {
+                        resolve(dataUrl);
+                    }
+                };
+                img.onerror = function () {
+                    resolve(dataUrl);
+                };
+                img.src = dataUrl;
+            };
+            reader.onerror = function () {
+                resolve("");
             };
             reader.readAsDataURL(file);
         });
     }
 
+    async function handleCreateModalLocalFiles(event) {
+        const files = event.target.files;
+        if (!files || !files.length) return;
+
+        const countEl = document.getElementById('createModalLocalCount');
+        if (countEl) countEl.innerText = `Đang đọc ảnh & trích xuất Vị trí, Ngày chụp từ ${files.length} file...`;
+
+        const fileList = Array.from(files);
+        for (let idx = 0; idx < fileList.length; idx++) {
+            const file = fileList[idx];
+            const [dataUrl, meta] = await Promise.all([
+                compressImageFile(file, 1600, 0.84),
+                extractMetadataFromLocalFile(file)
+            ]);
+            if (!dataUrl) continue;
+
+            const cleanName = file.name.replace(/\.[^/.]+$/, "").toUpperCase();
+            createModalLocalFilesData.push({
+                code: cleanName.length <= 20 ? cleanName : `IMG_${1001 + createModalLocalFilesData.length}`,
+                title: file.name,
+                capturedAt: meta.capturedAt,
+                location: meta.location,
+                city: meta.city,
+                url: dataUrl
+            });
+        }
+        renderCreateModalLocalPreview();
+        updateCreateModalDetectedMetaSummary();
+        event.target.value = "";
+    }
+
+    function removeLocalFileFromCreateModal(idx) {
+        createModalLocalFilesData.splice(idx, 1);
+        renderCreateModalLocalPreview();
+        updateCreateModalDetectedMetaSummary();
+    }
+
     function renderCreateModalLocalPreview() {
         const el = document.getElementById('createModalLocalCount');
-        if (!el) return;
-        if (!createModalLocalFilesData.length) {
-            el.innerText = "Chưa chọn file nào";
-        } else {
-            el.innerText = `Đã chọn sẵn ${createModalLocalFilesData.length} ảnh từ máy tính`;
+        const grid = document.getElementById('createModalLocalThumbGrid');
+        if (el) {
+            if (!createModalLocalFilesData.length) {
+                el.innerText = "Chưa chọn file nào";
+            } else {
+                el.innerText = `Đã chọn ${createModalLocalFilesData.length} ảnh từ máy tính (Đã đọc EXIF Ngày chụp & Vị trí)`;
+            }
+        }
+        if (grid) {
+            if (!createModalLocalFilesData.length) {
+                grid.innerHTML = "";
+            } else {
+                grid.innerHTML = createModalLocalFilesData.map((f, idx) => `
+                    <div class="relative group aspect-square rounded-lg overflow-hidden border border-zinc-200 bg-zinc-100" title="${f.code} • ${f.location || 'Tự động'} • ${formatTimeShort(f.capturedAt)}">
+                        <img src="${f.url}" alt="${f.code}" class="w-full h-full object-cover">
+                        <button
+                            type="button"
+                            onclick="AdminModule.removeLocalFileFromCreateModal(${idx})"
+                            class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center shadow"
+                            title="Bỏ ảnh này"
+                        >
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <span class="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[8px] font-mono truncate px-1">${f.location ? f.location : f.code}</span>
+                    </div>
+                `).join('');
+            }
         }
     }
 
@@ -469,54 +893,279 @@ const AdminModule = (function () {
     }
 
     function extractGoogleDriveFileId(url) {
-        const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (!url) return null;
+        if (url.includes('/folders/')) return null;
+        const match =
+            url.match(/\/file\/d\/([a-zA-Z0-9_-]{15,})/) ||
+            url.match(/\/d\/([a-zA-Z0-9_-]{15,})/) ||
+            url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
         return match ? match[1] : null;
     }
 
-    function buildSamplePhotosFromDriveLinks(driveLinks, city, date) {
-        const samplePool = [
-            { code: "DRV_0101", title: "Khoảnh khắc mở đầu", url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80", time: "07:30" },
-            { code: "DRV_0102", title: "Ánh nắng ban mai", url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80", time: "08:15" },
-            { code: "DRV_0103", title: "Nụ cười rạng rỡ", url: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=80", time: "09:00" },
-            { code: "DRV_0104", title: "Góc máy nghệ thuật", url: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=80", time: "10:20" },
-            { code: "DRV_0105", title: "Chiều hoàng hôn lãng mạn", url: "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1200&q=80", time: "16:45" },
-            { code: "DRV_0106", title: "Kỷ niệm đáng nhớ", url: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1200&q=80", time: "17:30" }
-        ];
+    function extractGoogleDriveFolderId(url) {
+        if (!url) return null;
+        const folderMatch = url.match(/\/folders\/([a-zA-Z0-9_-]{15,})/);
+        if (folderMatch) return folderMatch[1];
+        if (url.includes('drive.google.com') && url.includes('id=') && !url.includes('/file/')) {
+            const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
+            if (idMatch) return idMatch[1];
+        }
+        return null;
+    }
 
-        const photos = [];
-        // Check if any link is a direct file link
-        driveLinks.forEach((link, idx) => {
-            const fileId = extractGoogleDriveFileId(link);
-            if (fileId && !link.includes('/folders/')) {
-                photos.push({
-                    id: "drv_file_" + Date.now() + "_" + idx,
-                    code: `DRV_${1001 + idx}`,
-                    location: `${city}`,
-                    capturedAt: `${date}T09:${(10 + idx * 5).toString().padStart(2, '0')}`,
-                    title: `Ảnh Google Drive #${idx + 1}`,
-                    url: `https://lh3.googleusercontent.com/d/${fileId}=w1600`
+    function parseDriveEmbeddedFolderHtml(html) {
+        const files = [];
+        if (!html) return { folderTitle: "", files };
+        let folderTitle = "";
+        const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+        if (titleMatch) {
+            folderTitle = titleMatch[1].replace(/\s*-\s*Google Drive$/i, "").trim();
+        }
+        const entryRegex = /id="entry-([a-zA-Z0-9_-]{20,})"[\s\S]*?<div class="flip-entry-title">([^<]+)<\/div>(?:[\s\S]*?<div class="flip-entry-last-modified"><div>([^<]*)<\/div>)?/g;
+        let m;
+        while ((m = entryRegex.exec(html)) !== null) {
+            const fId = m[1];
+            const fName = m[2].trim();
+            const fMod = (m[3] || "").trim();
+            if (!/\.(mp4|mov|avi|zip|rar|pdf|txt|doc|docx)$/i.test(fName)) {
+                files.push({
+                    id: fId,
+                    name: fName,
+                    folderTitle,
+                    modifiedRaw: fMod,
+                    capturedAt: normalizeDateToIsoMinute(fMod),
+                    url: `https://drive.google.com/thumbnail?id=${fId}&sz=w1600`
                 });
             }
-        });
-
-        // If folder links were provided (or no direct file links), import sample Drive folder photos so user can immediately preview & set cover
-        if (driveLinks.length > 0 && photos.length === 0) {
-            samplePool.forEach((item, idx) => {
-                const loc = idx < 3 ? `Điểm chụp Sáng - ${city}` : `Điểm chụp Chiều - ${city}`;
-                photos.push({
-                    id: "drv_folder_" + Date.now() + "_" + idx,
-                    code: item.code,
-                    location: loc,
-                    capturedAt: `${date}T${item.time}`,
-                    title: item.title,
-                    url: item.url
-                });
-            });
         }
+        return { folderTitle, files };
+    }
+
+    async function fetchGoogleDriveFolderFiles(folderId) {
+        // 1. Try local server API endpoint (/api/drive-folder?id=...) which also extracts EXIF Date & GPS Location
+        try {
+            const resp = await fetch(`/api/drive-folder?id=${encodeURIComponent(folderId)}`);
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data && Array.isArray(data.files) && data.files.length > 0) {
+                    return data;
+                }
+            }
+        } catch (e) {}
+
+        // 2. Fallback: fetch public Google Drive embeddedfolderview via CORS proxy if needed
+        const embedUrl = `https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(folderId)}#list`;
+        const proxyUrls = [
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(embedUrl)}`,
+            `https://corsproxy.io/?${encodeURIComponent(embedUrl)}`
+        ];
+        for (const pUrl of proxyUrls) {
+            try {
+                const r = await fetch(pUrl);
+                if (r.ok) {
+                    const html = await r.text();
+                    const parsed = parseDriveEmbeddedFolderHtml(html);
+                    if (parsed.files && parsed.files.length > 0) return parsed;
+                }
+            } catch (e) {}
+        }
+        return { folderTitle: "", files: [] };
+    }
+
+    async function fetchGoogleDriveSingleFileMeta(fileId) {
+        try {
+            const resp = await fetch(`/api/drive-file-meta?id=${encodeURIComponent(fileId)}`);
+            if (resp.ok) {
+                return await resp.json();
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    async function fetchRealPhotosFromDriveLinks(driveLinks, fallbackCity, fallbackDate, startIdx = 0) {
+        const photos = [];
+        let counter = startIdx;
+
+        for (let i = 0; i < driveLinks.length; i++) {
+            const rawLink = (driveLinks[i] || '').trim();
+            if (!rawLink) continue;
+
+            const folderId = extractGoogleDriveFolderId(rawLink);
+            if (folderId) {
+                const folderData = await fetchGoogleDriveFolderFiles(folderId);
+                const folderTitle = folderData.folderTitle || "";
+                const folderFiles = folderData.files || [];
+                const folderLocHint = extractLocationFromText(folderTitle);
+                const folderDateHint = extractDateFromText(folderTitle);
+
+                for (let j = 0; j < folderFiles.length; j++) {
+                    const f = folderFiles[j];
+                    counter++;
+                    const cleanCode = (f.name || '').replace(/\.[^/.]+$/, "").toUpperCase();
+
+                    // 1. Resolve Location from EXIF GPS / XMP / filename / folder title
+                    let photoLoc = f.location || "";
+                    let photoCity = f.city || "";
+                    if (!photoLoc && f.lat != null && f.lon != null) {
+                        const geo = await reverseGeocodeCoords(f.lat, f.lon);
+                        if (geo) {
+                            photoLoc = geo.location;
+                            photoCity = geo.city;
+                        }
+                    }
+                    if (!photoLoc) {
+                        const nameLoc = extractLocationFromText(f.name) || folderLocHint;
+                        if (nameLoc) {
+                            photoLoc = nameLoc.location;
+                            photoCity = nameLoc.city;
+                        }
+                    }
+                    if (!photoLoc && folderTitle) {
+                        photoLoc = folderTitle;
+                        photoCity = fallbackCity || folderTitle;
+                    }
+                    if (!photoLoc) {
+                        photoLoc = fallbackCity || "";
+                        photoCity = fallbackCity || "";
+                    }
+
+                    // 2. Resolve Capture Date/Time from EXIF DateTimeOriginal / Drive Modified / filename
+                    let capturedAt =
+                        normalizeDateToIsoMinute(f.capturedAt) ||
+                        extractDateFromText(f.name) ||
+                        normalizeDateToIsoMinute(f.modifiedRaw) ||
+                        folderDateHint;
+                    if (!capturedAt) {
+                        const baseD = fallbackDate || new Date().toISOString().slice(0, 10);
+                        const hour = 8 + Math.floor((counter % 40) / 6);
+                        const min = ((counter * 7) % 60).toString().padStart(2, '0');
+                        capturedAt = `${baseD}T${hour.toString().padStart(2, '0')}:${min}`;
+                    }
+
+                    photos.push({
+                        id: `drv_${f.id}_${Date.now()}_${counter}`,
+                        driveFileId: f.id,
+                        code: cleanCode && cleanCode.length <= 22 ? cleanCode : `DRV_${1000 + counter}`,
+                        location: photoLoc,
+                        city: photoCity,
+                        capturedAt,
+                        title: f.name || `Ảnh Google Drive #${counter}`,
+                        url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`
+                    });
+                }
+                continue;
+            }
+
+            const fileId = extractGoogleDriveFileId(rawLink);
+            if (fileId) {
+                counter++;
+                const meta = await fetchGoogleDriveSingleFileMeta(fileId);
+                let photoLoc = (meta && meta.location) || "";
+                let photoCity = (meta && meta.city) || "";
+                if (!photoLoc && meta && meta.lat != null && meta.lon != null) {
+                    const geo = await reverseGeocodeCoords(meta.lat, meta.lon);
+                    if (geo) {
+                        photoLoc = geo.location;
+                        photoCity = geo.city;
+                    }
+                }
+                const fName = (meta && meta.name) ? meta.name : "";
+                if (!photoLoc && fName) {
+                    const nameLoc = extractLocationFromText(fName);
+                    if (nameLoc) {
+                        photoLoc = nameLoc.location;
+                        photoCity = nameLoc.city;
+                    }
+                }
+                if (!photoLoc) {
+                    photoLoc = fallbackCity || "";
+                    photoCity = fallbackCity || "";
+                }
+
+                const cleanCode = fName ? fName.replace(/\.[^/.]+$/, "").toUpperCase() : `DRV_${1000 + counter}`;
+                const min = ((counter * 5) % 60).toString().padStart(2, '0');
+                const baseD = fallbackDate || new Date().toISOString().slice(0, 10);
+                const capturedAt =
+                    (meta && normalizeDateToIsoMinute(meta.capturedAt)) ||
+                    extractDateFromText(fName) ||
+                    `${baseD}T09:${min}`;
+
+                photos.push({
+                    id: `drv_file_${fileId}_${Date.now()}_${counter}`,
+                    driveFileId: fileId,
+                    code: cleanCode.length <= 22 ? cleanCode : `DRV_${1000 + counter}`,
+                    location: photoLoc,
+                    city: photoCity,
+                    capturedAt,
+                    title: fName || `Ảnh Google Drive #${counter}`,
+                    url: `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`
+                });
+                continue;
+            }
+
+            // Direct image URL pasted into Drive input
+            if (/^https?:\/\//i.test(rawLink)) {
+                counter++;
+                const baseD = fallbackDate || new Date().toISOString().slice(0, 10);
+                const urlLoc = extractLocationFromText(rawLink);
+                photos.push({
+                    id: `drv_url_${Date.now()}_${counter}`,
+                    code: `IMG_${1000 + counter}`,
+                    location: (urlLoc && urlLoc.location) || fallbackCity || "",
+                    city: (urlLoc && urlLoc.city) || fallbackCity || "",
+                    capturedAt: extractDateFromText(rawLink) || `${baseD}T09:00`,
+                    title: `Ảnh #${counter}`,
+                    url: rawLink
+                });
+            }
+        }
+
         return photos;
     }
 
-    function createNewAlbum(event) {
+    function deriveAlbumDateAndLocation(photos, tags, title) {
+        // 1. Find earliest or primary capture date from the photos' EXIF metadata
+        let detectedDate = "";
+        const validDates = photos
+            .map(p => (p.capturedAt ? p.capturedAt.slice(0, 10) : ""))
+            .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d))
+            .sort();
+        if (validDates.length > 0) {
+            detectedDate = validDates[0];
+        } else {
+            detectedDate = new Date().toISOString().slice(0, 10);
+        }
+
+        // 2. Find primary city & location from photos' EXIF GPS / metadata
+        const photoWithCity = photos.find(p => p.city && p.city.trim());
+        const photoWithLoc = photos.find(p => p.location && p.location.trim());
+        const titleOrTagHint = extractLocationFromText(`${title || ""} ${(tags || []).join(" ")}`);
+
+        let city =
+            (photoWithCity && photoWithCity.city.trim()) ||
+            (photoWithLoc && photoWithLoc.location.split("-").pop().trim()) ||
+            (titleOrTagHint && titleOrTagHint.city) ||
+            (tags && tags[0]) ||
+            "Việt Nam";
+
+        let fullLocation =
+            (photoWithLoc && photoWithLoc.location.trim()) ||
+            `${city}, Việt Nam`;
+
+        // Ensure every photo has a non-empty location for grouping
+        photos.forEach(p => {
+            if (!p.location || !p.location.trim()) {
+                p.location = city;
+            }
+            if (!p.city || !p.city.trim()) {
+                p.city = city;
+            }
+        });
+
+        return { date: detectedDate, city, location: fullLocation };
+    }
+
+    async function createNewAlbum(event) {
         if (event) event.preventDefault();
 
         // Check if user left a link or tag in the input without clicking '+'
@@ -537,9 +1186,8 @@ const AdminModule = (function () {
 
         const clientName = (document.getElementById('createAlbumClientInput')?.value || '').trim() || "Khách Hàng";
         const rawSlug = (document.getElementById('createAlbumSlugInput')?.value || '').trim();
-        const cityInput = (document.getElementById('createAlbumCityInput')?.value || '').trim();
-        const city = cityInput || (createModalTags[0] ? createModalTags[0] : "Đà Lạt");
-        const date = (document.getElementById('createAlbumDateInput')?.value || '').trim() || "2026-11-07";
+        const hintCity = (document.getElementById('createAlbumCityInput')?.value || '').trim();
+        const hintDate = (document.getElementById('createAlbumDateInput')?.value || '').trim();
 
         const reminderEnabled = !!document.getElementById('createAlbumReminderToggle')?.checked;
         const reminderText = (document.getElementById('createAlbumReminderText')?.value || '').trim() || `Chào ${clientName}! Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé.`;
@@ -551,27 +1199,62 @@ const AdminModule = (function () {
         const completeLockEnabled = !!document.getElementById('createAlbumCompleteLockToggle')?.checked;
         const isPublic = !!document.getElementById('createAlbumPublicInput')?.checked;
 
+        if (createModalDriveLinks.length === 0 && createModalLocalFilesData.length === 0) {
+            App.showToast("Vui lòng dán link Google Drive đã chia sẻ hoặc chọn ảnh từ máy tính!", "error");
+            return;
+        }
+
+        const submitBtn = document.getElementById('createAlbumSubmitBtn');
+        const oldBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang đọc ảnh &amp; trích xuất Vị trí, Ngày chụp...</span>`;
+        }
+
+        let initialPhotos = [];
+        try {
+            // Load photos from computer if selected
+            if (createModalLocalFilesData.length > 0) {
+                const localMapped = createModalLocalFilesData.map((f, idx) => ({
+                    id: "loc_" + Date.now() + "_" + idx,
+                    code: f.code,
+                    location: f.location || hintCity || "",
+                    city: f.city || hintCity || "",
+                    capturedAt: f.capturedAt,
+                    title: f.title,
+                    url: f.url
+                }));
+                initialPhotos.push(...localMapped);
+            }
+
+            // Load real photos & EXIF metadata from shared Google Drive links if provided
+            if (createModalDriveLinks.length > 0) {
+                const drivePhotos = await fetchRealPhotosFromDriveLinks(createModalDriveLinks, hintCity, hintDate, initialPhotos.length);
+                initialPhotos.push(...drivePhotos);
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = oldBtnHtml;
+            }
+        }
+
+        if (createModalDriveLinks.length > 0 && initialPhotos.length === 0) {
+            App.showToast("Không đọc được file ảnh từ link Google Drive! Hãy kiểm tra thư mục/file Drive đã bật chia sẻ 'Bất kỳ ai có đường liên kết' chưa.", "error");
+            return;
+        }
+
+        // Automatically derive album's Date, City, and Location from the shared photos' metadata
+        const derivedMeta = deriveAlbumDateAndLocation(initialPhotos, createModalTags, title);
+        const date = derivedMeta.date;
+        const city = derivedMeta.city;
+        const albumLocation = derivedMeta.location;
+
         const baseSlug = slugify(rawSlug || title) || ("album-" + Date.now());
         const albums = getAllAlbums();
         const uniqueId = albums.some(a => a.id === baseSlug) ? `${baseSlug}-${Date.now().toString().slice(-4)}` : baseSlug;
 
-        let initialPhotos = [];
-        if (createModalSourceTab === 'local' && createModalLocalFilesData.length > 0) {
-            initialPhotos = createModalLocalFilesData.map((f, idx) => ({
-                id: "loc_" + Date.now() + "_" + idx,
-                code: f.code,
-                location: `${city}`,
-                capturedAt: f.capturedAt,
-                title: f.title,
-                url: f.url
-            }));
-        } else if (createModalDriveLinks.length > 0) {
-            initialPhotos = buildSamplePhotosFromDriveLinks(createModalDriveLinks, city, date);
-        }
-
-        const defaultCover = initialPhotos.length > 0
-            ? initialPhotos[0].url
-            : "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=85";
+        const defaultCover = initialPhotos.length > 0 ? initialPhotos[0].url : "";
 
         const newAlbum = {
             id: uniqueId,
@@ -579,13 +1262,13 @@ const AdminModule = (function () {
             clientName,
             date,
             city,
-            location: `${city}, Việt Nam`,
+            location: albumLocation,
             photographer: "Đức Thuận Studio",
             selectionLimit,
             pinCode: "",
             isPublic,
             tags: [...createModalTags],
-            sourceType: createModalSourceTab,
+            sourceType: createModalLocalFilesData.length > 0 && createModalDriveLinks.length === 0 ? 'local' : 'drive',
             driveLinks: [...createModalDriveLinks],
             reminderEnabled,
             reminderText,
@@ -595,7 +1278,7 @@ const AdminModule = (function () {
             isSelectionLockedBySubmit: false,
             youtubeId: "",
             coverUrl: defaultCover,
-            description: `Album ${title} của khách hàng ${clientName} (${city}).`,
+            description: `Album ${title} của khách hàng ${clientName} (${albumLocation}).`,
             photos: initialPhotos
         };
 
@@ -606,7 +1289,7 @@ const AdminModule = (function () {
         closeCreateAlbumModal();
         populateAdminDashboard(newAlbum.id);
         App.renderHomeShowcase();
-        App.showToast(`Đã tạo Album "${title}"! Bạn có thể chọn ảnh và nhấn "Đặt làm ảnh bìa".`);
+        App.showToast(`Đã tạo Album "${title}" (${initialPhotos.length} ảnh • Vị trí: ${city} • Ngày chụp: ${date.split('-').reverse().join('/')})!`);
     }
 
     // ==================== ADMIN DASHBOARD FUNCTIONS ====================
@@ -674,7 +1357,7 @@ const AdminModule = (function () {
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <!-- Album Info -->
                         <div class="flex items-start sm:items-center gap-3.5 cursor-pointer" onclick="App.openAlbumPage('${album.id}')">
-                            <img src="${album.coverUrl}" alt="${album.title}" class="w-16 h-16 rounded-xl object-cover border border-zinc-200 shrink-0">
+                            <img src="${album.coverUrl}" alt="${album.title}" referrerpolicy="no-referrer" class="w-16 h-16 rounded-xl object-cover border border-zinc-200 shrink-0">
                             <div>
                                 <div class="flex flex-wrap items-center gap-1.5">
                                     <h3 class="text-sm font-bold text-zinc-900">${album.title}</h3>
@@ -862,7 +1545,7 @@ const AdminModule = (function () {
                         }"
                         title="Đặt ảnh ${photo.code} làm ảnh bìa"
                     >
-                        <img src="${photo.url}" alt="${photo.code}" class="w-full h-full object-cover">
+                        <img src="${photo.url}" alt="${photo.code}" referrerpolicy="no-referrer" class="w-full h-full object-cover">
                         ${
                             isSelectedCover
                                 ? '<span class="absolute inset-0 bg-amber-500/30 flex items-center justify-center text-white text-[10px] font-bold drop-shadow">Ảnh bìa</span>'
@@ -940,7 +1623,7 @@ const AdminModule = (function () {
         renderEditAlbumDriveLinks();
     }
 
-    function syncUpdateAlbumDrive() {
+    async function syncUpdateAlbumDrive() {
         const albums = getAllAlbums();
         const album = albums.find(a => a.id === activeAdminAlbumId);
         if (!album) return;
@@ -948,34 +1631,67 @@ const AdminModule = (function () {
         const pendingLinkInput = document.getElementById('editAlbumNewDriveLinkInput');
         if (pendingLinkInput && pendingLinkInput.value.trim()) {
             if (!album.driveLinks) album.driveLinks = [];
-            album.driveLinks.push(pendingLinkInput.value.trim());
+            const val = pendingLinkInput.value.trim();
+            if (!album.driveLinks.includes(val)) {
+                album.driveLinks.push(val);
+            }
             pendingLinkInput.value = '';
         }
 
-        const extraPool = [
-            { title: "Khoảnh khắc mới cập nhật", url: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=80" },
-            { title: "Nụ cười hạnh phúc", url: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=1200&q=80" }
-        ];
+        if (!album.driveLinks || album.driveLinks.length === 0) {
+            App.showToast("Vui lòng dán link thư mục hoặc file Google Drive đã chia sẻ trước khi bấm Cập nhật!", "error");
+            return;
+        }
 
-        const nextCodeNum = 1001 + album.photos.length;
-        const sample = extraPool[album.photos.length % extraPool.length];
-        const newPhoto = {
-            id: "sync_" + Date.now(),
-            code: `IMG_${nextCodeNum}`,
-            location: `${album.location ? album.location.split(',')[0] : album.city} - ${album.city}`,
-            capturedAt: `${album.date || '2026-11-07'}T18:15`,
-            title: `${sample.title} (#${nextCodeNum})`,
-            url: sample.url
-        };
+        App.showToast("Đang đồng bộ ảnh thực tế từ Google Drive...");
+        const fetchedPhotos = await fetchRealPhotosFromDriveLinks(
+            album.driveLinks,
+            album.city || "Đà Lạt",
+            album.date || "2026-11-07",
+            album.photos.length
+        );
 
-        album.photos.push(newPhoto);
+        if (!fetchedPhotos.length) {
+            App.showToast("Không tìm thấy ảnh từ link Google Drive! Hãy kiểm tra quyền chia sẻ Công khai (Anyone with the link).", "error");
+            return;
+        }
+
+        let addedCount = 0;
+        fetchedPhotos.forEach(fp => {
+            const exists = album.photos.some(
+                p => (fp.driveFileId && p.driveFileId === fp.driveFileId) || p.url === fp.url
+            );
+            if (!exists) {
+                album.photos.push(fp);
+                addedCount++;
+            }
+        });
+
+        if (!album.coverUrl && album.photos.length > 0) {
+            album.coverUrl = album.photos[0].url;
+        }
+
+        // Update album Date & Location from the extracted photo metadata
+        const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title);
+        if (derived.date) album.date = derived.date;
+        if (derived.city && derived.city !== "Việt Nam") album.city = derived.city;
+        if (derived.location) album.location = derived.location;
+
+        album.sourceType = 'drive';
         saveAllAlbums(albums);
 
+        populateSelectedAlbumEditor();
         renderEditAlbumDriveLinks();
         renderModalCoverPhotoPicker();
         renderAdminAlbumsTable();
+        App.renderHomeShowcase();
         App.renderPublicAlbum();
-        App.showToast(`Đã cập nhật Album! Đã đồng bộ thêm ảnh mới (${newPhoto.code}), giữ nguyên link cũ và các lượt thả tim của khách.`);
+
+        if (addedCount > 0) {
+            App.showToast(`Đã đồng bộ thêm ${addedCount} ảnh mới (Vị trí: ${album.city} • Ngày chụp: ${album.date.split('-').reverse().join('/')})!`);
+        } else {
+            App.showToast(`Đã cập nhật thông tin Vị trí & Ngày chụp cho ${fetchedPhotos.length} ảnh từ Google Drive!`);
+        }
     }
 
     function populateSelectedAlbumEditor() {
@@ -1109,7 +1825,7 @@ const AdminModule = (function () {
         App.showToast("Đã lưu cài đặt và ảnh bìa Album thành công!");
     }
 
-    function addPhotoByUrl(event) {
+    async function addPhotoByUrl(event) {
         if (event) event.preventDefault();
         const urlInput = document.getElementById('newPhotoUrl');
         const codeInput = document.getElementById('newPhotoCode');
@@ -1117,30 +1833,53 @@ const AdminModule = (function () {
         const timeInput = document.getElementById('newPhotoTime');
         const titleInput = document.getElementById('newPhotoTitle');
 
-        let url = urlInput.value.trim();
+        let url = urlInput ? urlInput.value.trim() : '';
         if (!url) {
             App.showToast("Vui lòng nhập đường dẫn URL ảnh hoặc link Google Drive!", "error");
             return;
-        }
-
-        // Convert Google Drive link if pasted here
-        const drvId = extractGoogleDriveFileId(url);
-        if (drvId && !url.includes('/folders/')) {
-            url = `https://lh3.googleusercontent.com/d/${drvId}=w1600`;
         }
 
         const albums = getAllAlbums();
         const album = albums.find(a => a.id === activeAdminAlbumId);
         if (!album) return;
 
+        // If user pasted a Google Drive folder link here, fetch all photos from that folder
+        const folderId = extractGoogleDriveFolderId(url);
+        if (folderId) {
+            const folderPhotos = await fetchRealPhotosFromDriveLinks([url], album.city || "Đà Lạt", album.date || "2026-11-07", album.photos.length);
+            if (!folderPhotos.length) {
+                App.showToast("Không đọc được ảnh từ thư mục Google Drive này! Hãy kiểm tra quyền chia sẻ Công khai.", "error");
+                return;
+            }
+            folderPhotos.forEach(fp => album.photos.push(fp));
+            if (!album.coverUrl && album.photos.length > 0) {
+                album.coverUrl = album.photos[0].url;
+            }
+            saveAllAlbums(albums);
+            if (urlInput) urlInput.value = "";
+            populateAdminDashboard();
+            renderModalCoverPhotoPicker();
+            App.renderHomeShowcase();
+            App.renderPublicAlbum();
+            App.showToast(`Đã tải ${folderPhotos.length} ảnh từ thư mục Google Drive vào Album!`);
+            return;
+        }
+
+        // Convert Google Drive file link if pasted here
+        const drvId = extractGoogleDriveFileId(url);
+        if (drvId) {
+            url = `https://drive.google.com/thumbnail?id=${drvId}&sz=w1600`;
+        }
+
         const nextNum = 1001 + album.photos.length;
-        const code = codeInput.value.trim() || `IMG_${nextNum}`;
-        const location = locInput.value.trim() || `${album.location || album.city}`;
-        const capturedAt = timeInput.value.trim() || `${album.date}T09:00`;
-        const title = titleInput.value.trim() || `Ảnh ${code}`;
+        const code = (codeInput && codeInput.value.trim()) || `IMG_${nextNum}`;
+        const location = (locInput && locInput.value.trim()) || `${album.location || album.city}`;
+        const capturedAt = (timeInput && timeInput.value.trim()) || `${album.date}T09:00`;
+        const title = (titleInput && titleInput.value.trim()) || `Ảnh ${code}`;
 
         album.photos.push({
             id: "photo_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+            driveFileId: drvId || undefined,
             code,
             location,
             capturedAt,
@@ -1153,17 +1892,18 @@ const AdminModule = (function () {
         }
 
         saveAllAlbums(albums);
-        urlInput.value = "";
-        codeInput.value = "";
-        titleInput.value = "";
+        if (urlInput) urlInput.value = "";
+        if (codeInput) codeInput.value = "";
+        if (titleInput) titleInput.value = "";
 
         populateAdminDashboard();
+        renderModalCoverPhotoPicker();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
         App.showToast(`Đã thêm ảnh ${code} vào Album!`);
     }
 
-    function handleLocalFilesUpload(event) {
+    async function handleLocalFilesUpload(event) {
         const files = event.target.files;
         if (!files || !files.length) return;
 
@@ -1172,48 +1912,52 @@ const AdminModule = (function () {
         if (!album) return;
 
         const locInput = document.getElementById('newPhotoLocation');
-        const baseTimeInput = document.getElementById('newPhotoTime');
-        const location = (locInput && locInput.value.trim()) ? locInput.value.trim() : (album.location || album.city);
-        const fallbackDate = (baseTimeInput && baseTimeInput.value) ? baseTimeInput.value : `${album.date}T08:00`;
+        const manualLoc = (locInput && locInput.value.trim()) ? locInput.value.trim() : "";
 
-        let processed = 0;
-        Array.from(files).forEach((file, idx) => {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const cleanName = file.name.replace(/\.[^/.]+$/, "").toUpperCase();
-                const code = cleanName.length <= 16 ? cleanName : `IMG_${1001 + album.photos.length + idx}`;
+        const fileList = Array.from(files);
+        for (let idx = 0; idx < fileList.length; idx++) {
+            const file = fileList[idx];
+            const [dataUrl, meta] = await Promise.all([
+                compressImageFile(file, 1600, 0.84),
+                extractMetadataFromLocalFile(file)
+            ]);
+            if (!dataUrl) continue;
 
-                let capturedAt = fallbackDate;
-                if (file.lastModified) {
-                    const d = new Date(file.lastModified);
-                    capturedAt = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-                }
+            const cleanName = file.name.replace(/\.[^/.]+$/, "").toUpperCase();
+            const code = cleanName.length <= 20 ? cleanName : `IMG_${1001 + album.photos.length}`;
 
-                album.photos.push({
-                    id: "local_" + Date.now() + "_" + idx,
-                    code,
-                    location,
-                    capturedAt,
-                    title: file.name,
-                    url: e.target.result
-                });
+            const photoLocation = meta.location || manualLoc || (album.location || album.city || "");
+            const photoCity = meta.city || album.city || "";
+            const capturedAt = meta.capturedAt || `${album.date || '2026-11-07'}T08:00`;
 
-                if (album.photos.length === 1) {
-                    album.coverUrl = e.target.result;
-                }
+            album.photos.push({
+                id: "local_" + Date.now() + "_" + idx,
+                code,
+                location: photoLocation,
+                city: photoCity,
+                capturedAt,
+                title: file.name,
+                url: dataUrl
+            });
 
-                processed++;
-                if (processed === files.length) {
-                    saveAllAlbums(albums);
-                    populateAdminDashboard();
-                    App.renderHomeShowcase();
-                    App.renderPublicAlbum();
-                    App.showToast(`Đã tải lên ${files.length} ảnh vào "${album.title}"!`);
-                    event.target.value = "";
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+            if (album.photos.length === 1) {
+                album.coverUrl = dataUrl;
+            }
+        }
+
+        const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title);
+        if (derived.date) album.date = derived.date;
+        if (derived.city && derived.city !== "Việt Nam") album.city = derived.city;
+        if (derived.location) album.location = derived.location;
+
+        saveAllAlbums(albums);
+        populateSelectedAlbumEditor();
+        populateAdminDashboard();
+        renderModalCoverPhotoPicker();
+        App.renderHomeShowcase();
+        App.renderPublicAlbum();
+        App.showToast(`Đã tải lên ${fileList.length} ảnh (Đã lấy Vị trí & Ngày chụp từ EXIF ảnh)!`);
+        event.target.value = "";
     }
 
     function deletePhoto(photoId) {
@@ -1439,6 +2183,17 @@ const AdminModule = (function () {
         }
     }
 
+    function copyLightroomCodes() {
+        const box = document.getElementById('lightroomCodesOutput');
+        if (!box || !box.value.trim()) {
+            App.showToast("Chưa có mã ảnh nào được khách chọn!", "error");
+            return;
+        }
+        navigator.clipboard.writeText(box.value.trim()).then(() => {
+            App.showToast("Đã sao chép danh sách mã file chuẩn Lightroom!");
+        });
+    }
+
     function getRemovedBackupMap() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY_REMOVED_BACKUP_MAP);
@@ -1563,7 +2318,7 @@ const AdminModule = (function () {
 
         grid.innerHTML = delivered.map(item => `
             <div class="group relative bg-zinc-100 rounded-xl overflow-hidden border border-emerald-300 aspect-square">
-                <img src="${item.url}" alt="${item.code}" class="w-full h-full object-cover">
+                <img src="${item.url}" alt="${item.code}" referrerpolicy="no-referrer" class="w-full h-full object-cover">
                 <span class="absolute top-1.5 left-1.5 bg-emerald-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full shadow">Đã chỉnh</span>
                 <button
                     type="button"
@@ -1580,11 +2335,11 @@ const AdminModule = (function () {
         `).join('');
     }
 
-    function addDeliveredPhotosFromDrive() {
+    async function addDeliveredPhotosFromDrive() {
         const input = document.getElementById('deliveredDriveFolderInput');
         const link = input ? input.value.trim() : '';
         if (!link) {
-            App.showToast("Vui lòng dán link thư mục Google Drive chứa Ảnh đã chỉnh!", "error");
+            App.showToast("Vui lòng dán link thư mục hoặc file Google Drive chứa Ảnh đã chỉnh!", "error");
             return;
         }
 
@@ -1593,24 +2348,27 @@ const AdminModule = (function () {
         if (!album) return;
         if (!album.deliveredPhotos) album.deliveredPhotos = [];
 
-        const selections = getSelections(album.id);
-        const selectedOriginals = album.photos.filter(p => selections[p.id] && selections[p.id].selected);
-        const sourcePhotos = selectedOriginals.length > 0 ? selectedOriginals : album.photos.slice(0, 4);
+        App.showToast("Đang tải Ảnh đã chỉnh từ Google Drive...");
+        const driveDelivered = await fetchRealPhotosFromDriveLinks([link], album.city || "Đà Lạt", album.date || "2026-11-07", album.deliveredPhotos.length);
 
-        sourcePhotos.forEach((orig, idx) => {
-            const retouchedCode = `${orig.code}_Retouched`;
-            if (!album.deliveredPhotos.some(d => d.originalPhotoId === orig.id)) {
-                album.deliveredPhotos.push({
-                    id: "deliv_" + Date.now() + "_" + idx,
-                    originalPhotoId: orig.id,
-                    code: retouchedCode,
-                    location: orig.location || album.city,
-                    capturedAt: orig.capturedAt,
-                    title: `${orig.title || orig.code} (Ảnh đã chỉnh)`,
-                    beforeUrl: orig.url,
-                    url: orig.url
-                });
-            }
+        if (!driveDelivered.length) {
+            App.showToast("Không đọc được file ảnh từ link Google Drive này! Hãy kiểm tra quyền chia sẻ Công khai.", "error");
+            return;
+        }
+
+        driveDelivered.forEach((dPhoto, idx) => {
+            const cleanCode = (dPhoto.code || '').toUpperCase();
+            const matchedOrig = album.photos.find(p => cleanCode.includes(p.code.toUpperCase()) || p.code.toUpperCase().includes(cleanCode)) || album.photos[idx % Math.max(1, album.photos.length)];
+            album.deliveredPhotos.push({
+                id: "deliv_drv_" + Date.now() + "_" + idx,
+                originalPhotoId: matchedOrig ? matchedOrig.id : null,
+                code: dPhoto.code,
+                location: matchedOrig ? matchedOrig.location : (album.city || "Đà Lạt"),
+                capturedAt: matchedOrig ? matchedOrig.capturedAt : dPhoto.capturedAt,
+                title: `${dPhoto.title || dPhoto.code} (Ảnh đã chỉnh)`,
+                beforeUrl: matchedOrig ? matchedOrig.url : null,
+                url: dPhoto.url
+            });
         });
 
         if (input) input.value = '';
@@ -1618,10 +2376,10 @@ const AdminModule = (function () {
         renderModalDeliveredPhotos();
         renderAdminAlbumsTable();
         App.renderPublicAlbum();
-        App.showToast(`Đã bàn giao ${album.deliveredPhotos.length} Ảnh đã chỉnh! Khách hàng có thể xem & so sánh Trước/Sau ngay trên link cũ.`);
+        App.showToast(`Đã đồng bộ ${driveDelivered.length} Ảnh đã chỉnh từ Google Drive! Khách hàng có thể xem & so sánh Trước/Sau ngay trên link cũ.`);
     }
 
-    function handleDeliveredFilesUpload(event) {
+    async function handleDeliveredFilesUpload(event) {
         const files = event.target.files;
         if (!files || !files.length) return;
 
@@ -1630,35 +2388,32 @@ const AdminModule = (function () {
         if (!album) return;
         if (!album.deliveredPhotos) album.deliveredPhotos = [];
 
-        let loaded = 0;
-        Array.from(files).forEach((file, idx) => {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const cleanName = file.name.replace(/\.[^/.]+$/, "").toUpperCase();
-                // Match original photo by code if possible for Before/After comparison
-                const matchedOrig = album.photos.find(p => cleanName.includes(p.code.toUpperCase())) || album.photos[idx % Math.max(1, album.photos.length)];
-                album.deliveredPhotos.push({
-                    id: "deliv_local_" + Date.now() + "_" + idx,
-                    originalPhotoId: matchedOrig ? matchedOrig.id : null,
-                    code: `${cleanName}_PTS`,
-                    location: matchedOrig ? matchedOrig.location : album.city,
-                    capturedAt: matchedOrig ? matchedOrig.capturedAt : `${album.date}T10:00`,
-                    title: `${file.name} (Ảnh đã chỉnh)`,
-                    beforeUrl: matchedOrig ? matchedOrig.url : null,
-                    url: e.target.result
-                });
-                loaded++;
-                if (loaded === files.length) {
-                    saveAllAlbums(albums);
-                    renderModalDeliveredPhotos();
-                    renderAdminAlbumsTable();
-                    App.renderPublicAlbum();
-                    App.showToast(`Đã tải lên ${files.length} Ảnh đã chỉnh vào Album!`);
-                    event.target.value = "";
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+        const fileList = Array.from(files);
+        for (let idx = 0; idx < fileList.length; idx++) {
+            const file = fileList[idx];
+            const dataUrl = await compressImageFile(file, 1600, 0.84);
+            if (!dataUrl) continue;
+
+            const cleanName = file.name.replace(/\.[^/.]+$/, "").toUpperCase();
+            const matchedOrig = album.photos.find(p => cleanName.includes(p.code.toUpperCase())) || album.photos[idx % Math.max(1, album.photos.length)];
+            album.deliveredPhotos.push({
+                id: "deliv_local_" + Date.now() + "_" + idx,
+                originalPhotoId: matchedOrig ? matchedOrig.id : null,
+                code: `${cleanName}_PTS`,
+                location: matchedOrig ? matchedOrig.location : album.city,
+                capturedAt: matchedOrig ? matchedOrig.capturedAt : `${album.date}T10:00`,
+                title: `${file.name} (Ảnh đã chỉnh)`,
+                beforeUrl: matchedOrig ? matchedOrig.url : null,
+                url: dataUrl
+            });
+        }
+
+        saveAllAlbums(albums);
+        renderModalDeliveredPhotos();
+        renderAdminAlbumsTable();
+        App.renderPublicAlbum();
+        App.showToast(`Đã tải lên ${fileList.length} Ảnh đã chỉnh từ máy tính vào Album!`);
+        event.target.value = "";
     }
 
     function deleteDeliveredPhoto(delivId) {
@@ -1685,6 +2440,7 @@ const AdminModule = (function () {
     }
 
     function resetDemoData() {
+        memoryAlbumsCache = null;
         localStorage.removeItem(STORAGE_KEY_ALBUMS);
         localStorage.removeItem(STORAGE_KEY_SELECTIONS_MAP);
         localStorage.removeItem(STORAGE_KEY_SUBMISSIONS_MAP);
@@ -1736,6 +2492,7 @@ const AdminModule = (function () {
         addTagToCreateModal,
         removeTagFromCreateModal,
         handleCreateModalLocalFiles,
+        removeLocalFileFromCreateModal,
         handleCreateModalToggleChange,
         createNewAlbum,
         unlockAlbumSelectionForClient,
