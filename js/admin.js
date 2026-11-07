@@ -186,46 +186,41 @@ function loadAlbumsFromDrive() {
 // ==================== TRÍCH XUẤT ẢNH & METADATA (EXIF / GPS / ĐỊA ĐIỂM) ====================
 
 var KNOWN_VN_LOCATIONS = [
-  { keywords: ["da lat", "dalat", "đà lạt", "tuyen lam", "đa phú", "da phu", "con ga", "cầu đất", "cau dat", "langbiang", "xuan huong"], city: "Đà Lạt" },
-  { keywords: ["phu quoc", "phú quốc", "bai sao", "bãi sao", "sanato", "hon thom", "hòn thơm", "rach vem"], city: "Phú Quốc" },
-  { keywords: ["ha noi", "hanoi", "hà nội", "ho guom", "hồ gươm", "pho co", "phố cổ", "phan dinh phung", "ho tay", "hồ tây"], city: "Hà Nội" },
-  { keywords: ["sai gon", "saigon", "sài gòn", "tp hcm", "tphcm", "ho chi minh", "hồ chí minh", "quan 1", "quận 1", "thu thiêm"], city: "TP. Hồ Chí Minh" },
-  { keywords: ["da nang", "danang", "đà nẵng", "ba na", "bà nà", "my khe", "mỹ khê", "son tra", "sơn trà"], city: "Đà Nẵng" },
-  { keywords: ["hoi an", "hội an", "cua dai", "an bang"], city: "Hội An" },
+  { keywords: ["da lat", "dalat", "tuyen lam", "da phu", "con ga", "cau dat", "langbiang", "xuan huong"], city: "Đà Lạt" },
+  { keywords: ["phu quoc", "bai sao", "sanato", "hon thom", "rach vem"], city: "Phú Quốc" },
+  { keywords: ["ha noi", "hanoi", "ho guom", "pho co", "phan dinh phung", "ho tay"], city: "Hà Nội" },
+  { keywords: ["sai gon", "saigon", "tp hcm", "tphcm", "ho chi minh", "quan 1", "thu thiem"], city: "TP. Hồ Chí Minh" },
+  { keywords: ["da nang", "danang", "ba na", "my khe", "son tra"], city: "Đà Nẵng" },
+  { keywords: ["hoi an", "cua dai", "an bang"], city: "Hội An" },
   { keywords: ["nha trang", "cam ranh", "bai dai"], city: "Nha Trang" },
   { keywords: ["sapa", "sa pa", "fansipan", "muong hoa"], city: "Sa Pa" },
-  { keywords: ["ninh binh", "ninh bình", "trang an", "tràng an", "tam coc", "hang mua"], city: "Ninh Bình" },
-  { keywords: ["hue", "huế", "dai noi", "đại nội", "huong giang"], city: "Huế" },
-  { keywords: ["vung tau", "vũng tàu", "ho tram", "hồ tràm"], city: "Vũng Tàu" },
-  { keywords: ["ha long", "hạ long", "quang ninh", "quảng ninh", "tuan chau"], city: "Hạ Long" },
-  { keywords: ["phan thiet", "phan thiết", "mui ne", "mũi né", "bau trang", "bàu trắng"], city: "Phan Thiết" },
-  { keywords: ["quy nhon", "quy nhơn", "ky co", "kỳ co", "eo gio", "eo gió"], city: "Quy Nhơn" },
-  { keywords: ["thu dau mot", "thủ dầu một", "binh duong", "bình dương", "phu cuong", "phú cường"], city: "Thủ Dầu Một" }
+  { keywords: ["ninh binh", "trang an", "tam coc", "hang mua"], city: "Ninh Bình" },
+  { keywords: ["hue", "dai noi", "huong giang"], city: "Huế" },
+  { keywords: ["vung tau", "ho tram"], city: "Vũng Tàu" },
+  { keywords: ["ha long", "quang ninh", "tuan chau"], city: "Hạ Long" },
+  { keywords: ["phan thiet", "mui ne", "bau trang"], city: "Phan Thiết" },
+  { keywords: ["quy nhon", "ky co", "eo gio"], city: "Quy Nhơn" },
+  { keywords: ["thu dau mot", "binh duong", "phu cuong"], city: "Thủ Dầu Một" }
 ];
+
+function stripVnAccents(str) {
+  if (!str) return "";
+  return String(str)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\\u0111/gi, "d")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
 
 function extractLocationFromText(text) {
   if (!text) return null;
-  var norm = text.toLowerCase()
-    .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, "a")
-    .replace(/[èéẹẻẽêềếệểễ]/g, "e")
-    .replace(/[ìíịỉĩ]/g, "i")
-    .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, "o")
-    .replace(/[ùúụủũưừứựửữ]/g, "u")
-    .replace(/[ỳýỵỷỹ]/g, "y")
-    .replace(/đ/g, "d")
-    .replace(/[_.\-]+/g, " ");
-
+  var norm = stripVnAccents(text);
   for (var i = 0; i < KNOWN_VN_LOCATIONS.length; i++) {
     var item = KNOWN_VN_LOCATIONS[i];
     for (var j = 0; j < item.keywords.length; j++) {
-      var kw = item.keywords[j].toLowerCase()
-        .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, "a")
-        .replace(/[èéẹẻẽêềếệểễ]/g, "e")
-        .replace(/[ìíịỉĩ]/g, "i")
-        .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, "o")
-        .replace(/[ùúụủũưừứựửữ]/g, "u")
-        .replace(/[ỳýỵỷỹ]/g, "y")
-        .replace(/đ/g, "d");
+      var kw = item.keywords[j];
       if (norm.indexOf(kw) !== -1) {
         return { city: item.city, location: item.city };
       }
