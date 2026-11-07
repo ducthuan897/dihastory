@@ -327,7 +327,7 @@ function parseBinaryExifGps(bytes) {
   return null;
 }
 
-function extractExifAndLocationFromDriveFile(file) {
+function extractExifAndLocationFromDriveFile(file, geoCache) {
   var meta = {
     capturedAt: null,
     lat: null,
@@ -427,12 +427,19 @@ function extractExifAndLocationFromDriveFile(file) {
     }
   }
 
-  // 6. Dịch toạ độ GPS thành địa danh tiếng Việt thực tế
+  // 6. Dịch toạ độ GPS thành địa danh tiếng Việt thực tế (có cache theo toạ độ để chạy siêu tốc)
   if (meta.lat != null && meta.lon != null && !meta.city) {
-    var geo = reverseGeocodeCoords(meta.lat, meta.lon);
-    if (geo) {
-      meta.city = geo.city;
-      meta.location = geo.location;
+    var cacheKey = meta.lat.toFixed(3) + "," + meta.lon.toFixed(3);
+    if (geoCache && geoCache[cacheKey]) {
+      meta.city = geoCache[cacheKey].city;
+      meta.location = geoCache[cacheKey].location;
+    } else {
+      var geo = reverseGeocodeCoords(meta.lat, meta.lon);
+      if (geo) {
+        meta.city = geo.city;
+        meta.location = geo.location;
+        if (geoCache) geoCache[cacheKey] = geo;
+      }
     }
   }
 
@@ -469,40 +476,35 @@ function getFolderPhotosWithExif(folderId) {
     }
   }
 
-  // 3. Quét metadata EXIF & GPS từ 3 ảnh đầu tiên trong thư mục (< 100ms)
-  var sampleCount = Math.min(allFiles.length, 3);
-  for (var s = 0; s < sampleCount; s++) {
-    var sFile = allFiles[s];
-    var meta = extractExifAndLocationFromDriveFile(sFile);
-    if (meta.capturedAt && !detectedFolderDate) {
-      detectedFolderDate = meta.capturedAt;
-    }
-    if (meta.city && !detectedFolderCity) {
-      detectedFolderCity = meta.city;
-      detectedFolderLoc = meta.location || meta.city;
-    }
-    if (detectedFolderDate && detectedFolderCity) break;
-  }
+  // 3. Quét metadata EXIF, GPS & ngày giờ riêng biệt cho TỪNG tấm ảnh
+  var geoCache = {};
 
-  // 4. Tạo danh sách ảnh trả về
   for (var k = 0; k < allFiles.length; k++) {
     var f = allFiles[k];
     var fname = f.getName();
-    var fDate = detectedFolderDate || extractDateFromText(fname);
+    var meta = extractExifAndLocationFromDriveFile(f, geoCache);
+
+    var fDate = meta.capturedAt || extractDateFromText(fname);
     if (!fDate) {
       try {
         fDate = Utilities.formatDate(f.getLastUpdated(), "GMT+7", "yyyy-MM-dd'T'HH:mm");
       } catch(e) {}
     }
 
+    if (fDate && !detectedFolderDate) detectedFolderDate = fDate;
+    if (meta.city && !detectedFolderCity) {
+      detectedFolderCity = meta.city;
+      detectedFolderLoc = meta.location || meta.city;
+    }
+
     filesList.push({
       id: f.getId(),
       name: fname,
-      capturedAt: fDate,
-      city: detectedFolderCity || "",
-      location: detectedFolderLoc || detectedFolderCity || "",
-      lat: null,
-      lon: null
+      capturedAt: fDate || "",
+      city: meta.city || detectedFolderCity || "",
+      location: meta.location || detectedFolderLoc || meta.city || detectedFolderCity || "",
+      lat: meta.lat != null ? meta.lat : null,
+      lon: meta.lon != null ? meta.lon : null
     });
   }
 

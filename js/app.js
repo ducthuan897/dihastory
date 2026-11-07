@@ -78,7 +78,7 @@ const App = (function () {
         // Phân biệt chế độ xem: Khách chọn ảnh (client) vs Trưng bày công khai (showcase)
         if (modeParam === 'client' || params.get('client') === '1' || params.get('select') === '1') {
             isClientMode = true;
-        } else if (viewParam === 'showcase' || modeParam === 'showcase') {
+        } else {
             isClientMode = false;
         }
 
@@ -364,11 +364,17 @@ const App = (function () {
         }
 
         const groupBtn = document.getElementById('homeGroupToggleBtn');
+        const groupBtnMob = document.getElementById('homeGroupToggleBtnMobile');
+        const activeClass = 'bg-zinc-900 text-white border-zinc-900 shadow-xs';
+        const inactiveClass = 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100 shadow-xs';
         if (groupBtn) {
-            groupBtn.className = `px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 shrink-0 shadow-xs ${
-                homeGroupByLocation
-                    ? 'bg-zinc-900 text-white border-zinc-900'
-                    : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+            groupBtn.className = `px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 shrink-0 ${
+                homeGroupByLocation ? activeClass : inactiveClass
+            }`;
+        }
+        if (groupBtnMob) {
+            groupBtnMob.className = `px-2.5 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1 shrink-0 ${
+                homeGroupByLocation ? activeClass : inactiveClass
             }`;
         }
 
@@ -665,6 +671,8 @@ const App = (function () {
         setTxt('heroPhotoCount', `${album.photos.length} Ảnh`);
 
         // Mode toggling on Hero & Toolbars (Showcase Mode vs Client Link Mode)
+        const topShareBar = document.getElementById('albumTopShareNoticeBar');
+        const shareLinkWrap = document.getElementById('albumClientShareLinkWrap');
         const heroDownloadBtn = document.getElementById('heroClientDownloadBtn');
         const heroSubmitBtn = document.getElementById('heroClientSubmitBtn');
         const heroViewGalleryLabel = document.getElementById('heroViewGalleryBtnLabel');
@@ -674,10 +682,12 @@ const App = (function () {
         const reminderBtn = document.getElementById('albumTopReminderBtn');
         const galleryBatchDownloadBtn = document.getElementById('galleryBatchDownloadBtn');
 
+        if (topShareBar) topShareBar.classList.toggle('hidden', !isClientMode);
+        if (shareLinkWrap) shareLinkWrap.classList.toggle('hidden', !isClientMode);
         if (heroDownloadBtn) heroDownloadBtn.classList.toggle('hidden', !isClientMode);
         if (heroSubmitBtn) heroSubmitBtn.classList.toggle('hidden', !isClientMode);
         if (heroViewGalleryLabel) {
-            heroViewGalleryLabel.innerText = isClientMode ? 'Xem Ảnh & Chọn Ảnh Lưu Về' : 'Xem Danh Sách Ảnh';
+            heroViewGalleryLabel.innerText = isClientMode ? 'Xem Ảnh & Chọn Ảnh Lưu Về' : 'Khám Phá Bộ Ảnh';
         }
         if (heroBackBtn) heroBackBtn.classList.toggle('hidden', isClientMode);
         if (guideToolbar) guideToolbar.classList.toggle('hidden', !isClientMode);
