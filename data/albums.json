@@ -1,239 +1,64 @@
-﻿[
+[
     {
-        "id":  "gian-than-dat-09",
-        "title":  "Gian thần Đạt 09",
-        "clientName":  "Nguyễn Thành Đạt",
-        "date":  "2026-07-24",
-        "city":  "",
-        "location":  "",
-        "photographer":  "Đức Thuận Studio",
-        "selectionLimit":  15,
-        "pinCode":  "",
-        "isPublic":  true,
-        "tags":  [
-
-                 ],
-        "sourceType":  "drive",
-        "driveLinks":  [
-                           "https://drive.google.com/drive/folders/1GJ1XAfPhF5wYF9BwqZUL1f96IdLm9t09?usp=drive_link"
-                       ],
-        "reminderEnabled":  true,
-        "reminderText":  "Chào Nguyễn Thành Đạt! Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé.",
-        "deadlineEnabled":  false,
-        "deadlineAt":  "2026-11-15T23:59",
-        "completeLockEnabled":  true,
-        "isSelectionLockedBySubmit":  false,
-        "youtubeId":  "",
-        "coverUrl":  "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U\u0026sz=w1600",
-        "description":  "Album Gian thần Đạt 09 của khách hàng Nguyễn Thành Đạt ().",
-        "photos":  [
-                       {
-                           "id":  "drv_1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7_1794052824913_1",
-                           "driveFileId":  "1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7",
-                           "code":  "DSC00346",
-                           "location":  "",
-                           "city":  "",
-                           "capturedAt":  "2026-07-24T16:28",
-                           "title":  "DSC00346.jpg",
-                           "url":  "https://drive.google.com/thumbnail?id=1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7\u0026sz=w1600",
-                           "starred":  true
-                       },
-                       {
-                           "id":  "drv_1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U_1794052824913_2",
-                           "driveFileId":  "1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U",
-                           "code":  "DSC01193",
-                           "location":  "",
-                           "city":  "",
-                           "capturedAt":  "2026-07-24T16:28",
-                           "title":  "DSC01193.jpg",
-                           "url":  "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U\u0026sz=w1600"
-                       },
-                       {
-                           "id":  "drv_1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd_1794052824913_3",
-                           "driveFileId":  "1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd",
-                           "code":  "DSC01184",
-                           "location":  "",
-                           "city":  "",
-                           "capturedAt":  "2026-07-24T16:28",
-                           "title":  "DSC01184.jpg",
-                           "url":  "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd\u0026sz=w1600"
-                       }
-                   ]
-    },
-    {
-        "id":  "couple-phuquoc-sunset",
-        "title":  "Love Story: HoÃ ng HÃ´n PhÃº Quá»‘c",
-        "clientName":  "HoÃ ng Nam \u0026 Báº£o Ngá»c",
-        "date":  "2026-11-02",
-        "city":  "PhÃº Quá»‘c",
-        "location":  "Sunset Sanato \u0026 BÃ£i Sao, PhÃº Quá»‘c",
-        "photographer":  "Äá»©c Thuáº­n Studio",
-        "selectionLimit":  12,
-        "pinCode":  "",
-        "isPublic":  true,
-        "tags":  [
-                     "PhÃº Quá»‘c",
-                     "Couple",
-                     "Sunset"
-                 ],
-        "sourceType":  "drive",
-        "driveLinks":  [
-
-                       ],
-        "reminderEnabled":  false,
-        "reminderText":  "",
-        "deadlineEnabled":  false,
-        "deadlineAt":  "",
-        "completeLockEnabled":  true,
-        "isSelectionLockedBySubmit":  false,
-        "youtubeId":  "L_LUpnjgPso",
-        "coverUrl":  "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format\u0026fit=crop\u0026w=1800\u0026q=85",
-        "description":  "Ká»· niá»‡m 5 nÄƒm bÃªn nhau giá»¯a biá»ƒn xanh vÃ  hoÃ ng hÃ´n Ä‘áº£o ngá»c PhÃº Quá»‘c.",
-        "photos":  [
-                       {
-                           "id":  "c1",
-                           "code":  "RAW_3011",
-                           "location":  "BÃ£i Sao - PhÃº Quá»‘c",
-                           "capturedAt":  "2026-11-02T14:30",
-                           "title":  "BÆ°á»›c chÃ¢n trÃªn cÃ¡t tráº¯ng",
-                           "url":  "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "c2",
-                           "code":  "RAW_3012",
-                           "location":  "BÃ£i Sao - PhÃº Quá»‘c",
-                           "capturedAt":  "2026-11-02T15:10",
-                           "title":  "Tiáº¿ng cÆ°á»i bÃªn sÃ³ng biá»ƒn",
-                           "url":  "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "c3",
-                           "code":  "RAW_3013",
-                           "location":  "BÃ£i Sao - PhÃº Quá»‘c",
-                           "capturedAt":  "2026-11-02T15:45",
-                           "title":  "GiÃ³ biá»ƒn dá»‹u Ãªm",
-                           "url":  "https://images.unsplash.com/photo-1474552226712-ac0f0961a954?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "c4",
-                           "code":  "RAW_3014",
-                           "location":  "Sunset Sanato - PhÃº Quá»‘c",
-                           "capturedAt":  "2026-11-02T17:05",
-                           "title":  "Ãnh náº¯ng chiá»u tÃ ",
-                           "url":  "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "c5",
-                           "code":  "RAW_3015",
-                           "location":  "Sunset Sanato - PhÃº Quá»‘c",
-                           "capturedAt":  "2026-11-02T17:35",
-                           "title":  "Ã”m trá»n hoÃ ng hÃ´n",
-                           "url":  "https://images.unsplash.com/photo-1545232972-90466c963042?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "c6",
-                           "code":  "RAW_3016",
-                           "location":  "Sunset Sanato - PhÃº Quá»‘c",
-                           "capturedAt":  "2026-11-02T17:55",
-                           "title":  "Báº£n tÃ¬nh ca biá»ƒn Ä‘áº£o",
-                           "url":  "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       }
-                   ]
-    },
-    {
-        "id":  "muse-dalat-portrait",
-        "title":  "Muse Concept: NÃ ng ThÆ¡ MÃ¹a Thu",
-        "clientName":  "KhÃ¡nh Linh",
-        "date":  "2026-10-25",
-        "city":  "ÄÃ  Láº¡t",
-        "location":  "Há»“ Tuyá»n LÃ¢m \u0026 Dá»‘c NhÃ  BÃ², ÄÃ  Láº¡t",
-        "photographer":  "Äá»©c Thuáº­n Studio",
-        "selectionLimit":  8,
-        "pinCode":  "",
-        "isPublic":  true,
-        "tags":  [
-                     "ÄÃ  Láº¡t",
-                     "Portrait",
-                     "Muse"
-                 ],
-        "sourceType":  "local",
-        "driveLinks":  [
-
-                       ],
-        "reminderEnabled":  false,
-        "reminderText":  "",
-        "deadlineEnabled":  false,
-        "deadlineAt":  "",
-        "completeLockEnabled":  false,
-        "isSelectionLockedBySubmit":  false,
-        "youtubeId":  "jfKfPfyJRdk",
-        "coverUrl":  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format\u0026fit=crop\u0026w=1800\u0026q=85",
-        "description":  "Bá»™ áº£nh chÃ¢n dung nÃ ng thÆ¡ phong cÃ¡ch mÃ u phim trong tráº»o táº¡i ÄÃ  Láº¡t.",
-        "photos":  [
-                       {
-                           "id":  "m1",
-                           "code":  "DSC_2001",
-                           "location":  "Há»“ Tuyá»n LÃ¢m - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-10-25T08:00",
-                           "title":  "Ãnh nhÃ¬n trong veo",
-                           "url":  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "m2",
-                           "code":  "DSC_2002",
-                           "location":  "Há»“ Tuyá»n LÃ¢m - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-10-25T08:35",
-                           "title":  "Náº¯ng sá»›m bÃªn há»“",
-                           "url":  "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "m3",
-                           "code":  "DSC_2003",
-                           "location":  "Há»“ Tuyá»n LÃ¢m - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-10-25T09:15",
-                           "title":  "GÃ³c nghiÃªng tháº§n thÃ¡i",
-                           "url":  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "m4",
-                           "code":  "DSC_2004",
-                           "location":  "Há»“ Tuyá»n LÃ¢m - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-10-25T09:50",
-                           "title":  "GiÃ³ chiá»u tháº£o nguyÃªn",
-                           "url":  "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "m5",
-                           "code":  "DSC_2005",
-                           "location":  "Dá»‘c NhÃ  BÃ² - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-10-25T15:20",
-                           "title":  "MÃ u phim hoÃ i niá»‡m",
-                           "url":  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "m6",
-                           "code":  "DSC_2006",
-                           "location":  "Dá»‘c NhÃ  BÃ² - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-10-25T16:00",
-                           "title":  "Dáº¡o bÆ°á»›c phá»‘ hoa",
-                           "url":  "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "m7",
-                           "code":  "DSC_2007",
-                           "location":  "Dá»‘c NhÃ  BÃ² - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-10-25T16:30",
-                           "title":  "Chiá»u thu láº¯ng Ä‘á»ng",
-                           "url":  "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       },
-                       {
-                           "id":  "m8",
-                           "code":  "DSC_2008",
-                           "location":  "Dá»‘c NhÃ  BÃ² - ÄÃ  Láº¡t",
-                           "capturedAt":  "2026-10-25T17:00",
-                           "title":  "NÃ©t Ä‘áº¹p tá»± nhiÃªn",
-                           "url":  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format\u0026fit=crop\u0026w=1200\u0026q=80"
-                       }
-                   ]
+        "id": "gian-than-dat-09",
+        "title": "Gian thần Đạt 09",
+        "clientName": "Nguyễn Thành Đạt",
+        "date": "2026-10-19",
+        "city": "Đà Lạt",
+        "location": "Đà Lạt",
+        "photographer": "Đức Thuận Studio",
+        "selectionLimit": 15,
+        "pinCode": "",
+        "isPublic": true,
+        "tags": [
+            "Đà Lạt",
+            "Chân dung"
+        ],
+        "sourceType": "drive",
+        "driveLinks": [
+            "https://drive.google.com/drive/folders/1GJ1XAfPhF5wYF9BwqZUL1f96IdLm9t09?usp=drive_link"
+        ],
+        "reminderEnabled": true,
+        "reminderText": "Chào Nguyễn Thành Đạt! Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé.",
+        "deadlineEnabled": false,
+        "deadlineAt": "2026-11-15T23:59",
+        "completeLockEnabled": true,
+        "isSelectionLockedBySubmit": false,
+        "youtubeId": "",
+        "coverUrl": "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=w1600",
+        "description": "Album Gian thần Đạt 09 của khách hàng Nguyễn Thành Đạt.",
+        "photos": [
+            {
+                "id": "drv_1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7_1794052824913_1",
+                "driveFileId": "1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7",
+                "code": "DSC00346",
+                "location": "Đà Lạt",
+                "city": "Đà Lạt",
+                "capturedAt": "2026-10-19T21:35",
+                "title": "DSC00346.jpg",
+                "url": "https://drive.google.com/thumbnail?id=1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7&sz=w1600",
+                "starred": true
+            },
+            {
+                "id": "drv_1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U_1794052824913_2",
+                "driveFileId": "1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U",
+                "code": "DSC01193",
+                "location": "Đà Lạt",
+                "city": "Đà Lạt",
+                "capturedAt": "2026-10-19T21:35",
+                "title": "DSC01193.jpg",
+                "url": "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=w1600"
+            },
+            {
+                "id": "drv_1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd_1794052824913_3",
+                "driveFileId": "1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd",
+                "code": "DSC01184",
+                "location": "Đà Lạt",
+                "city": "Đà Lạt",
+                "capturedAt": "2026-10-19T21:35",
+                "title": "DSC01184.jpg",
+                "url": "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd&sz=w1600"
+            }
+        ]
     }
 ]

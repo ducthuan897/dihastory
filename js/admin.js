@@ -271,18 +271,117 @@ function reverseGeocodeCoords(lat, lon) {
       var r = response.results[0];
       var formatted = r.formatted_address || "";
       var city = "";
+      var subLoc = "";
       for (var i = 0; i < r.address_components.length; i++) {
         var comp = r.address_components[i];
         var types = comp.types || [];
+        var name = (comp.long_name || "").replace(/^(Tỉnh|Thành phố|TP\.)\s+/i, "").trim();
+        if (name.toLowerCase() === "việt nam" || name.toLowerCase() === "vietnam") continue;
         if (types.indexOf("administrative_area_level_1") !== -1 || types.indexOf("locality") !== -1) {
-          city = comp.long_name.replace(/^(Tỉnh|Thành phố|TP\.)\s+/i, "");
-          break;
+          if (!city && name) city = name;
+        }
+        if (types.indexOf("administrative_area_level_2") !== -1 || types.indexOf("sublocality") !== -1) {
+          if (!subLoc && name) subLoc = name.replace(/^(Quận|Huyện|Thị xã|Phường|Xã)\s+/i, "").trim();
         }
       }
+      var finalCity = city || subLoc || "";
+      var finalLoc = (subLoc && city && subLoc.toLowerCase() !== city.toLowerCase())
+        ? (subLoc + " - " + city)
+        : (finalCity || formatted);
       return {
-        city: city || "",
-        location: formatted || city
+        city: finalCity,
+        location: finalLoc
       };
+    }
+  } catch(e) {}
+  return null;
+}
+
+function parseBinaryExifGps(bytes) {
+  try {
+    var len = Math.min(bytes.length, 65536);
+    var u = function(idx) {
+      var b = bytes[idx];
+      return b < 0 ? b + 256 : b;
+    };
+    var u16 = function(idx, le) {
+      return le ? (u(idx) | (u(idx + 1) << 8)) : ((u(idx) << 8) | u(idx + 1));
+    };
+    var u32 = function(idx, le) {
+      var b0 = u(idx), b1 = u(idx + 1), b2 = u(idx + 2), b3 = u(idx + 3);
+      return le ? (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) : ((b0 << 24) | (b1 << 16) | (b2 << 8) | b3);
+    };
+
+    if (u(0) !== 0xFF || u(1) !== 0xD8) return null;
+    var offset = 2;
+    while (offset + 4 < len) {
+      if (u(offset) !== 0xFF) break;
+      while (offset + 1 < len && u(offset + 1) === 0xFF) offset++;
+      if (offset + 4 >= len) break;
+      var marker = u(offset + 1);
+      if (marker === 0xDA || marker === 0xD9) break;
+      var segLen = (u(offset + 2) << 8) | u(offset + 3);
+      if (segLen < 2) break;
+
+      if (marker === 0xE1 && offset + 10 < len &&
+          u(offset + 4) === 0x45 && u(offset + 5) === 0x78 && u(offset + 6) === 0x69 && u(offset + 7) === 0x66) {
+        var tiff = offset + 10;
+        var le = u16(tiff, false) === 0x4949;
+        var ifd0 = u32(tiff + 4, le);
+        var pIfd = tiff + ifd0;
+        if (pIfd + 2 > len) return null;
+        var count = u16(pIfd, le);
+        var gpsOffset = 0;
+        for (var i = 0; i < count; i++) {
+          var ep = pIfd + 2 + i * 12;
+          if (ep + 12 > len) break;
+          var tag = u16(ep, le);
+          if (tag === 0x8825) {
+            gpsOffset = u32(ep + 8, le);
+            break;
+          }
+        }
+        if (gpsOffset > 0 && tiff + gpsOffset + 2 < len) {
+          var pGps = tiff + gpsOffset;
+          var gCount = u16(pGps, le);
+          var latRef = "N", lonRef = "E", lat = null, lon = null;
+          for (var j = 0; j < gCount; j++) {
+            var gp = pGps + 2 + j * 12;
+            if (gp + 12 > len) break;
+            var gTag = u16(gp, le);
+            var gVp = gp + 8;
+            if (gTag === 0x0001) {
+              latRef = String.fromCharCode(u(gVp)).toUpperCase();
+            } else if (gTag === 0x0002) {
+              var rPos = tiff + u32(gVp, le);
+              if (rPos + 24 <= len) {
+                var d = u32(rPos, le) / (u32(rPos + 4, le) || 1);
+                var m = u32(rPos + 8, le) / (u32(rPos + 12, le) || 1);
+                var s = u32(rPos + 16, le) / (u32(rPos + 20, le) || 1);
+                lat = d + m / 60 + s / 3600;
+              }
+            } else if (gTag === 0x0003) {
+              lonRef = String.fromCharCode(u(gVp)).toUpperCase();
+            } else if (gTag === 0x0004) {
+              var rPos2 = tiff + u32(gVp, le);
+              if (rPos2 + 24 <= len) {
+                var d2 = u32(rPos2, le) / (u32(rPos2 + 4, le) || 1);
+                var m2 = u32(rPos2 + 8, le) / (u32(rPos2 + 12, le) || 1);
+                var s2 = u32(rPos2 + 16, le) / (u32(rPos2 + 20, le) || 1);
+                lon = d2 + m2 / 60 + s2 / 3600;
+              }
+            }
+          }
+          if (lat != null && lon != null) {
+            if (latRef === "S") lat = -lat;
+            if (lonRef === "W") lon = -lon;
+            if (Math.abs(lat) > 0.001 || Math.abs(lon) > 0.001) {
+              return { lat: lat, lon: lon };
+            }
+          }
+        }
+      }
+      offset += 2 + segLen;
     }
   } catch(e) {}
   return null;
@@ -300,20 +399,25 @@ function extractExifAndLocationFromDriveFile(file) {
   try {
     var blob = file.getBlob();
     var bytes = blob.getBytes();
-    var maxLen = Math.min(bytes.length, 131072);
-    var str = "";
-    try {
-      str = Utilities.newBlob(bytes.slice(0, maxLen)).getDataAsString("ISO-8859-1");
-    } catch(e) {
-      str = blob.getDataAsString();
+    var maxLen = Math.min(bytes.length, 65536);
+    var chars = [];
+    for (var i = 0; i < maxLen; i++) {
+      var b = bytes[i];
+      if (b < 0) b += 256;
+      if (b >= 32 && b <= 126) {
+        chars.push(String.fromCharCode(b));
+      } else {
+        chars.push(' ');
+      }
     }
+    var str = chars.join('');
 
     var mDateXmp = str.match(/(?:DateTimeOriginal|CreateDate|DateCreated)[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
     if (mDateXmp) {
       meta.capturedAt = mDateXmp[1] + "-" + mDateXmp[2] + "-" + mDateXmp[3] + "T" + mDateXmp[4] + ":" + mDateXmp[5];
     }
     if (!meta.capturedAt) {
-      var mDateExif = str.match(/(20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})(?::\d{2})?/);
+      var mDateExif = str.match(/\b(19\d\d|20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})(?::\d{2})?/);
       if (mDateExif) {
         meta.capturedAt = mDateExif[1] + "-" + mDateExif[2] + "-" + mDateExif[3] + "T" + mDateExif[4] + ":" + mDateExif[5];
       }
@@ -330,9 +434,22 @@ function extractExifAndLocationFromDriveFile(file) {
       }
     }
 
+    if (meta.lat == null && bytes.length > 512) {
+      try {
+        var binGps = parseBinaryExifGps(bytes);
+        if (binGps && binGps.lat != null && binGps.lon != null) {
+          meta.lat = binGps.lat;
+          meta.lon = binGps.lon;
+        }
+      } catch(eBin) {}
+    }
+
     var mCity = str.match(/photoshop:City[=">\s]+([^"<&\r\n]+)/i);
     if (mCity) {
-      meta.city = mCity[1].trim();
+      var cCandidate = mCity[1].trim();
+      if (cCandidate.toLowerCase() !== "việt nam" && cCandidate.toLowerCase() !== "vietnam") {
+        meta.city = cCandidate;
+      }
     }
     var mLoc = str.match(/Iptc4xmpCore:Location[=">\s]+([^"<&\r\n]+)/i);
     if (mLoc) {
@@ -1383,8 +1500,14 @@ function testRun() {
                 const headerBytes = new Uint8Array(buffer, 0, Math.min(len, 131072));
                 const asciiHeader = new TextDecoder("utf-8", { fatal: false }).decode(headerBytes);
                 if (!out.capturedAt) {
-                    const dtMatch = asciiHeader.match(/(?:DateTimeOriginal|CreateDate|DateCreated)[=">\s:]+(\d{4}[:\-]\d{2}[:\-]\d{2}[T\s]\d{2}:\d{2})/);
+                    const dtMatch = asciiHeader.match(/(?:DateTimeOriginal|CreateDate|DateCreated)[=">\s:]+(\d{4}[:\-]\d{2}[:\-]\d{2}[T\s]\d{2}:\d{2})/i);
                     if (dtMatch) out.capturedAt = normalizeDateToIsoMinute(dtMatch[1]);
+                }
+                if (!out.capturedAt) {
+                    const rawDateMatch = asciiHeader.match(/\b(19\d\d|20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})/);
+                    if (rawDateMatch) {
+                        out.capturedAt = `${rawDateMatch[1]}-${rawDateMatch[2]}-${rawDateMatch[3]}T${rawDateMatch[4]}:${rawDateMatch[5]}`;
+                    }
                 }
                 if (out.lat == null || out.lon == null) {
                     const latMatch = asciiHeader.match(/exif:GPSLatitude[=">\s]+([^"<&\s]+)/i);
@@ -1400,7 +1523,12 @@ function testRun() {
                 }
                 if (!out.city) {
                     const cityMatch = asciiHeader.match(/photoshop:City[=">\s]+([^"<&\r\n]+)/i);
-                    if (cityMatch) out.city = cityMatch[1].trim();
+                    if (cityMatch) {
+                        const c = cityMatch[1].trim();
+                        if (c.toLowerCase() !== "việt nam" && c.toLowerCase() !== "vietnam") {
+                            out.city = c;
+                        }
+                    }
                 }
                 if (!out.location) {
                     const locMatch = asciiHeader.match(/Iptc4xmpCore:Location[=">\s]+([^"<&\r\n]+)/i);
@@ -1520,6 +1648,32 @@ function testRun() {
         };
     }
 
+    function quickPickCreateCity(cityName) {
+        const cityInput = document.getElementById('createAlbumCityInput');
+        if (cityInput) {
+            cityInput.value = cityName;
+            cityInput.dataset.autoFilled = "true";
+        }
+        const metaText = document.getElementById('createModalDetectedMetaText');
+        const dateInput = document.getElementById('createAlbumDateInput');
+        const dateVal = dateInput && dateInput.value ? dateInput.value.split('-').reverse().join('/') : '';
+        if (metaText) {
+            metaText.innerHTML = `<span class="text-emerald-700 font-semibold"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>Địa điểm: ${cityName}</span>${dateVal ? ` • <span class="text-zinc-800 font-medium"><i class="fa-regular fa-calendar text-emerald-600 mr-1"></i>${dateVal}</span>` : ''}`;
+        }
+        const chipContainer = document.getElementById('createQuickLocationChips');
+        if (chipContainer) {
+            chipContainer.querySelectorAll('button').forEach(btn => {
+                const bTxt = btn.innerText.trim();
+                const isMatch = bTxt === cityName || (cityName === 'TP. Hồ Chí Minh' && bTxt === 'TP.HCM');
+                if (isMatch) {
+                    btn.className = "px-2 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[11px] shadow-xs border border-rose-600 transition";
+                } else {
+                    btn.className = "px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition";
+                }
+            });
+        }
+    }
+
     function updateCreateModalDetectedMetaSummary(extraPhotos = []) {
         const metaText = document.getElementById('createModalDetectedMetaText');
         const cityInput = document.getElementById('createAlbumCityInput');
@@ -1529,8 +1683,14 @@ function testRun() {
         const foundLocPhoto = allKnown.find(p => p.location || p.city);
         const foundDatePhoto = allKnown.find(p => p.capturedAt);
 
-        const detectedCity = foundLocPhoto ? (foundLocPhoto.city || foundLocPhoto.location) : "";
-        const detectedLoc = foundLocPhoto ? (foundLocPhoto.location || foundLocPhoto.city) : "";
+        let detectedCity = foundLocPhoto ? (foundLocPhoto.city || foundLocPhoto.location) : "";
+        if (detectedCity && (detectedCity.toLowerCase() === "việt nam" || detectedCity.toLowerCase() === "vietnam")) {
+            detectedCity = "";
+        }
+        let detectedLoc = foundLocPhoto ? (foundLocPhoto.location || foundLocPhoto.city) : "";
+        if (detectedLoc && (detectedLoc.toLowerCase() === "việt nam" || detectedLoc.toLowerCase() === "vietnam")) {
+            detectedLoc = "";
+        }
         const detectedDate = foundDatePhoto && foundDatePhoto.capturedAt ? foundDatePhoto.capturedAt.slice(0, 10) : "";
 
         if (cityInput && detectedCity) {
@@ -1546,11 +1706,31 @@ function testRun() {
             }
         }
 
+        // Highlight matching city chip if any
+        const activeCity = (cityInput && cityInput.value) || detectedCity;
+        if (activeCity) {
+            const chipContainer = document.getElementById('createQuickLocationChips');
+            if (chipContainer) {
+                chipContainer.querySelectorAll('button').forEach(btn => {
+                    const bTxt = btn.innerText.trim();
+                    const isMatch = bTxt.toLowerCase() === activeCity.toLowerCase() || (activeCity.includes("Hồ Chí Minh") && bTxt === 'TP.HCM');
+                    if (isMatch) {
+                        btn.className = "px-2 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[11px] shadow-xs border border-rose-600 transition";
+                    } else {
+                        btn.className = "px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition";
+                    }
+                });
+            }
+        }
+
         if (metaText) {
-            if (detectedLoc || detectedDate) {
+            if (detectedLoc || detectedCity) {
                 const dateFormatted = detectedDate ? detectedDate.split('-').reverse().join('/') : 'Tự động từ ảnh';
-                const locFormatted = detectedLoc || 'Tự động từ ảnh / tag';
-                metaText.innerHTML = `Đã lấy từ ảnh: <strong class="text-zinc-900"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>${locFormatted}</strong> • <strong class="text-zinc-900"><i class="fa-regular fa-calendar mr-1 text-emerald-600"></i>${dateFormatted}</strong>`;
+                const locFormatted = detectedLoc || detectedCity;
+                metaText.innerHTML = `Đã lấy từ ảnh EXIF: <strong class="text-zinc-900"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>${locFormatted}</strong> • <strong class="text-zinc-900"><i class="fa-regular fa-calendar mr-1 text-emerald-600"></i>${dateFormatted}</strong>`;
+            } else if (detectedDate) {
+                const dateFormatted = detectedDate.split('-').reverse().join('/');
+                metaText.innerHTML = `Đã đọc Ngày chụp EXIF: <strong class="text-zinc-900"><i class="fa-regular fa-calendar mr-1 text-emerald-600"></i>${dateFormatted}</strong> • <span class="text-amber-700 font-medium">Ảnh máy cơ không có chip GPS — hãy bấm 1 chạm chọn Địa điểm bên dưới 👇</span>`;
             } else if (createModalDriveLinks.length > 0) {
                 metaText.innerHTML = `Đã gắn <strong>${createModalDriveLinks.length}</strong> link Google Drive — Đang chờ trích xuất Vị trí &amp; Ngày chụp`;
             } else {
@@ -2343,17 +2523,25 @@ function testRun() {
             (titleOrTagHint && titleOrTagHint.city) ||
             (tags && tags.length > 0 && tags[0]) ||
             "";
+        if (city && (city.toLowerCase() === "việt nam" || city.toLowerCase() === "vietnam")) {
+            city = "";
+        }
 
         let fullLocation =
             (photoWithLoc && photoWithLoc.location.trim()) ||
-            (hintCity ? (hintCity.includes(",") ? hintCity : `${hintCity}, Việt Nam`) : (city ? `${city}, Việt Nam` : ""));
+            (hintCity && hintCity.trim()) ||
+            city ||
+            "";
+        if (fullLocation && (fullLocation.toLowerCase() === "việt nam" || fullLocation.toLowerCase() === "vietnam")) {
+            fullLocation = "";
+        }
 
         // Ensure every photo has location & date if album has them
         photos.forEach(p => {
-            if (!p.location || !p.location.trim()) {
+            if (!p.location || !p.location.trim() || p.location === "Việt Nam") {
                 p.location = fullLocation || city || "";
             }
-            if (!p.city || !p.city.trim()) {
+            if (!p.city || !p.city.trim() || p.city === "Việt Nam") {
                 p.city = city || "";
             }
             if (!p.capturedAt && detectedDate) {
@@ -2916,6 +3104,16 @@ function testRun() {
             updatedEl.innerText = album.date ? album.date.split('-').reverse().join('/') : '07/11/2026';
         }
 
+        const cityBadge = document.getElementById('managePageCityBadge');
+        if (cityBadge) {
+            cityBadge.innerText = album.city || 'Chưa đặt (Bấm để chọn)';
+        }
+
+        const dateBadge = document.getElementById('managePageDateBadge');
+        if (dateBadge) {
+            dateBadge.innerText = album.date ? album.date.split('-').reverse().join('/') : 'Chưa đặt';
+        }
+
         const bellBadge = document.getElementById('managePageBellBadge');
         if (bellBadge) {
             bellBadge.innerText = `${submissions.length}`;
@@ -3174,6 +3372,57 @@ function testRun() {
                 </div>
             `;
         }).join('');
+    }
+
+    function quickChangeAlbumLocation() {
+        const album = getActiveAdminAlbum();
+        if (!album) return;
+        const currentCity = album.city || "";
+        const entered = window.prompt("Nhập địa điểm / thành phố cho Album này (VD: Đà Lạt, Phú Quốc, Hội An, Hà Nội, TP. Hồ Chí Minh...):", currentCity);
+        if (entered === null) return;
+        const clean = entered.trim();
+        if (!clean) {
+            App.showToast("Địa điểm không được để trống!", "error");
+            return;
+        }
+        album.city = clean;
+        album.location = clean;
+        (album.photos || []).forEach(p => {
+            p.city = clean;
+            if (!p.location || p.location === currentCity || p.location === "Việt Nam") {
+                p.location = clean;
+            }
+        });
+        const albums = getAllAlbums();
+        saveAllAlbums(albums);
+        renderAlbumManagePage();
+        App.renderHomeShowcase();
+        App.renderPublicAlbum();
+        App.showToast(`Đã cập nhật địa điểm: ${clean}!`);
+    }
+
+    function quickChangeAlbumDate() {
+        const album = getActiveAdminAlbum();
+        if (!album) return;
+        const currentDate = album.date || new Date().toISOString().slice(0, 10);
+        const entered = window.prompt("Nhập ngày chụp của Album (YYYY-MM-DD, VD: 2026-10-19):", currentDate);
+        if (entered === null) return;
+        const clean = entered.trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
+            App.showToast("Vui lòng nhập định dạng ngày YYYY-MM-DD!", "error");
+            return;
+        }
+        album.date = clean;
+        (album.photos || []).forEach(p => {
+            const timePart = (p.capturedAt && p.capturedAt.includes('T')) ? p.capturedAt.split('T')[1] : '09:00';
+            p.capturedAt = `${clean}T${timePart}`;
+        });
+        const albums = getAllAlbums();
+        saveAllAlbums(albums);
+        renderAlbumManagePage();
+        App.renderHomeShowcase();
+        App.renderPublicAlbum();
+        App.showToast(`Đã cập nhật ngày chụp: ${clean.split('-').reverse().join('/')}!`);
     }
 
     function switchEditModalTab(tabName) {
@@ -4232,6 +4481,9 @@ function testRun() {
         testGoogleDriveApiKey,
         copyAppsScriptCode,
         fetchCloudOrStaticAlbums,
+        quickPickCreateCity,
+        quickChangeAlbumLocation,
+        quickChangeAlbumDate,
         applyLatestCloudAlbums,
         mergeCloudAlbums: applyLatestCloudAlbums,
         exportAlbumsJsonFile

@@ -213,18 +213,117 @@ function reverseGeocodeCoords(lat, lon) {
       var r = response.results[0];
       var formatted = r.formatted_address || "";
       var city = "";
+      var subLoc = "";
       for (var i = 0; i < r.address_components.length; i++) {
         var comp = r.address_components[i];
         var types = comp.types || [];
+        var name = (comp.long_name || "").replace(/^(Tỉnh|Thành phố|TP\.)\s+/i, "").trim();
+        if (name.toLowerCase() === "việt nam" || name.toLowerCase() === "vietnam") continue;
         if (types.indexOf("administrative_area_level_1") !== -1 || types.indexOf("locality") !== -1) {
-          city = comp.long_name.replace(/^(Tỉnh|Thành phố|TP\.)\s+/i, "");
-          break;
+          if (!city && name) city = name;
+        }
+        if (types.indexOf("administrative_area_level_2") !== -1 || types.indexOf("sublocality") !== -1) {
+          if (!subLoc && name) subLoc = name.replace(/^(Quận|Huyện|Thị xã|Phường|Xã)\s+/i, "").trim();
         }
       }
+      var finalCity = city || subLoc || "";
+      var finalLoc = (subLoc && city && subLoc.toLowerCase() !== city.toLowerCase())
+        ? (subLoc + " - " + city)
+        : (finalCity || formatted);
       return {
-        city: city || "",
-        location: formatted || city
+        city: finalCity,
+        location: finalLoc
       };
+    }
+  } catch(e) {}
+  return null;
+}
+
+function parseBinaryExifGps(bytes) {
+  try {
+    var len = Math.min(bytes.length, 65536);
+    var u = function(idx) {
+      var b = bytes[idx];
+      return b < 0 ? b + 256 : b;
+    };
+    var u16 = function(idx, le) {
+      return le ? (u(idx) | (u(idx + 1) << 8)) : ((u(idx) << 8) | u(idx + 1));
+    };
+    var u32 = function(idx, le) {
+      var b0 = u(idx), b1 = u(idx + 1), b2 = u(idx + 2), b3 = u(idx + 3);
+      return le ? (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) : ((b0 << 24) | (b1 << 16) | (b2 << 8) | b3);
+    };
+
+    if (u(0) !== 0xFF || u(1) !== 0xD8) return null;
+    var offset = 2;
+    while (offset + 4 < len) {
+      if (u(offset) !== 0xFF) break;
+      while (offset + 1 < len && u(offset + 1) === 0xFF) offset++;
+      if (offset + 4 >= len) break;
+      var marker = u(offset + 1);
+      if (marker === 0xDA || marker === 0xD9) break;
+      var segLen = (u(offset + 2) << 8) | u(offset + 3);
+      if (segLen < 2) break;
+
+      if (marker === 0xE1 && offset + 10 < len &&
+          u(offset + 4) === 0x45 && u(offset + 5) === 0x78 && u(offset + 6) === 0x69 && u(offset + 7) === 0x66) {
+        var tiff = offset + 10;
+        var le = u16(tiff, false) === 0x4949;
+        var ifd0 = u32(tiff + 4, le);
+        var pIfd = tiff + ifd0;
+        if (pIfd + 2 > len) return null;
+        var count = u16(pIfd, le);
+        var gpsOffset = 0;
+        for (var i = 0; i < count; i++) {
+          var ep = pIfd + 2 + i * 12;
+          if (ep + 12 > len) break;
+          var tag = u16(ep, le);
+          if (tag === 0x8825) {
+            gpsOffset = u32(ep + 8, le);
+            break;
+          }
+        }
+        if (gpsOffset > 0 && tiff + gpsOffset + 2 < len) {
+          var pGps = tiff + gpsOffset;
+          var gCount = u16(pGps, le);
+          var latRef = "N", lonRef = "E", lat = null, lon = null;
+          for (var j = 0; j < gCount; j++) {
+            var gp = pGps + 2 + j * 12;
+            if (gp + 12 > len) break;
+            var gTag = u16(gp, le);
+            var gVp = gp + 8;
+            if (gTag === 0x0001) {
+              latRef = String.fromCharCode(u(gVp)).toUpperCase();
+            } else if (gTag === 0x0002) {
+              var rPos = tiff + u32(gVp, le);
+              if (rPos + 24 <= len) {
+                var d = u32(rPos, le) / (u32(rPos + 4, le) || 1);
+                var m = u32(rPos + 8, le) / (u32(rPos + 12, le) || 1);
+                var s = u32(rPos + 16, le) / (u32(rPos + 20, le) || 1);
+                lat = d + m / 60 + s / 3600;
+              }
+            } else if (gTag === 0x0003) {
+              lonRef = String.fromCharCode(u(gVp)).toUpperCase();
+            } else if (gTag === 0x0004) {
+              var rPos2 = tiff + u32(gVp, le);
+              if (rPos2 + 24 <= len) {
+                var d2 = u32(rPos2, le) / (u32(rPos2 + 4, le) || 1);
+                var m2 = u32(rPos2 + 8, le) / (u32(rPos2 + 12, le) || 1);
+                var s2 = u32(rPos2 + 16, le) / (u32(rPos2 + 20, le) || 1);
+                lon = d2 + m2 / 60 + s2 / 3600;
+              }
+            }
+          }
+          if (lat != null && lon != null) {
+            if (latRef === "S") lat = -lat;
+            if (lonRef === "W") lon = -lon;
+            if (Math.abs(lat) > 0.001 || Math.abs(lon) > 0.001) {
+              return { lat: lat, lon: lon };
+            }
+          }
+        }
+      }
+      offset += 2 + segLen;
     }
   } catch(e) {}
   return null;
@@ -240,24 +339,29 @@ function extractExifAndLocationFromDriveFile(file) {
   };
 
   try {
-    // Đọc nhị phân 130KB đầu của file ảnh trong 2ms
+    // Đọc nhị phân 64KB đầu của file ảnh để quét EXIF ASCII và TIFF GPS trong 1-2ms
     var blob = file.getBlob();
     var bytes = blob.getBytes();
-    var maxLen = Math.min(bytes.length, 131072);
-    var str = "";
-    try {
-      str = Utilities.newBlob(bytes.slice(0, maxLen)).getDataAsString("ISO-8859-1");
-    } catch(e) {
-      str = blob.getDataAsString();
+    var maxLen = Math.min(bytes.length, 65536);
+    var chars = [];
+    for (var i = 0; i < maxLen; i++) {
+      var b = bytes[i];
+      if (b < 0) b += 256;
+      if (b >= 32 && b <= 126) {
+        chars.push(String.fromCharCode(b));
+      } else {
+        chars.push(' ');
+      }
     }
+    var str = chars.join('');
 
-    // 1. Tìm ngày giờ chụp thật từ EXIF / XMP (DateTimeOriginal / CreateDate)
+    // 1. Tìm ngày giờ chụp thật từ EXIF / XMP (DateTimeOriginal / CreateDate / DateCreated)
     var mDateXmp = str.match(/(?:DateTimeOriginal|CreateDate|DateCreated)[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
     if (mDateXmp) {
       meta.capturedAt = mDateXmp[1] + "-" + mDateXmp[2] + "-" + mDateXmp[3] + "T" + mDateXmp[4] + ":" + mDateXmp[5];
     }
     if (!meta.capturedAt) {
-      var mDateExif = str.match(/(20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})(?::\d{2})?/);
+      var mDateExif = str.match(/\b(19\d\d|20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})(?::\d{2})?/);
       if (mDateExif) {
         meta.capturedAt = mDateExif[1] + "-" + mDateExif[2] + "-" + mDateExif[3] + "T" + mDateExif[4] + ":" + mDateExif[5];
       }
@@ -275,10 +379,24 @@ function extractExifAndLocationFromDriveFile(file) {
       }
     }
 
-    // 3. Tìm địa danh Photoshop / Lightroom đã gắn vào ảnh
+    // 3. Quét toạ độ GPS từ Binary EXIF TIFF nếu XMP không có
+    if (meta.lat == null && bytes.length > 512) {
+      try {
+        var binGps = parseBinaryExifGps(bytes);
+        if (binGps && binGps.lat != null && binGps.lon != null) {
+          meta.lat = binGps.lat;
+          meta.lon = binGps.lon;
+        }
+      } catch(eBin) {}
+    }
+
+    // 4. Tìm địa danh Photoshop / Lightroom đã gắn vào ảnh
     var mCity = str.match(/photoshop:City[=">\s]+([^"<&\r\n]+)/i);
     if (mCity) {
-      meta.city = mCity[1].trim();
+      var cCandidate = mCity[1].trim();
+      if (cCandidate.toLowerCase() !== "việt nam" && cCandidate.toLowerCase() !== "vietnam") {
+        meta.city = cCandidate;
+      }
     }
     var mLoc = str.match(/Iptc4xmpCore:Location[=">\s]+([^"<&\r\n]+)/i);
     if (mLoc) {
