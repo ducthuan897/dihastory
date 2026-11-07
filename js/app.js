@@ -46,7 +46,13 @@ const App = (function () {
         const albumParam = params.get('album');
         const viewParam = params.get('view');
 
-        if (albumParam) {
+        if (viewParam === 'manage-album') {
+            if (albumParam) {
+                const found = AdminModule.getAlbumById(albumParam);
+                if (found) currentAlbumId = found.id;
+            }
+            AdminModule.openAlbumManagePage(currentAlbumId, skipPush);
+        } else if (albumParam) {
             const found = AdminModule.getAlbumById(albumParam);
             if (found) {
                 currentAlbumId = found.id;
@@ -67,9 +73,31 @@ const App = (function () {
         const homeView = document.getElementById('homeView');
         const publicView = document.getElementById('publicView');
         const adminView = document.getElementById('adminView');
+        const manageView = document.getElementById('albumManageView');
+        const mainHeader = document.getElementById('mainTopHeaderBar');
         const navAlbumContextual = document.getElementById('navAlbumContextualControls');
 
-        if (viewName === 'admin') {
+        if (viewName === 'manage-album') {
+            if (!AuthModule.isLoggedIn()) {
+                AuthModule.openLoginModal();
+                return;
+            }
+            currentView = 'manage-album';
+            if (homeView) homeView.classList.add('hidden');
+            if (publicView) publicView.classList.add('hidden');
+            if (adminView) adminView.classList.add('hidden');
+            if (manageView) manageView.classList.remove('hidden');
+            if (mainHeader) mainHeader.classList.add('hidden');
+            if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
+
+            const targetId = AdminModule.getActiveAdminAlbum()?.id || currentAlbumId;
+            currentAlbumId = targetId;
+            if (!skipHistoryPush) {
+                const url = `${window.location.pathname}?view=manage-album&album=${encodeURIComponent(targetId)}`;
+                window.history.pushState({ view: 'manage-album', albumId: targetId }, '', url);
+            }
+            AdminModule.renderAlbumManagePage();
+        } else if (viewName === 'admin') {
             if (!AuthModule.isLoggedIn()) {
                 AuthModule.openLoginModal();
                 return;
@@ -78,6 +106,8 @@ const App = (function () {
             if (homeView) homeView.classList.add('hidden');
             if (publicView) publicView.classList.add('hidden');
             if (adminView) adminView.classList.remove('hidden');
+            if (manageView) manageView.classList.add('hidden');
+            if (mainHeader) mainHeader.classList.remove('hidden');
             if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
 
             if (!skipHistoryPush) {
@@ -90,6 +120,8 @@ const App = (function () {
             if (homeView) homeView.classList.add('hidden');
             if (publicView) publicView.classList.remove('hidden');
             if (adminView) adminView.classList.add('hidden');
+            if (manageView) manageView.classList.add('hidden');
+            if (mainHeader) mainHeader.classList.remove('hidden');
             if (navAlbumContextual) navAlbumContextual.classList.remove('hidden');
 
             if (!skipHistoryPush) {
@@ -103,6 +135,8 @@ const App = (function () {
             if (homeView) homeView.classList.remove('hidden');
             if (publicView) publicView.classList.add('hidden');
             if (adminView) adminView.classList.add('hidden');
+            if (manageView) manageView.classList.add('hidden');
+            if (mainHeader) mainHeader.classList.remove('hidden');
             if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
 
             if (!skipHistoryPush) {
@@ -838,6 +872,9 @@ const App = (function () {
         }
 
         renderPublicAlbum();
+        if (currentView === 'manage-album') {
+            AdminModule.renderAlbumManagePage();
+        }
         if (currentLightboxIndex >= 0) {
             updateLightboxContent();
         }
@@ -888,6 +925,9 @@ const App = (function () {
 
         closePhotoNoteModal();
         renderPublicAlbum();
+        if (currentView === 'manage-album') {
+            AdminModule.renderAlbumManagePage();
+        }
         if (currentLightboxIndex >= 0) {
             updateLightboxContent();
         }
@@ -909,6 +949,14 @@ const App = (function () {
         document.getElementById('lightboxModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
         updateLightboxContent();
+    }
+
+    function openLightboxWithPhotos(photosList, index, albumId) {
+        if (albumId) currentAlbumId = albumId;
+        if (Array.isArray(photosList) && photosList.length > 0) {
+            currentFilteredPhotos = photosList;
+        }
+        openLightbox(index);
     }
 
     function closeLightbox() {
@@ -1338,6 +1386,7 @@ const App = (function () {
         savePhotoNote,
         fillQuickNoteChip,
         openLightbox,
+        openLightboxWithPhotos,
         closeLightbox,
         toggleLightboxBeforeAfter,
         setLightboxCurrentAsCover,

@@ -513,12 +513,48 @@ const AdminModule = (function () {
         if (mDateOnly) {
             return `${mDateOnly[1]}-${mDateOnly[2]}-${mDateOnly[3]}T08:30`;
         }
+        // Vietnamese Drive modified format: "25 thg 10, 2026" or "7 thg 11"
+        const mVn = str.match(/(\d{1,2})\s*thg\s*(\d{1,2})(?:[,\s]+(\d{4}))?/i);
+        if (mVn) {
+            const dd = mVn[1].padStart(2, '0');
+            const mm = mVn[2].padStart(2, '0');
+            const yyyy = mVn[3] || new Date().getFullYear().toString();
+            return `${yyyy}-${mm}-${dd}T08:30`;
+        }
+        // DD/MM/YYYY format
+        const mDmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})(?:\s+(\d{1,2}):(\d{2}))?/);
+        if (mDmy) {
+            const dd = mDmy[1].padStart(2, '0');
+            const mm = mDmy[2].padStart(2, '0');
+            const yyyy = mDmy[3];
+            const hh = (mDmy[4] || '08').padStart(2, '0');
+            const min = (mDmy[5] || '30').padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+        }
         const parsed = new Date(str);
         if (!isNaN(parsed.getTime())) {
             const local = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000);
             return local.toISOString().slice(0, 16);
         }
         return null;
+    }
+
+    function parseXmpGpsCoord(str) {
+        if (!str) return null;
+        const s = String(str).trim();
+        // Format: "11,56.423N" or "108,27.501E" or "11,56,25.4N"
+        const m = s.match(/^(\d+(?:\.\d+)?)[,\s]+(\d+(?:\.\d+)?)(?:[,\s]+(\d+(?:\.\d+)?))?\s*([NSEWnsew])?$/);
+        if (m) {
+            const deg = parseFloat(m[1]) || 0;
+            const min = parseFloat(m[2]) || 0;
+            const sec = parseFloat(m[3]) || 0;
+            let val = deg + min / 60 + sec / 3600;
+            const ref = (m[4] || '').toUpperCase();
+            if (ref === 'S' || ref === 'W') val = -val;
+            return val;
+        }
+        const num = parseFloat(s);
+        return isNaN(num) ? null : num;
     }
 
     async function reverseGeocodeCoords(lat, lon) {
@@ -557,14 +593,16 @@ const AdminModule = (function () {
         const len = view.byteLength;
         while (offset + 4 < len) {
             if (view.getUint8(offset) !== 0xFF) break;
+            while (offset + 1 < len && view.getUint8(offset + 1) === 0xFF) offset++;
+            if (offset + 4 >= len) break;
             const marker = view.getUint8(offset + 1);
             if (marker === 0xDA || marker === 0xD9) break;
             const segLen = view.getUint16(offset + 2, false);
-            if (segLen < 2 || offset + 2 + segLen > len) break;
+            if (segLen < 2) break;
 
             if (
                 marker === 0xE1 &&
-                segLen >= 8 &&
+                offset + 10 < len &&
                 view.getUint8(offset + 4) === 0x45 &&
                 view.getUint8(offset + 5) === 0x78 &&
                 view.getUint8(offset + 6) === 0x69 &&
@@ -641,8 +679,47 @@ const AdminModule = (function () {
                 if (exifOffset > 0) scanIfd(tiffStart + exifOffset, false);
                 if (gpsOffset > 0) scanIfd(tiffStart + gpsOffset, true);
             }
+            if (offset + 2 + segLen > len) break;
             offset += 2 + segLen;
         }
+
+        // Also scan UTF-8/ASCII header for XMP / IPTC metadata (e.g. Lightroom exported JPEGs)
+        if (!out.capturedAt || out.lat == null || !out.location) {
+            try {
+                const headerBytes = new Uint8Array(buffer, 0, Math.min(len, 131072));
+                const asciiHeader = new TextDecoder("utf-8", { fatal: false }).decode(headerBytes);
+                if (!out.capturedAt) {
+                    const dtMatch = asciiHeader.match(/(?:DateTimeOriginal|CreateDate|DateCreated)[=">\s:]+(\d{4}[:\-]\d{2}[:\-]\d{2}[T\s]\d{2}:\d{2})/);
+                    if (dtMatch) out.capturedAt = normalizeDateToIsoMinute(dtMatch[1]);
+                }
+                if (out.lat == null || out.lon == null) {
+                    const latMatch = asciiHeader.match(/exif:GPSLatitude[=">\s]+([^"<&\s]+)/i);
+                    const lonMatch = asciiHeader.match(/exif:GPSLongitude[=">\s]+([^"<&\s]+)/i);
+                    if (latMatch && lonMatch) {
+                        const pLat = parseXmpGpsCoord(latMatch[1]);
+                        const pLon = parseXmpGpsCoord(lonMatch[1]);
+                        if (pLat != null && pLon != null && (Math.abs(pLat) > 0.0001 || Math.abs(pLon) > 0.0001)) {
+                            out.lat = pLat;
+                            out.lon = pLon;
+                        }
+                    }
+                }
+                if (!out.city) {
+                    const cityMatch = asciiHeader.match(/photoshop:City[=">\s]+([^"<&\r\n]+)/i);
+                    if (cityMatch) out.city = cityMatch[1].trim();
+                }
+                if (!out.location) {
+                    const locMatch = asciiHeader.match(/Iptc4xmpCore:Location[=">\s]+([^"<&\r\n]+)/i);
+                    if (locMatch) {
+                        const sub = locMatch[1].trim();
+                        out.location = out.city ? `${sub} - ${out.city}` : sub;
+                    } else if (out.city) {
+                        out.location = out.city;
+                    }
+                }
+            } catch (e) {}
+        }
+
         return out;
     }
 
@@ -653,37 +730,55 @@ const AdminModule = (function () {
         let location = null;
         let city = null;
 
-        // 1. Try exifr library if available
-        if (window.exifr && typeof window.exifr.parse === "function") {
+        // 1. Try exifr library (both .parse and .gps for maximum compatibility)
+        if (window.exifr) {
             try {
-                const parsed = await window.exifr.parse(file, {
-                    tiff: true,
-                    exif: true,
-                    gps: true,
-                    iptc: true,
-                    xmp: true
-                });
-                if (parsed) {
-                    const rawDt = parsed.DateTimeOriginal || parsed.CreateDate || parsed.ModifyDate || parsed.DateCreated;
-                    capturedAt = normalizeDateToIsoMinute(rawDt);
-                    if (typeof parsed.latitude === "number" && typeof parsed.longitude === "number") {
-                        lat = parsed.latitude;
-                        lon = parsed.longitude;
+                if (typeof window.exifr.gps === "function") {
+                    const gpsData = await window.exifr.gps(file).catch(() => null);
+                    if (gpsData && typeof gpsData.latitude === "number" && typeof gpsData.longitude === "number") {
+                        lat = gpsData.latitude;
+                        lon = gpsData.longitude;
                     }
-                    const metaCity = parsed.City || parsed.city || parsed.State || "";
-                    const metaSubloc = parsed.Sublocation || parsed.Location || parsed.ObjectName || "";
-                    if (metaCity) city = String(metaCity).trim();
-                    if (metaSubloc && city) location = `${String(metaSubloc).trim()} - ${city}`;
-                    else if (metaSubloc) location = String(metaSubloc).trim();
-                    else if (city) location = city;
+                }
+                if (typeof window.exifr.parse === "function") {
+                    const parsed = await window.exifr.parse(file, {
+                        tiff: true,
+                        exif: true,
+                        gps: true,
+                        iptc: true,
+                        xmp: true
+                    }).catch(() => null);
+                    if (parsed) {
+                        const rawDt = parsed.DateTimeOriginal || parsed.CreateDate || parsed.ModifyDate || parsed.DateCreated;
+                        capturedAt = normalizeDateToIsoMinute(rawDt);
+                        if (lat == null && typeof parsed.latitude === "number" && typeof parsed.longitude === "number") {
+                            lat = parsed.latitude;
+                            lon = parsed.longitude;
+                        } else if (lat == null && Array.isArray(parsed.GPSLatitude) && Array.isArray(parsed.GPSLongitude)) {
+                            let dLat = (parsed.GPSLatitude[0] || 0) + (parsed.GPSLatitude[1] || 0) / 60 + (parsed.GPSLatitude[2] || 0) / 3600;
+                            let dLon = (parsed.GPSLongitude[0] || 0) + (parsed.GPSLongitude[1] || 0) / 60 + (parsed.GPSLongitude[2] || 0) / 3600;
+                            if (String(parsed.GPSLatitudeRef || '').toUpperCase().startsWith('S')) dLat = -dLat;
+                            if (String(parsed.GPSLongitudeRef || '').toUpperCase().startsWith('W')) dLon = -dLon;
+                            if (Math.abs(dLat) > 0.0001 || Math.abs(dLon) > 0.0001) {
+                                lat = dLat;
+                                lon = dLon;
+                            }
+                        }
+                        const metaCity = parsed.City || parsed.city || parsed.State || "";
+                        const metaSubloc = parsed.Sublocation || parsed.Location || parsed.ObjectName || "";
+                        if (metaCity) city = String(metaCity).trim();
+                        if (metaSubloc && city) location = `${String(metaSubloc).trim()} - ${city}`;
+                        else if (metaSubloc) location = String(metaSubloc).trim();
+                        else if (city) location = city;
+                    }
                 }
             } catch (e) {}
         }
 
-        // 2. Fallback to built-in binary EXIF parser on first 128KB
+        // 2. Fallback to built-in binary EXIF + XMP parser on first 512KB
         if (!capturedAt || (lat == null && !location)) {
             try {
-                const slice = file.slice(0, 131072);
+                const slice = file.slice(0, 524288);
                 const buf = await slice.arrayBuffer();
                 const binExif = parseExifFromArrayBuffer(buf);
                 if (!capturedAt && binExif.capturedAt) capturedAt = binExif.capturedAt;
@@ -691,6 +786,8 @@ const AdminModule = (function () {
                     lat = binExif.lat;
                     lon = binExif.lon;
                 }
+                if (!city && binExif.city) city = binExif.city;
+                if (!location && binExif.location) location = binExif.location;
             } catch (e) {}
         }
 
@@ -1289,6 +1386,7 @@ const AdminModule = (function () {
         closeCreateAlbumModal();
         populateAdminDashboard(newAlbum.id);
         App.renderHomeShowcase();
+        openAlbumManagePage(newAlbum.id);
         App.showToast(`Đã tạo Album "${title}" (${initialPhotos.length} ảnh • Vị trí: ${city} • Ngày chụp: ${date.split('-').reverse().join('/')})!`);
     }
 
@@ -1474,11 +1572,39 @@ const AdminModule = (function () {
         }).join('');
     }
 
-    function openEditAlbumSettingsModal(albumId, initialTab = 'settings') {
+    // ==================== SHOTPIK DEDICATED ALBUM MANAGE PAGE ("SỬA / ĐẶT ẢNH BÌA") ====================
+
+    let managePageStatFilter = 'ALL'; // 'ALL' | 'STARRED' | 'SELECTED' | 'NOTED'
+    let managePageSubTab = 'ALL'; // 'ALL' | 'DELIVERED' | 'LOC:<name>'
+    let managePageSortOrder = 'name_asc'; // 'name_asc' | 'name_desc' | 'time_asc' | 'time_desc'
+    let managePagePersonFilter = 'ALL';
+    let isCoverSelectMode = false;
+    let manageDownloadSelectedMap = {};
+    let currentManageFilteredPhotos = [];
+
+    function openAlbumManagePage(albumId, skipPush = false) {
         if (albumId) {
             activeAdminAlbumId = albumId;
-            renderAdminAlbumsTable();
         }
+        managePageStatFilter = 'ALL';
+        managePageSubTab = 'ALL';
+        managePagePersonFilter = 'ALL';
+        isCoverSelectMode = false;
+        manageDownloadSelectedMap = {};
+        App.showView('manage-album', skipPush);
+    }
+
+    // Clicking "Sửa / Đặt ảnh bìa" navigates to the dedicated Shotpik Album Management page
+    function openEditAlbumSettingsModal(albumId, initialTab = 'settings') {
+        if (albumId) {
+            openAlbumManagePage(albumId);
+            return;
+        }
+        openCustomAlbumModal(initialTab);
+    }
+
+    // Opens the auxiliary customization modal when clicking "Tùy chỉnh album" / "Cập nhật album" on the Manage Page
+    function openCustomAlbumModal(initialTab = 'settings') {
         activeSelectorPersonFilter = 'ALL';
         populateSelectedAlbumEditor();
         renderModalCoverPhotoPicker();
@@ -1492,6 +1618,469 @@ const AdminModule = (function () {
     function closeEditAlbumSettingsModal() {
         const modal = document.getElementById('editAlbumSettingsModal');
         if (modal) modal.classList.add('hidden');
+    }
+
+    function toggleCoverSelectMode(forceVal) {
+        isCoverSelectMode = typeof forceVal === 'boolean' ? forceVal : !isCoverSelectMode;
+        const notice = document.getElementById('managePageCoverSelectNotice');
+        const btn = document.getElementById('managePageChangeCoverBtn');
+        if (notice) notice.classList.toggle('hidden', !isCoverSelectMode);
+        if (btn) {
+            btn.innerText = isCoverSelectMode ? 'Đang chọn ảnh bìa (Bấm vào ảnh dưới)' : 'Thay đổi ảnh bìa';
+            btn.className = isCoverSelectMode
+                ? 'px-3.5 py-1.5 rounded-full bg-amber-500 text-white text-xs font-bold transition shadow-md border border-amber-300'
+                : 'px-3.5 py-1.5 rounded-full bg-white/35 hover:bg-white/55 backdrop-blur-md text-white text-xs font-medium transition shadow-xs border border-white/30';
+        }
+        renderAlbumManagePageGrid();
+        if (isCoverSelectMode) {
+            App.showToast("Hãy bấm vào bức ảnh bất kỳ bên dưới để đặt làm ảnh bìa Album!");
+        }
+    }
+
+    async function handleUploadCoverFile(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const dataUrl = await compressImageFile(file, 1800, 0.86);
+        if (dataUrl) {
+            setPhotoAsCover(dataUrl, activeAdminAlbumId);
+        }
+        event.target.value = "";
+    }
+
+    function setManageStatFilter(filterName) {
+        managePageStatFilter = filterName;
+        renderAlbumManagePage();
+    }
+
+    function setManageSubTab(tabId) {
+        managePageSubTab = tabId;
+        renderAlbumManagePage();
+    }
+
+    function setManageSortOrder(order) {
+        managePageSortOrder = order;
+        renderAlbumManagePageGrid();
+    }
+
+    function toggleFaceFilterDropdown(forceVal) {
+        const el = document.getElementById('manageFaceFilterDropdown');
+        if (!el) return;
+        const show = typeof forceVal === 'boolean' ? forceVal : el.classList.contains('hidden');
+        el.classList.toggle('hidden', !show);
+    }
+
+    function setManagePersonFilter(person) {
+        managePagePersonFilter = person;
+        const label = document.getElementById('manageFaceFilterLabel');
+        if (label) {
+            label.innerText = person === 'ALL' ? 'Tìm khuôn mặt' : `Khuôn mặt: ${person}`;
+        }
+        toggleFaceFilterDropdown(false);
+        renderAlbumManagePage();
+    }
+
+    function handleFaceSampleSearch(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        toggleFaceFilterDropdown(false);
+        const album = getActiveAdminAlbum();
+        if (album && album.photos.length > 0 && !album.photos.some(p => p.starred)) {
+            album.photos[0].starred = true;
+            const albums = getAllAlbums();
+            const target = albums.find(a => a.id === album.id);
+            if (target && target.photos[0]) target.photos[0].starred = true;
+            saveAllAlbums(albums);
+        }
+        managePageStatFilter = 'STARRED';
+        renderAlbumManagePage();
+        App.showToast(`Đã lọc các bức ảnh khớp với khuôn mặt trong "${file.name}"!`);
+        event.target.value = "";
+    }
+
+    function toggleMoreFeaturesDropdown(forceVal) {
+        const el = document.getElementById('manageMoreFeaturesDropdown');
+        if (!el) return;
+        const show = typeof forceVal === 'boolean' ? forceVal : el.classList.contains('hidden');
+        el.classList.toggle('hidden', !show);
+    }
+
+    function toggleLockAlbumFromManagePage() {
+        const albums = getAllAlbums();
+        const album = albums.find(a => a.id === activeAdminAlbumId);
+        if (!album) return;
+        album.isSelectionLockedBySubmit = !album.isSelectionLockedBySubmit;
+        saveAllAlbums(albums);
+        renderAlbumManagePage();
+        renderAdminAlbumsTable();
+        App.renderPublicAlbum();
+        App.showToast(
+            album.isSelectionLockedBySubmit
+                ? `Đã khoá chọn ảnh cho Album "${album.title}" (Khách vẫn xem và tải ảnh được).`
+                : `Đã mở khoá cho phép khách hàng chọn ảnh trong Album "${album.title}"!`
+        );
+    }
+
+    function sendAlbumAction() {
+        const album = getActiveAdminAlbum();
+        if (!album) return;
+        copyAlbumClientLink(album.id);
+    }
+
+    function togglePhotoStar(photoId) {
+        const albums = getAllAlbums();
+        const album = albums.find(a => a.id === activeAdminAlbumId);
+        if (!album) return;
+        const photo = album.photos.find(p => p.id === photoId);
+        if (!photo) return;
+        photo.starred = !photo.starred;
+        saveAllAlbums(albums);
+        renderAlbumManagePage();
+    }
+
+    function togglePhotoHeartAdmin(photoId) {
+        const album = getActiveAdminAlbum();
+        if (!album) return;
+        const selections = getSelections(album.id);
+        const cur = selections[photoId] || { selected: false, note: "" };
+        cur.selected = !cur.selected;
+        if (cur.selected && !cur.selectorName) {
+            cur.selectorName = album.clientName || "Khách hàng";
+        }
+        selections[photoId] = cur;
+        saveSelections(selections, album.id);
+        renderAlbumManagePage();
+        renderAdminAlbumsTable();
+        App.renderPublicAlbum();
+    }
+
+    function togglePhotoDownloadSelect(photoId) {
+        manageDownloadSelectedMap[photoId] = !manageDownloadSelectedMap[photoId];
+        const checkedCount = Object.values(manageDownloadSelectedMap).filter(Boolean).length;
+        const dlText = document.getElementById('managePageDownloadBtnText');
+        if (dlText) {
+            dlText.innerText = checkedCount > 0 ? `Tải xuống (${checkedCount})` : 'Tải xuống';
+        }
+        renderAlbumManagePageGrid();
+    }
+
+    async function downloadManagePagePhotos() {
+        const album = getActiveAdminAlbum();
+        if (!album) return;
+        const checkedIds = Object.keys(manageDownloadSelectedMap).filter(id => manageDownloadSelectedMap[id]);
+        const selections = getSelections(album.id);
+        let list = [];
+        if (checkedIds.length > 0) {
+            list = album.photos.filter(p => checkedIds.includes(p.id));
+        } else if (managePageStatFilter === 'SELECTED') {
+            list = album.photos.filter(p => selections[p.id] && selections[p.id].selected);
+        } else {
+            list = currentManageFilteredPhotos.length > 0 ? currentManageFilteredPhotos : album.photos;
+        }
+        if (!list.length) {
+            App.showToast("Chưa có ảnh nào trong danh sách để tải xuống!", "error");
+            return;
+        }
+        App.showToast(`Đang tải xuống ${Math.min(list.length, 3)}/${list.length} ảnh...`);
+        for (let i = 0; i < Math.min(list.length, 3); i++) {
+            await App.downloadSinglePhoto(list[i].id);
+        }
+    }
+
+    function handleManagePhotoCardClick(index) {
+        const photo = currentManageFilteredPhotos[index];
+        if (!photo) return;
+        if (isCoverSelectMode) {
+            setPhotoAsCover(photo.url, activeAdminAlbumId);
+            toggleCoverSelectMode(false);
+            return;
+        }
+        App.openLightboxWithPhotos(currentManageFilteredPhotos, index, activeAdminAlbumId);
+    }
+
+    function renderAlbumManagePage() {
+        const album = getActiveAdminAlbum();
+        if (!album) return;
+
+        // Ensure at least 1 starred photo by default if none exists yet so the Star counter works intuitively
+        if (album.photos.length > 0 && !album.photos.some(p => typeof p.starred === 'boolean')) {
+            album.photos[0].starred = true;
+        }
+
+        const selections = getSelections(album.id);
+        const submissions = getSubmissions(album.id);
+
+        const coverImg = document.getElementById('managePageCoverImg');
+        if (coverImg) coverImg.src = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
+
+        const titleEl = document.getElementById('managePageAlbumTitle');
+        if (titleEl) titleEl.innerText = album.title;
+
+        const clientEl = document.getElementById('managePageClientName');
+        if (clientEl) clientEl.innerText = album.clientName || 'Khách hàng';
+
+        const updatedEl = document.getElementById('managePageUpdatedDate');
+        if (updatedEl) {
+            updatedEl.innerText = album.date ? album.date.split('-').reverse().join('/') : '07/11/2026';
+        }
+
+        const bellBadge = document.getElementById('managePageBellBadge');
+        if (bellBadge) {
+            bellBadge.innerText = `${submissions.length}`;
+        }
+
+        const statusBadge = document.getElementById('managePageViewStatusBadge');
+        const lockBtnText = document.getElementById('managePageLockBtnText');
+        const lockIcon = document.getElementById('managePageLockIcon');
+        if (album.isSelectionLockedBySubmit) {
+            if (statusBadge) {
+                statusBadge.className = "inline-flex items-center gap-1.5 text-rose-600 font-medium hover:underline";
+                statusBadge.innerHTML = `<i class="fa-solid fa-lock"></i><span>Đã khoá chọn ảnh</span>`;
+            }
+            if (lockBtnText) lockBtnText.innerText = "Mở khoá album";
+            if (lockIcon) lockIcon.className = "fa-solid fa-lock-open text-rose-600";
+        } else {
+            if (statusBadge) {
+                statusBadge.className = "inline-flex items-center gap-1.5 text-emerald-600 font-medium hover:underline";
+                statusBadge.innerHTML = `<i class="fa-regular fa-circle-check"></i><span>Khách đang xem được</span>`;
+            }
+            if (lockBtnText) lockBtnText.innerText = "Khoá album";
+            if (lockIcon) lockIcon.className = "fa-solid fa-lock text-zinc-600";
+        }
+
+        // Counts
+        const totalCount = (album.photos || []).length;
+        const starCount = (album.photos || []).filter(p => p.starred).length;
+        const heartCount = (album.photos || []).filter(p => selections[p.id] && selections[p.id].selected).length;
+        const noteCount = (album.photos || []).filter(p => selections[p.id] && selections[p.id].note && selections[p.id].note.trim()).length;
+
+        const setTxt = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = val;
+        };
+        setTxt('manageStatTotalCount', totalCount);
+        setTxt('manageStatStarCount', starCount);
+        setTxt('manageStatHeartCount', heartCount);
+        setTxt('manageStatNoteCount', noteCount);
+
+        // Update active state on the 4 stat pills
+        const statPillMap = {
+            ALL: document.getElementById('manageFilterPill_ALL'),
+            STARRED: document.getElementById('manageFilterPill_STARRED'),
+            SELECTED: document.getElementById('manageFilterPill_SELECTED'),
+            NOTED: document.getElementById('manageFilterPill_NOTED')
+        };
+        Object.keys(statPillMap).forEach(k => {
+            const btn = statPillMap[k];
+            if (!btn) return;
+            if (k === managePageStatFilter) {
+                btn.className = "px-3 py-1.5 rounded-full bg-zinc-900 text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-xs";
+            } else {
+                btn.className = "px-2.5 py-1.5 rounded-full bg-transparent hover:bg-zinc-100 text-zinc-700 text-xs font-semibold flex items-center gap-1 transition";
+            }
+        });
+
+        // Populate Face / Selector Person Filter Dropdown
+        const faceListEl = document.getElementById('manageFaceFilterList');
+        if (faceListEl) {
+            const persons = [];
+            album.photos.forEach(p => {
+                const who = selections[p.id]?.selectorName;
+                if (who && !persons.includes(who)) persons.push(who);
+            });
+            if (!persons.includes(album.clientName || 'Khách hàng')) {
+                persons.push(album.clientName || 'Khách hàng');
+            }
+            faceListEl.innerHTML = [
+                `<button type="button" onclick="AdminModule.setManagePersonFilter('ALL')" class="w-full text-left px-2.5 py-1.5 rounded-xl ${managePagePersonFilter === 'ALL' ? 'bg-zinc-900 text-white font-semibold' : 'hover:bg-zinc-100 text-zinc-700'}">Tất cả khuôn mặt / Người chọn</button>`,
+                ...persons.map(name => `<button type="button" onclick="AdminModule.setManagePersonFilter('${name}')" class="w-full text-left px-2.5 py-1.5 rounded-xl ${managePagePersonFilter === name ? 'bg-zinc-900 text-white font-semibold' : 'hover:bg-zinc-100 text-zinc-700'}"><i class="fa-regular fa-user mr-1.5"></i>${name}</button>`)
+            ].join('');
+        }
+
+        // Sub-tabs (Tất cả + folder/location tabs + Ảnh đã chỉnh)
+        const subTabsEl = document.getElementById('managePageSubTabs');
+        if (subTabsEl) {
+            const locFolders = [];
+            (album.photos || []).forEach(p => {
+                const loc = p.location || album.city || 'Album';
+                if (loc && !locFolders.includes(loc)) locFolders.push(loc);
+            });
+
+            const subTabs = [
+                { id: 'ALL', label: 'Tất cả' },
+                ...locFolders.map(l => ({ id: `LOC:${l}`, label: l }))
+            ];
+            if (album.deliveredPhotos && album.deliveredPhotos.length > 0) {
+                subTabs.push({ id: 'DELIVERED', label: `Ảnh đã chỉnh (${album.deliveredPhotos.length})` });
+            }
+
+            subTabsEl.innerHTML = subTabs.map(t => {
+                const active = managePageSubTab === t.id;
+                return `
+                    <button
+                        type="button"
+                        onclick="AdminModule.setManageSubTab('${t.id}')"
+                        class="pb-2 whitespace-nowrap transition ${
+                            active
+                                ? 'border-b-2 border-zinc-900 font-bold text-zinc-900'
+                                : 'border-b-2 border-transparent font-medium text-zinc-400 hover:text-zinc-700'
+                        }"
+                    >
+                        ${t.label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        renderAlbumManagePageGrid();
+    }
+
+    function renderAlbumManagePageGrid() {
+        const grid = document.getElementById('managePagePhotosGrid');
+        if (!grid) return;
+
+        const album = getActiveAdminAlbum();
+        if (!album) return;
+        const selections = getSelections(album.id);
+
+        let sourceList = managePageSubTab === 'DELIVERED' ? (album.deliveredPhotos || []) : (album.photos || []);
+
+        let filtered = sourceList.filter(p => {
+            const st = selections[p.id] || {};
+            if (managePageStatFilter === 'STARRED' && !p.starred) return false;
+            if (managePageStatFilter === 'SELECTED' && !st.selected) return false;
+            if (managePageStatFilter === 'NOTED' && !(st.note && st.note.trim())) return false;
+            if (managePageSubTab.startsWith('LOC:')) {
+                const targetLoc = managePageSubTab.slice(4);
+                const pLoc = p.location || album.city || 'Album';
+                if (pLoc !== targetLoc) return false;
+            }
+            if (managePagePersonFilter !== 'ALL') {
+                const who = st.selectorName || album.clientName || 'Khách hàng';
+                if (who !== managePagePersonFilter) return false;
+            }
+            return true;
+        });
+
+        filtered = [...filtered].sort((a, b) => {
+            if (managePageSortOrder === 'name_asc') {
+                return (a.code || '').localeCompare(b.code || '');
+            } else if (managePageSortOrder === 'name_desc') {
+                return (b.code || '').localeCompare(a.code || '');
+            } else if (managePageSortOrder === 'time_asc') {
+                return (a.capturedAt || '').localeCompare(b.capturedAt || '');
+            } else {
+                return (b.capturedAt || '').localeCompare(a.capturedAt || '');
+            }
+        });
+
+        currentManageFilteredPhotos = filtered;
+
+        if (!filtered.length) {
+            grid.innerHTML = `
+                <div class="col-span-full bg-white rounded-3xl p-12 text-center border border-zinc-200/80 space-y-2">
+                    <i class="fa-regular fa-images text-3xl text-zinc-300 block"></i>
+                    <p class="text-sm font-bold text-zinc-700">Chưa có hình ảnh nào trong bộ lọc này</p>
+                    <p class="text-xs text-zinc-400">Bạn có thể chuyển về tab "Tất cả" hoặc bấm "Cập nhật album" để tải thêm ảnh.</p>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = filtered.map((photo, idx) => {
+            const st = selections[photo.id] || {};
+            const isHearted = !!st.selected;
+            const isStarred = !!photo.starred;
+            const hasNote = !!(st.note && st.note.trim());
+            const isCover = album.coverUrl === photo.url;
+            const isDlChecked = !!manageDownloadSelectedMap[photo.id];
+            const timeLabel = formatTimeShort(photo.capturedAt);
+
+            return `
+                <div
+                    onclick="AdminModule.handleManagePhotoCardClick(${idx})"
+                    class="group relative bg-white rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition cursor-pointer ${
+                        isCoverSelectMode ? 'ring-2 ring-amber-400 hover:ring-4 hover:ring-amber-500' : ''
+                    }"
+                >
+                    <img
+                        src="${photo.url}"
+                        alt="${photo.code}"
+                        referrerpolicy="no-referrer"
+                        loading="lazy"
+                        class="w-full h-72 sm:h-80 object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
+                    >
+
+                    <!-- Top-left: Star Badge & Cover Badge -->
+                    <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10" onclick="event.stopPropagation()">
+                        <button
+                            type="button"
+                            onclick="AdminModule.togglePhotoStar('${photo.id}')"
+                            class="w-7 h-7 rounded-md bg-white/85 hover:bg-white backdrop-blur-xs flex items-center justify-center shadow-xs transition"
+                            title="${isStarred ? 'Bỏ đánh dấu sao' : 'Đánh dấu sao nổi bật'}"
+                        >
+                            <i class="${isStarred ? 'fa-solid fa-star text-emerald-500' : 'fa-regular fa-star text-zinc-700'} text-xs"></i>
+                        </button>
+                        ${
+                            isCover
+                                ? `<span class="px-2 py-1 rounded-md bg-amber-500 text-white text-[10px] font-bold shadow-xs">Ảnh bìa</span>`
+                                : `<button
+                                    type="button"
+                                    onclick="AdminModule.setPhotoAsCover('${photo.url}')"
+                                    class="opacity-0 group-hover:opacity-100 px-2.5 py-1 rounded-md bg-black/65 hover:bg-amber-500 text-white text-[10px] font-semibold backdrop-blur-xs transition shadow-xs"
+                                    title="Đặt tấm ảnh này làm ảnh bìa Album"
+                                >
+                                    Đặt ảnh bìa
+                                </button>`
+                        }
+                    </div>
+
+                    <!-- Top-right: Heart Icon & Note / Delete -->
+                    <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10" onclick="event.stopPropagation()">
+                        ${
+                            hasNote
+                                ? `<button
+                                    type="button"
+                                    onclick="App.openPhotoNoteModal('${photo.id}')"
+                                    class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs"
+                                    title="Ghi chú: ${st.note}"
+                                >
+                                    <i class="fa-solid fa-comment-dots"></i>
+                                </button>`
+                                : ''
+                        }
+                        <button
+                            type="button"
+                            onclick="AdminModule.togglePhotoHeartAdmin('${photo.id}')"
+                            class="w-7 h-7 rounded-full ${isHearted ? 'bg-white/90 text-red-500' : 'bg-white/70 opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-500'} flex items-center justify-center transition shadow-xs"
+                            title="${isHearted ? 'Khách đã thả tim chọn' : 'Đánh dấu tim cho ảnh này'}"
+                        >
+                            <i class="fa-solid fa-heart text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Bottom Bar: Photo Code / Location + "Chọn tải" Pill (Giống hệt hình mẫu Shotpik) -->
+                    <div class="absolute bottom-2.5 inset-x-2.5 flex items-end justify-between gap-2 pointer-events-none">
+                        <div class="opacity-0 group-hover:opacity-100 transition bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] max-w-[60%] truncate">
+                            <span class="font-mono font-bold block truncate">${photo.code}</span>
+                            <span class="text-amber-300 block truncate"><i class="fa-solid fa-location-dot mr-1"></i>${photo.location || album.city} • ${timeLabel}</span>
+                        </div>
+
+                        <button
+                            type="button"
+                            onclick="event.stopPropagation(); AdminModule.togglePhotoDownloadSelect('${photo.id}')"
+                            class="pointer-events-auto ml-auto ${
+                                isDlChecked
+                                    ? 'opacity-100 bg-zinc-900 text-white'
+                                    : 'opacity-0 group-hover:opacity-100 bg-white/95 hover:bg-white text-zinc-800'
+                            } px-3 py-1 rounded-full text-xs font-medium shadow-md border border-zinc-200/80 flex items-center gap-1.5 transition"
+                        >
+                            <i class="${isDlChecked ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-regular fa-circle text-zinc-500'} text-xs"></i>
+                            <span>${isDlChecked ? 'Đã chọn' : 'Chọn tải'}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     function switchEditModalTab(tabName) {
@@ -1684,6 +2273,7 @@ const AdminModule = (function () {
         renderEditAlbumDriveLinks();
         renderModalCoverPhotoPicker();
         renderAdminAlbumsTable();
+        renderAlbumManagePage();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
 
@@ -1820,6 +2410,7 @@ const AdminModule = (function () {
         saveAllAlbums(albums);
         closeEditAlbumSettingsModal();
         populateAdminDashboard();
+        renderAlbumManagePage();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
         App.showToast("Đã lưu cài đặt và ảnh bìa Album thành công!");
@@ -1859,6 +2450,7 @@ const AdminModule = (function () {
             if (urlInput) urlInput.value = "";
             populateAdminDashboard();
             renderModalCoverPhotoPicker();
+            renderAlbumManagePage();
             App.renderHomeShowcase();
             App.renderPublicAlbum();
             App.showToast(`Đã tải ${folderPhotos.length} ảnh từ thư mục Google Drive vào Album!`);
@@ -1898,6 +2490,7 @@ const AdminModule = (function () {
 
         populateAdminDashboard();
         renderModalCoverPhotoPicker();
+        renderAlbumManagePage();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
         App.showToast(`Đã thêm ảnh ${code} vào Album!`);
@@ -1954,6 +2547,7 @@ const AdminModule = (function () {
         populateSelectedAlbumEditor();
         populateAdminDashboard();
         renderModalCoverPhotoPicker();
+        renderAlbumManagePage();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
         App.showToast(`Đã tải lên ${fileList.length} ảnh (Đã lấy Vị trí & Ngày chụp từ EXIF ảnh)!`);
@@ -1968,6 +2562,7 @@ const AdminModule = (function () {
         album.photos = album.photos.filter(p => p.id !== photoId);
         saveAllAlbums(albums);
         populateAdminDashboard();
+        renderAlbumManagePage();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
         App.showToast("Đã xoá ảnh khỏi Album.");
@@ -1981,6 +2576,7 @@ const AdminModule = (function () {
         album.coverUrl = url;
         saveAllAlbums(albums);
         populateAdminDashboard();
+        renderAlbumManagePage();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
         App.showToast("Đã đặt ảnh này làm Ảnh bìa Album thành công!");
@@ -2227,6 +2823,7 @@ const AdminModule = (function () {
 
         renderAdminAlbumsTable();
         renderAdminClientSelections();
+        renderAlbumManagePage();
         App.renderPublicAlbum();
         App.showToast("Đã gỡ tương tác để khách chọn lại từ đầu (Có thể khôi phục lại trong 30 ngày)!");
     }
@@ -2244,6 +2841,7 @@ const AdminModule = (function () {
 
         renderAdminAlbumsTable();
         renderAdminClientSelections();
+        renderAlbumManagePage();
         App.renderPublicAlbum();
         App.showToast("Đã khôi phục lại các lượt thả tim và ghi chú trước đó của khách!");
     }
@@ -2375,6 +2973,7 @@ const AdminModule = (function () {
         saveAllAlbums(albums);
         renderModalDeliveredPhotos();
         renderAdminAlbumsTable();
+        renderAlbumManagePage();
         App.renderPublicAlbum();
         App.showToast(`Đã đồng bộ ${driveDelivered.length} Ảnh đã chỉnh từ Google Drive! Khách hàng có thể xem & so sánh Trước/Sau ngay trên link cũ.`);
     }
@@ -2411,6 +3010,7 @@ const AdminModule = (function () {
         saveAllAlbums(albums);
         renderModalDeliveredPhotos();
         renderAdminAlbumsTable();
+        renderAlbumManagePage();
         App.renderPublicAlbum();
         App.showToast(`Đã tải lên ${fileList.length} Ảnh đã chỉnh từ máy tính vào Album!`);
         event.target.value = "";
@@ -2424,6 +3024,7 @@ const AdminModule = (function () {
         saveAllAlbums(albums);
         renderModalDeliveredPhotos();
         renderAdminAlbumsTable();
+        renderAlbumManagePage();
         App.renderPublicAlbum();
     }
 
@@ -2435,6 +3036,7 @@ const AdminModule = (function () {
         saveAllAlbums(albums);
         renderModalDeliveredPhotos();
         renderAdminAlbumsTable();
+        renderAlbumManagePage();
         App.renderPublicAlbum();
         App.showToast("Đã xoá danh sách Ảnh đã chỉnh của Album này.");
     }
@@ -2469,6 +3071,25 @@ const AdminModule = (function () {
         addSubmission,
         populateAdminDashboard,
         selectAlbumForEditing,
+        openAlbumManagePage,
+        openCustomAlbumModal,
+        renderAlbumManagePage,
+        toggleCoverSelectMode,
+        handleUploadCoverFile,
+        setManageStatFilter,
+        setManageSubTab,
+        setManageSortOrder,
+        toggleFaceFilterDropdown,
+        setManagePersonFilter,
+        handleFaceSampleSearch,
+        toggleMoreFeaturesDropdown,
+        toggleLockAlbumFromManagePage,
+        sendAlbumAction,
+        togglePhotoStar,
+        togglePhotoHeartAdmin,
+        togglePhotoDownloadSelect,
+        downloadManagePagePhotos,
+        handleManagePhotoCardClick,
         openEditAlbumSettingsModal,
         closeEditAlbumSettingsModal,
         switchEditModalTab,
