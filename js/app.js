@@ -668,6 +668,7 @@ const App = (function () {
         const heroDownloadBtn = document.getElementById('heroClientDownloadBtn');
         const heroSubmitBtn = document.getElementById('heroClientSubmitBtn');
         const heroViewGalleryLabel = document.getElementById('heroViewGalleryBtnLabel');
+        const heroBackBtn = document.getElementById('heroBackToHomeBtn');
         const guideToolbar = document.getElementById('galleryToolbarAnchor');
         const navAlbumContextual = document.getElementById('navAlbumContextualControls');
         const reminderBtn = document.getElementById('albumTopReminderBtn');
@@ -678,6 +679,7 @@ const App = (function () {
         if (heroViewGalleryLabel) {
             heroViewGalleryLabel.innerText = isClientMode ? 'Xem Ảnh & Chọn Ảnh Lưu Về' : 'Xem Danh Sách Ảnh';
         }
+        if (heroBackBtn) heroBackBtn.classList.toggle('hidden', isClientMode);
         if (guideToolbar) guideToolbar.classList.toggle('hidden', !isClientMode);
         if (navAlbumContextual) navAlbumContextual.classList.toggle('hidden', !isClientMode);
         if (reminderBtn) {

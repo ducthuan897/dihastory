@@ -180,7 +180,8 @@
                             <span>Nhóm địa điểm</span>
                         </button>
 
-                        <div class="flex items-center bg-white border border-zinc-200 hover:border-zinc-300 rounded-full px-2.5 py-1.5 text-xs transition shadow-2xs">
+                        <div
+                            class="flex items-center bg-white border border-zinc-200 hover:border-zinc-300 rounded-full px-2.5 py-1.5 text-xs transition shadow-2xs">
                             <i class="fa-solid fa-arrow-down-short-wide text-zinc-400 mr-1.5 text-[11px]"></i>
                             <select onchange="App.setHomeTimeSort(this.value)"
                                 class="bg-transparent font-medium text-zinc-800 outline-none cursor-pointer text-xs pr-1">
@@ -267,6 +268,15 @@
                 <div class="album-hero-overlay"></div>
 
                 <div class="relative z-10 text-center text-white px-4 max-w-3xl mx-auto">
+                    <!-- Back to Home Showcase Button -->
+                    <div class="mb-4">
+                        <button id="heroBackToHomeBtn" type="button" onclick="App.showView('home')"
+                            class="inline-flex items-center gap-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white border border-white/20 text-xs font-semibold px-4 py-1.5 rounded-full transition shadow-md">
+                            <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                            <span>Quay lại Trang Chủ</span>
+                        </button>
+                    </div>
+
                     <div id="heroClientNameBadge"
                         class="inline-flex items-center space-x-2 bg-white/15 backdrop-blur-md border border-white/20 px-3.5 py-1 rounded-full text-xs uppercase tracking-widest mb-4">
                         <i class="fa-solid fa-heart text-rose-400"></i>
@@ -289,11 +299,6 @@
                     </div>
 
                     <div class="flex flex-wrap items-center justify-center gap-3">
-                        <button id="heroViewGalleryBtn" type="button" onclick="App.scrollToGallery()"
-                            class="bg-white text-zinc-900 hover:bg-zinc-100 font-semibold px-6 py-3 rounded-full text-sm transition shadow-lg flex items-center gap-2">
-                            <span id="heroViewGalleryBtnLabel">Xem Album</span>
-                            <i class="fa-solid fa-arrow-down text-xs"></i>
-                        </button>
                         <button id="heroClientDownloadBtn" type="button" onclick="App.openDownloadModal()"
                             class="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-5 py-3 rounded-full text-sm transition shadow-lg flex items-center gap-2">
                             <i class="fa-solid fa-cloud-arrow-down"></i>
@@ -621,12 +626,18 @@
                             <span class="inline-flex items-center gap-1 text-zinc-600">
                                 <i class="fa-solid fa-location-dot text-rose-500"></i>
                                 <span>Địa điểm:</span>
-                                <strong id="managePageCityBadge" class="text-zinc-900 font-bold cursor-pointer hover:underline hover:text-rose-600" onclick="AdminModule.quickChangeAlbumLocation()" title="Bấm để đổi nhanh Địa điểm"></strong>
+                                <strong id="managePageCityBadge"
+                                    class="text-zinc-900 font-bold cursor-pointer hover:underline hover:text-rose-600"
+                                    onclick="AdminModule.quickChangeAlbumLocation()"
+                                    title="Bấm để đổi nhanh Địa điểm"></strong>
                             </span>
                             <span class="inline-flex items-center gap-1 text-zinc-600">
                                 <i class="fa-regular fa-calendar text-emerald-600"></i>
                                 <span>Ngày chụp:</span>
-                                <strong id="managePageDateBadge" class="text-zinc-900 font-bold cursor-pointer hover:underline hover:text-emerald-700" onclick="AdminModule.quickChangeAlbumDate()" title="Bấm để chỉnh sửa Ngày chụp"></strong>
+                                <strong id="managePageDateBadge"
+                                    class="text-zinc-900 font-bold cursor-pointer hover:underline hover:text-emerald-700"
+                                    onclick="AdminModule.quickChangeAlbumDate()"
+                                    title="Bấm để chỉnh sửa Ngày chụp"></strong>
                             </span>
                             <button type="button" onclick="AdminModule.toggleLockAlbumFromManagePage()"
                                 id="managePageViewStatusBadge"
@@ -993,19 +1004,43 @@
                                 <span class="text-[10px] text-zinc-400">Chọn nhanh 1 chạm 👇</span>
                             </div>
                             <div class="flex flex-wrap gap-1 mb-2" id="createQuickLocationChips">
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Đà Lạt')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Đà Lạt</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Hà Nội')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Hà Nội</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('TP. Hồ Chí Minh')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">TP.HCM</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Thủ Dầu Một')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Thủ Dầu Một</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Phú Quốc')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Phú Quốc</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Đà Nẵng')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Đà Nẵng</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Hội An')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Hội An</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Nha Trang')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Nha Trang</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Sa Pa')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Sa Pa</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Ninh Bình')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Ninh Bình</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Huế')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Huế</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Vũng Tàu')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Vũng Tàu</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Quy Nhơn')" class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Quy Nhơn</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Đà Lạt')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Đà
+                                    Lạt</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Hà Nội')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Hà
+                                    Nội</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('TP. Hồ Chí Minh')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">TP.HCM</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Thủ Dầu Một')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Thủ
+                                    Dầu Một</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Phú Quốc')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Phú
+                                    Quốc</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Đà Nẵng')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Đà
+                                    Nẵng</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Hội An')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Hội
+                                    An</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Nha Trang')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Nha
+                                    Trang</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Sa Pa')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Sa
+                                    Pa</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Ninh Bình')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Ninh
+                                    Bình</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Huế')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Huế</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Vũng Tàu')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Vũng
+                                    Tàu</button>
+                                <button type="button" onclick="AdminModule.quickPickCreateCity('Quy Nhơn')"
+                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Quy
+                                    Nhơn</button>
                             </div>
                             <input type="text" id="createAlbumCityInput" oninput="delete this.dataset.autoFilled"
                                 placeholder="Tự điền từ ảnh hoặc gõ: Đà Lạt, Phú Quốc, Hội An..."
@@ -1022,7 +1057,8 @@
                             <input type="date" id="createAlbumDateInput" oninput="delete this.dataset.autoFilled"
                                 class="w-full bg-white px-3 py-2 rounded-xl border border-zinc-200 text-xs font-medium text-zinc-800 outline-none focus:border-zinc-900 transition">
                             <p class="text-[11px] text-zinc-400 mt-2 leading-relaxed">
-                                <i class="fa-solid fa-camera mr-1 text-zinc-400"></i>Hệ thống tự động quét ngày chụp gốc từ EXIF từng bức ảnh tải lên.
+                                <i class="fa-solid fa-camera mr-1 text-zinc-400"></i>Hệ thống tự động quét ngày chụp gốc
+                                từ EXIF từng bức ảnh tải lên.
                             </p>
                         </div>
                     </div>
@@ -1224,7 +1260,8 @@
                             <li>Vào <a href="https://script.google.com/home/start" target="_blank"
                                     rel="noopener noreferrer"
                                     class="text-rose-600 underline font-semibold">script.google.com</a> &rarr; Bấm
-                                <strong>Dự án mới (New project)</strong>.</li>
+                                <strong>Dự án mới (New project)</strong>.
+                            </li>
                             <li>Xóa hết mã cũ trong file <code>Mã.gs</code>, bấm nút <strong>Sao chép mã</strong> ở trên
                                 rồi dán vào và bấm <strong>Lưu</strong>.</li>
                             <li>Bấm <strong>Triển khai (Deploy)</strong> ở góc phải &rarr; Chọn <strong>Tùy chọn triển
@@ -1233,7 +1270,8 @@
                             <li>Mục <strong>Ai có quyền truy cập (Who has access)</strong>: Chọn <strong>Bất kỳ ai
                                     (Anyone)</strong> &rarr; Bấm <strong>Triển khai</strong>.</li>
                             <li>Sao chép đường link Web App (dạng
-                                <code>https://script.google.com/macros/s/.../exec</code>) và dán vào ô bên trên.</li>
+                                <code>https://script.google.com/macros/s/.../exec</code>) và dán vào ô bên trên.
+                            </li>
                         </ol>
                     </div>
 
