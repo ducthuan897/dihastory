@@ -34,8 +34,12 @@ const AdminModule = (function () {
 
     function updateDriveApiKeyBadge() {
         const key = getGoogleDriveApiKey();
-        const badge = document.getElementById('driveApiKeyBadge');
-        if (badge) {
+        const badges = [
+            document.getElementById('driveApiKeyBadge'),
+            document.getElementById('adminHeaderDriveBadge')
+        ];
+        badges.forEach(badge => {
+            if (!badge) return;
             if (key) {
                 badge.innerText = "Đã kết nối";
                 badge.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold";
@@ -43,7 +47,7 @@ const AdminModule = (function () {
                 badge.innerText = "Chưa kết nối";
                 badge.className = "text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium";
             }
-        }
+        });
     }
 
     function openDriveApiKeyModal() {
@@ -52,7 +56,11 @@ const AdminModule = (function () {
         if (input) input.value = getGoogleDriveApiKey();
         const alert = document.getElementById('driveApiKeyAlert');
         if (alert) alert.classList.add('hidden');
-        if (modal) modal.classList.remove('hidden');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.zIndex = '9999';
+            setTimeout(() => { if (input) input.focus(); }, 100);
+        }
     }
 
     function closeDriveApiKeyModal() {
