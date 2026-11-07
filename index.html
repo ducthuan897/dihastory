@@ -53,7 +53,7 @@
                     </div>
                 </div>
 
-                <!-- Center: 3 Pages Navigation -->
+                <!-- Center: Main Navigation -->
                 <nav class="hidden md:flex items-center bg-zinc-100/80 p-1 rounded-full border border-zinc-200/80">
                     <button
                         id="navTabHome"
@@ -62,7 +62,7 @@
                         class="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-zinc-900 text-white transition flex items-center gap-1.5 shadow-sm"
                     >
                         <i class="fa-solid fa-compass text-xs"></i>
-                        <span>1. Trang Chủ (Dự Án Công Khai)</span>
+                        <span>Trang Chủ</span>
                     </button>
                     <button
                         id="navTabAlbum"
@@ -71,7 +71,7 @@
                         class="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 transition flex items-center gap-1.5"
                     >
                         <i class="fa-regular fa-images text-xs"></i>
-                        <span>2. Trang Album Khách Hàng</span>
+                        <span>Album Khách Hàng</span>
                     </button>
                     <button
                         id="navTabAdmin"
@@ -80,7 +80,7 @@
                         class="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 transition flex items-center gap-1.5"
                     >
                         <i class="fa-solid fa-sliders text-xs"></i>
-                        <span>3. Trang Quản Trị Album</span>
+                        <span>Quản Trị</span>
                     </button>
                 </nav>
 
@@ -156,16 +156,16 @@
                 </div>
             </div>
 
-            <!-- Mobile 3-Page Switcher Bar -->
+            <!-- Mobile Switcher Bar -->
             <div class="flex md:hidden items-center justify-around py-2 border-t border-zinc-100 text-xs font-semibold">
                 <button type="button" onclick="App.showView('home')" class="px-3 py-1 rounded-full text-zinc-700 hover:bg-zinc-100">
-                    <i class="fa-solid fa-compass mr-1"></i>1. Trang Chủ
+                    <i class="fa-solid fa-compass mr-1"></i>Trang Chủ
                 </button>
                 <button type="button" onclick="App.showView('album')" class="px-3 py-1 rounded-full text-zinc-700 hover:bg-zinc-100">
-                    <i class="fa-regular fa-images mr-1"></i>2. Trang Album
+                    <i class="fa-regular fa-images mr-1"></i>Album
                 </button>
                 <button type="button" onclick="App.showView('admin')" class="px-3 py-1 rounded-full text-zinc-700 hover:bg-zinc-100">
-                    <i class="fa-solid fa-sliders mr-1"></i>3. Quản Trị
+                    <i class="fa-solid fa-sliders mr-1"></i>Quản Trị
                 </button>
             </div>
         </div>
@@ -199,7 +199,7 @@
                     </h1>
 
                     <p class="text-zinc-300 text-sm sm:text-base max-w-2xl mx-auto">
-                        Nơi trưng bày các bộ ảnh kỷ niệm được khách hàng đồng ý chia sẻ công khai, được phân nhóm theo địa điểm và dòng thời gian.
+                        Những câu chuyện tình yêu và khoảnh khắc đáng nhớ được ghi lại qua ống kính Đức Thuận Studio.
                     </p>
 
                     <!-- Client Private Album Lookup Box -->
@@ -211,7 +211,7 @@
                             <input
                                 type="text"
                                 id="quickAlbumCodeInput"
-                                placeholder="Nhập tên miền album hoặc dán Link nhận ảnh (VD: private-hanoi-autumn)..."
+                                placeholder="Nhập mã album hoặc dán đường dẫn nhận ảnh..."
                                 class="w-full pl-10 pr-4 py-3 rounded-full bg-white/95 text-zinc-900 placeholder-zinc-400 text-xs sm:text-sm outline-none shadow-lg"
                             >
                             <i class="fa-solid fa-key absolute left-4 top-3.5 text-zinc-400 text-xs"></i>
@@ -223,9 +223,6 @@
                             Mở Album Khách Hàng &rarr;
                         </button>
                     </form>
-                    <p class="text-[11px] text-zinc-400">
-                        Mẹo thử nhanh mã Album riêng tư (không chiếu trên Trang chủ): <button type="button" onclick="App.openAlbumPage('private-hanoi-autumn')" class="text-amber-300 underline font-mono">?album=private-hanoi-autumn</button>
-                    </p>
                 </div>
             </section>
 
@@ -235,15 +232,15 @@
                     <div>
                         <div class="flex items-center gap-2.5">
                             <span class="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                                <i class="fa-solid fa-globe mr-1"></i>Showcase Công Khai
+                                <i class="fa-solid fa-globe mr-1"></i>Bộ Sưu Tập Tiêu Biểu
                             </span>
-                            <span id="homePublicAlbumsCount" class="text-xs text-zinc-500 font-semibold">3 Dự Án Công Khai</span>
+                            <span id="homePublicAlbumsCount" class="text-xs text-zinc-500 font-semibold">3 Dự Án</span>
                         </div>
                         <h2 class="font-serif-display text-3xl sm:text-4xl font-bold text-zinc-900 mt-1">
                             Các Dự Án Đã Thực Hiện
                         </h2>
                         <p class="text-xs sm:text-sm text-zinc-500">
-                            Chỉ hiển thị các bộ ảnh được khách hàng cho phép đăng công khai và được Admin bật duyệt chiếu.
+                            Khám phá các bộ ảnh kỷ niệm theo từng điểm đến và dấu ấn thời gian.
                         </p>
                     </div>
 
@@ -572,11 +569,11 @@
             <div class="bg-zinc-900 text-white p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <span class="bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[11px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
-                        Trang 3 • Quản Trị Hệ Thống Album (Shotpik)
+                        Quản Trị Studio
                     </span>
-                    <h1 class="text-2xl font-bold mt-1.5">Quản Lý Các Album Đã Tải Lên & Link Trả Ảnh Khách Hàng</h1>
+                    <h1 class="text-2xl font-bold mt-1.5">Quản Lý Album & Bàn Giao Ảnh</h1>
                     <p class="text-xs text-zinc-400 mt-0.5">
-                        Lấy ảnh từ Google Drive hoặc Local, cài đặt Lời nhắc cho khách, Hạn chọn ảnh đếm ngược và nút Hoàn tất chọn ảnh.
+                        Đồng bộ ảnh từ Google Drive hoặc tải lên từ máy tính, thiết lập thời hạn chọn ảnh và theo dõi danh sách ảnh khách chọn.
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -682,11 +679,11 @@
                                 <input type="text" id="adminClientName" required class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-zinc-700 mb-1">Ngày thực hiện (Sắp xếp thời gian)</label>
+                                <label class="block text-xs font-semibold text-zinc-700 mb-1">Ngày chụp</label>
                                 <input type="date" id="adminShootDate" class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-zinc-700 mb-1">Tỉnh / Thành phố (Nhóm địa điểm)</label>
+                                <label class="block text-xs font-semibold text-zinc-700 mb-1">Tỉnh / Thành phố</label>
                                 <input type="text" id="adminCity" placeholder="VD: Đà Lạt, Phú Quốc, Hà Nội..." class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
                             </div>
                             <div>
@@ -736,7 +733,7 @@
                         <div class="grid sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-zinc-700 mb-1">Mã PIN khoá Album (Tuỳ chọn)</label>
-                                <input type="text" id="adminPinCode" placeholder="Để trống nếu không khoá PIN" class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
+                                <input type="password" id="adminPinCode" autocomplete="new-password" placeholder="Để trống nếu không khoá PIN" class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-zinc-700 mb-1">Link YouTube Video Phóng Sự</label>
@@ -913,7 +910,7 @@
             <div class="flex items-center space-x-2">
                 <span class="font-bold text-zinc-900">ĐỨC THUẬN STUDIO</span>
                 <span>•</span>
-                <span>Hệ thống 3 Trang: Trang Chủ Công Khai • Trang Album Khách Hàng • Trang Quản Trị</span>
+                <span>Studio Nhiếp Ảnh & Lưu Giữ Khoảnh Khắc</span>
             </div>
             <p>&copy; 2026 Đức Thuận Studio. Bảo lưu mọi quyền.</p>
         </div>
@@ -1584,7 +1581,7 @@
                         <i class="fa-solid fa-camera-retro"></i>
                     </div>
                     <h3 class="text-xl font-bold text-zinc-900">Đăng Nhập Quản Trị Studio</h3>
-                    <p class="text-xs text-zinc-500 mt-1">Tài khoản mặc định: <code class="bg-zinc-100 px-1.5 py-0.5 rounded">admin</code> / Mật khẩu: <code class="bg-zinc-100 px-1.5 py-0.5 rounded">123456</code></p>
+                    <p class="text-xs text-zinc-500 mt-1">Vui lòng nhập thông tin tài khoản quản trị viên để tiếp tục.</p>
                 </div>
 
                 <div id="loginAlert" class="hidden mb-4 p-3 rounded-lg bg-rose-50 text-rose-600 text-xs border border-rose-200">
@@ -1594,12 +1591,12 @@
                 <form onsubmit="AuthModule.handleLoginSubmit(event)" class="space-y-4">
                     <div>
                         <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Tài khoản</label>
-                        <input type="text" id="usernameInput" value="admin" required placeholder="admin" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-zinc-900">
+                        <input type="text" id="usernameInput" required autocomplete="username" placeholder="Nhập tài khoản..." class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-zinc-900">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Mật khẩu</label>
-                        <input type="password" id="passwordInput" value="123456" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-zinc-900">
+                        <input type="password" id="passwordInput" required autocomplete="current-password" placeholder="Nhập mật khẩu..." class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-zinc-900">
                     </div>
 
                     <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-semibold py-2.5 rounded-xl transition text-sm">

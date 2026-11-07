@@ -47,11 +47,15 @@ const AuthModule = (function () {
     }
 
     function openLoginModal() {
+        const passInput = document.getElementById('passwordInput');
+        if (passInput) passInput.value = '';
         document.getElementById('loginModal').classList.remove('hidden');
         document.getElementById('usernameInput').focus();
     }
 
     function closeLoginModal() {
+        const passInput = document.getElementById('passwordInput');
+        if (passInput) passInput.value = '';
         document.getElementById('loginModal').classList.add('hidden');
         document.getElementById('loginAlert').classList.add('hidden');
     }
