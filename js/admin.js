@@ -3103,7 +3103,7 @@ const AdminModule = (function () {
             }
         }
 
-        const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title);
+        const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title, album.city, album.date);
         if (derived.date) album.date = derived.date;
         if (derived.city && derived.city !== "Việt Nam") album.city = derived.city;
         if (derived.location) album.location = derived.location;
