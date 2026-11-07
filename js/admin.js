@@ -1623,10 +1623,6 @@ const AdminModule = (function () {
                 }
             } catch (e) {}
         }
-                    if (parsed.files && parsed.files.length > 0) break;
-                }
-            } catch (e) {}
-        }
 
         // Enrich files in folder with client-side EXIF GPS & Capture Date (sample up to 8 files in parallel for speed)
         if (parsed.files && parsed.files.length > 0) {
