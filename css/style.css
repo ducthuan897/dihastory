@@ -19,12 +19,12 @@ body {
     font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
 }
 
-/* Hero Cover Banner (Shotpik Style) */
+/* Hero Cover Banner (Shotpik Style - Compact & Elegant) */
 .album-hero {
     position: relative;
-    height: 72vh;
-    min-height: 480px;
-    max-height: 760px;
+    height: 44vh;
+    min-height: 300px;
+    max-height: 450px;
     width: 100%;
     overflow: hidden;
     background-color: #09090b;
@@ -86,8 +86,9 @@ body {
         gap: 8px;
     }
     .album-hero {
-        height: 58vh;
-        min-height: 380px;
+        height: 38vh;
+        min-height: 250px;
+        max-height: 340px;
     }
 }
 

@@ -291,28 +291,28 @@
                     alt="Album Cover" referrerpolicy="no-referrer" class="album-hero-bg">
                 <div class="album-hero-overlay"></div>
 
-                <div class="relative z-10 text-center text-white px-4 max-w-3xl mx-auto">
+                <div class="relative z-10 text-center text-white px-4 max-w-3xl mx-auto py-4 sm:py-6">
                     <!-- Back to Home Showcase Button -->
-                    <div class="mb-4">
+                    <div class="mb-2.5">
                         <button id="heroBackToHomeBtn" type="button" onclick="App.showView('home')"
-                            class="inline-flex items-center gap-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white border border-white/20 text-xs font-semibold px-4 py-1.5 rounded-full transition shadow-md">
+                            class="inline-flex items-center gap-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white border border-white/20 text-xs font-semibold px-3.5 py-1 rounded-full transition shadow-md">
                             <i class="fa-solid fa-arrow-left text-[11px]"></i>
                             <span>Quay lại Trang Chủ</span>
                         </button>
                     </div>
 
                     <div id="heroClientNameBadge"
-                        class="inline-flex items-center space-x-2 bg-white/15 backdrop-blur-md border border-white/20 px-3.5 py-1 rounded-full text-xs uppercase tracking-widest mb-4">
+                        class="inline-flex items-center space-x-2 bg-white/15 backdrop-blur-md border border-white/20 px-3 py-0.5 rounded-full text-[11px] uppercase tracking-widest mb-2">
                         <i class="fa-solid fa-heart text-rose-400"></i>
                         <span id="heroClientName">Minh Quân & Lan Anh</span>
                     </div>
 
                     <h1 id="heroAlbumTitle"
-                        class="font-serif-display text-4xl sm:text-6xl font-semibold tracking-wide leading-tight mb-4">
+                        class="font-serif-display text-2xl sm:text-4xl md:text-5xl font-semibold tracking-wide leading-tight mb-2 sm:mb-2.5">
                         Wedding: Minh Quân & Lan Anh
                     </h1>
 
-                    <div class="flex flex-wrap items-center justify-center gap-4 text-xs sm:text-sm text-zinc-200 mb-8">
+                    <div class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 text-xs text-zinc-200 mb-3.5 sm:mb-5">
                         <span><i class="fa-regular fa-calendar mr-1.5"></i><span
                                 id="heroShootDate">07.11.2026</span></span>
                         <span>•</span>
@@ -322,14 +322,14 @@
                         <span><i class="fa-regular fa-images mr-1.5"></i><span id="heroPhotoCount">12 Ảnh</span></span>
                     </div>
 
-                    <div class="flex flex-wrap items-center justify-center gap-3">
+                    <div class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
                         <button id="heroClientDownloadBtn" type="button" onclick="App.openDownloadModal()"
-                            class="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-5 py-3 rounded-full text-sm transition shadow-lg flex items-center gap-2">
+                            class="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm transition shadow-lg flex items-center gap-2">
                             <i class="fa-solid fa-cloud-arrow-down"></i>
                             <span>Lưu Ảnh Đã Chọn Về Máy</span>
                         </button>
                         <button id="heroClientSubmitBtn" type="button" onclick="App.openSubmitSelectionModal()"
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-3 rounded-full text-sm transition shadow-lg flex items-center gap-2">
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm transition shadow-lg flex items-center gap-2">
                             <i class="fa-regular fa-circle-check"></i>
                             <span>Hoàn Tất Chọn Ảnh</span>
                         </button>
