@@ -144,7 +144,7 @@ const AdminModule = (function () {
             isSelectionLockedBySubmit: false,
             youtubeId: "",
             coverUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1800&q=85",
-            description: "Album riêng tư gửi link trực tiếp cho khách hàng chọn ảnh in (Không hiển thị ngoài Trang Chủ).",
+            description: "Bộ ảnh ngoại cảnh mùa thu tại Phố Cổ & Hồ Gươm, Hà Nội.",
             photos: [
                 { id: "h1", code: "HN_4001", location: "Hồ Gươm - Hà Nội", capturedAt: "2026-11-05T06:30", title: "Thu Hà Nội bên hồ", url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80" },
                 { id: "h2", code: "HN_4002", location: "Hồ Gươm - Hà Nội", capturedAt: "2026-11-05T07:15", title: "Nắng thu dịu ngọt", url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80" },
@@ -670,7 +670,7 @@ const AdminModule = (function () {
                 >
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <!-- Album Info -->
-                        <div class="flex items-start sm:items-center gap-3.5 cursor-pointer" onclick="AdminModule.selectAlbumForEditing('${album.id}')">
+                        <div class="flex items-start sm:items-center gap-3.5 cursor-pointer" onclick="App.openAlbumPage('${album.id}')">
                             <img src="${album.coverUrl}" alt="${album.title}" class="w-16 h-16 rounded-xl object-cover border border-zinc-200 shrink-0">
                             <div>
                                 <div class="flex flex-wrap items-center gap-1.5">
@@ -751,7 +751,7 @@ const AdminModule = (function () {
 
                             <button
                                 type="button"
-                                onclick="AdminModule.selectAlbumForEditing('${album.id}')"
+                                onclick="AdminModule.openEditAlbumSettingsModal('${album.id}')"
                                 class="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 text-xs font-semibold transition"
                             >
                                 <i class="fa-solid fa-pen-to-square mr-1"></i>Sửa / Đặt ảnh bìa
@@ -787,6 +787,66 @@ const AdminModule = (function () {
         }).join('');
     }
 
+    function openEditAlbumSettingsModal(albumId) {
+        if (albumId) {
+            activeAdminAlbumId = albumId;
+            renderAdminAlbumsTable();
+        }
+        populateSelectedAlbumEditor();
+        renderModalCoverPhotoPicker();
+        const modal = document.getElementById('editAlbumSettingsModal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeEditAlbumSettingsModal() {
+        const modal = document.getElementById('editAlbumSettingsModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function renderModalCoverPhotoPicker() {
+        const album = getActiveAdminAlbum();
+        if (!album) return;
+
+        const previewImg = document.getElementById('modalCoverPreviewImg');
+        const currentCoverUrl = document.getElementById('adminCoverUrl')?.value || album.coverUrl;
+        if (previewImg) previewImg.src = currentCoverUrl;
+
+        const grid = document.getElementById('modalCoverPhotoPickerGrid');
+        if (!grid) return;
+
+        if (!album.photos || !album.photos.length) {
+            grid.innerHTML = `<span class="text-xs text-zinc-400 italic">Album chưa có ảnh nào. Hãy tải ảnh lên hoặc dán URL ảnh bìa bên dưới.</span>`;
+            return;
+        }
+
+        grid.innerHTML = album.photos.map(photo => {
+            const isSelectedCover = currentCoverUrl === photo.url;
+            return `
+                <button
+                    type="button"
+                    onclick="AdminModule.pickCoverPhotoInModal('${photo.url}')"
+                    class="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 transition ${
+                        isSelectedCover
+                            ? 'border-amber-500 ring-2 ring-amber-400 scale-105'
+                            : 'border-zinc-200 opacity-80 hover:opacity-100 hover:border-amber-400'
+                    }"
+                    title="Chọn ảnh ${photo.code} làm ảnh bìa"
+                >
+                    <img src="${photo.url}" alt="${photo.code}" class="w-full h-full object-cover">
+                    ${isSelectedCover ? '<span class="absolute inset-0 bg-amber-500/25 flex items-center justify-center text-white text-xs drop-shadow"><i class="fa-solid fa-check"></i></span>' : ''}
+                </button>
+            `;
+        }).join('');
+    }
+
+    function pickCoverPhotoInModal(url) {
+        const coverInput = document.getElementById('adminCoverUrl');
+        const previewImg = document.getElementById('modalCoverPreviewImg');
+        if (coverInput) coverInput.value = url;
+        if (previewImg) previewImg.src = url;
+        renderModalCoverPhotoPicker();
+    }
+
     function populateSelectedAlbumEditor() {
         const album = getActiveAdminAlbum();
         if (!album) return;
@@ -817,6 +877,9 @@ const AdminModule = (function () {
         setVal('adminSelectionLimit', album.selectionLimit || 10);
         setVal('adminPinCode', album.pinCode || "");
         setVal('adminYoutubeUrl', album.youtubeId ? `https://www.youtube.com/watch?v=${album.youtubeId}` : "");
+
+        const previewImg = document.getElementById('modalCoverPreviewImg');
+        if (previewImg) previewImg.src = album.coverUrl;
 
         setChk('adminIsPublicCheckbox', album.isPublic);
         setChk('adminReminderEnabledCheckbox', album.reminderEnabled);
@@ -901,10 +964,11 @@ const AdminModule = (function () {
         album.youtubeId = ytInput ? (extractYouTubeID(ytInput) || album.youtubeId) : "";
 
         saveAllAlbums(albums);
+        closeEditAlbumSettingsModal();
         populateAdminDashboard();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
-        App.showToast("Đã lưu thông tin cài đặt Album thành công!");
+        App.showToast("Đã lưu cài đặt và ảnh bìa Album thành công!");
     }
 
     function addPhotoByUrl(event) {
@@ -1235,6 +1299,9 @@ const AdminModule = (function () {
         addSubmission,
         populateAdminDashboard,
         selectAlbumForEditing,
+        openEditAlbumSettingsModal,
+        closeEditAlbumSettingsModal,
+        pickCoverPhotoInModal,
         openCreateAlbumModal,
         closeCreateAlbumModal,
         switchCreateAlbumTab,

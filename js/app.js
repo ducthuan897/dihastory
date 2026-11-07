@@ -280,7 +280,7 @@ const App = (function () {
                                 </span>
                                 <div>
                                     <h2 class="font-serif-display text-2xl sm:text-3xl font-bold text-zinc-900">${city}</h2>
-                                    <p class="text-xs text-zinc-500">${albumsInCity.length} bộ ảnh công khai • Sắp xếp theo thời gian (${homeTimeSort === 'newest' ? 'Mới nhất trước' : 'Cũ nhất trước'})</p>
+                                    <p class="text-xs text-zinc-500">${albumsInCity.length} bộ ảnh kỷ niệm tại ${city}</p>
                                 </div>
                             </div>
                             <span class="text-xs bg-zinc-100 text-zinc-700 px-3 py-1 rounded-full font-semibold">${albumsInCity.length} Album</span>
