@@ -669,144 +669,80 @@ function testRun() {
     let activeEditModalTab = 'settings'; // 'settings' | 'selections' | 'delivered'
     let activeSelectorPersonFilter = 'ALL';
 
+    const DEMO_SAMPLE_IDS = ['wedding-minhquan-lananh', 'couple-phuquoc-sunset', 'muse-dalat-portrait', 'private-hanoi-autumn'];
+
     const DEFAULT_ALBUMS = [
         {
-            id: "wedding-minhquan-lananh",
-            title: "Wedding: Minh Quân & Lan Anh",
-            clientName: "Minh Quân & Lan Anh",
-            date: "2026-11-07",
-            city: "Đà Lạt",
-            location: "Dalat Palace Heritage, Đà Lạt",
-            photographer: "Đức Thuận Studio",
-            selectionLimit: 10,
-            pinCode: "",
-            isPublic: true,
-            tags: ["Đà Lạt", "Wedding", "Pre-Wedding"],
-            sourceType: "drive",
-            driveLinks: ["https://drive.google.com/drive/folders/1aBcDeFgHiJkLmNoPqRsTuVwXyZ"],
-            reminderEnabled: true,
-            reminderText: "Chào Minh Quân & Lan Anh! Hai bạn vui lòng thả tim chọn 10 tấm ảnh ưng ý nhất để Studio tiến hành chỉnh sửa chi tiết và in ảnh cổng trước ngày 15/11 nhé!",
-            deadlineEnabled: true,
-            deadlineAt: "2026-11-15T23:59",
-            completeLockEnabled: true,
-            isSelectionLockedBySubmit: false,
-            youtubeId: "dQw4w9WgXcQ",
-            coverUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=85",
-            description: "Bộ ảnh phóng sự cưới và ngoại cảnh bình minh tại Đà Lạt.",
-            photos: [
-                { id: "p1", code: "IMG_1001", location: "Đồi Thông Đa Phú - Đà Lạt", capturedAt: "2026-11-07T05:45", title: "Sương sớm đồi thông", url: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p2", code: "IMG_1002", location: "Đồi Thông Đa Phú - Đà Lạt", capturedAt: "2026-11-07T06:15", title: "Nắng mai chạm ngõ", url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p3", code: "IMG_1003", location: "Đồi Thông Đa Phú - Đà Lạt", capturedAt: "2026-11-07T06:50", title: "Khoảnh khắc nắm tay", url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p4", code: "IMG_1004", location: "Đồi Thông Đa Phú - Đà Lạt", capturedAt: "2026-11-07T07:20", title: "Hẹn ước trăm năm", url: "https://images.unsplash.com/photo-1529636798458-92182e662485?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p5", code: "IMG_1005", location: "Nhà Thờ Con Gà - Đà Lạt", capturedAt: "2026-11-07T09:30", title: "Cô dâu chuẩn bị lễ", url: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p6", code: "IMG_1006", location: "Nhà Thờ Con Gà - Đà Lạt", capturedAt: "2026-11-07T10:05", title: "Hoa cưới tinh khôi", url: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p7", code: "IMG_1007", location: "Nhà Thờ Con Gà - Đà Lạt", capturedAt: "2026-11-07T10:40", title: "Nghi thức trao nhẫn", url: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p8", code: "IMG_1008", location: "Nhà Thờ Con Gà - Đà Lạt", capturedAt: "2026-11-07T11:15", title: "Nụ cười hạnh phúc", url: "https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p9", code: "IMG_1009", location: "Dalat Palace Heritage - Đà Lạt", capturedAt: "2026-11-07T17:10", title: "Chiều hoàng hôn bên hồ", url: "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p10", code: "IMG_1010", location: "Dalat Palace Heritage - Đà Lạt", capturedAt: "2026-11-07T18:30", title: "Không gian bàn tiệc tối", url: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p11", code: "IMG_1011", location: "Dalat Palace Heritage - Đà Lạt", capturedAt: "2026-11-07T19:15", title: "Điệu nhảy đầu tiên", url: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=80" },
-                { id: "p12", code: "IMG_1012", location: "Dalat Palace Heritage - Đà Lạt", capturedAt: "2026-11-07T20:00", title: "Nâng ly chúc mừng", url: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=1200&q=80" }
-            ]
-        },
-        {
-            id: "couple-phuquoc-sunset",
-            title: "Love Story: Hoàng Hôn Phú Quốc",
-            clientName: "Hoàng Nam & Bảo Ngọc",
-            date: "2026-11-02",
-            city: "Phú Quốc",
-            location: "Sunset Sanato & Bãi Sao, Phú Quốc",
-            photographer: "Đức Thuận Studio",
-            selectionLimit: 12,
-            pinCode: "",
-            isPublic: true,
-            tags: ["Phú Quốc", "Couple", "Sunset"],
-            sourceType: "drive",
-            driveLinks: [],
-            reminderEnabled: false,
-            reminderText: "",
-            deadlineEnabled: false,
-            deadlineAt: "",
-            completeLockEnabled: true,
-            isSelectionLockedBySubmit: false,
-            youtubeId: "L_LUpnjgPso",
-            coverUrl: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=1800&q=85",
-            description: "Kỷ niệm 5 năm bên nhau giữa biển xanh và hoàng hôn đảo ngọc Phú Quốc.",
-            photos: [
-                { id: "c1", code: "RAW_3011", location: "Bãi Sao - Phú Quốc", capturedAt: "2026-11-02T14:30", title: "Bước chân trên cát trắng", url: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=1200&q=80" },
-                { id: "c2", code: "RAW_3012", location: "Bãi Sao - Phú Quốc", capturedAt: "2026-11-02T15:10", title: "Tiếng cười bên sóng biển", url: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1200&q=80" },
-                { id: "c3", code: "RAW_3013", location: "Bãi Sao - Phú Quốc", capturedAt: "2026-11-02T15:45", title: "Gió biển dịu êm", url: "https://images.unsplash.com/photo-1474552226712-ac0f0961a954?auto=format&fit=crop&w=1200&q=80" },
-                { id: "c4", code: "RAW_3014", location: "Sunset Sanato - Phú Quốc", capturedAt: "2026-11-02T17:05", title: "Ánh nắng chiều tà", url: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1200&q=80" },
-                { id: "c5", code: "RAW_3015", location: "Sunset Sanato - Phú Quốc", capturedAt: "2026-11-02T17:35", title: "Ôm trọn hoàng hôn", url: "https://images.unsplash.com/photo-1545232972-90466c963042?auto=format&fit=crop&w=1200&q=80" },
-                { id: "c6", code: "RAW_3016", location: "Sunset Sanato - Phú Quốc", capturedAt: "2026-11-02T17:55", title: "Bản tình ca biển đảo", url: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1200&q=80" }
-            ]
-        },
-        {
-            id: "muse-dalat-portrait",
-            title: "Muse Concept: Nàng Thơ Mùa Thu",
-            clientName: "Khánh Linh",
-            date: "2026-10-25",
-            city: "Đà Lạt",
-            location: "Hồ Tuyền Lâm & Dốc Nhà Bò, Đà Lạt",
-            photographer: "Đức Thuận Studio",
-            selectionLimit: 8,
-            pinCode: "",
-            isPublic: true,
-            tags: ["Đà Lạt", "Portrait", "Muse"],
-            sourceType: "local",
-            driveLinks: [],
-            reminderEnabled: false,
-            reminderText: "",
-            deadlineEnabled: false,
-            deadlineAt: "",
-            completeLockEnabled: false,
-            isSelectionLockedBySubmit: false,
-            youtubeId: "jfKfPfyJRdk",
-            coverUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1800&q=85",
-            description: "Bộ ảnh chân dung nàng thơ phong cách màu phim trong trẻo tại Đà Lạt.",
-            photos: [
-                { id: "m1", code: "DSC_2001", location: "Hồ Tuyền Lâm - Đà Lạt", capturedAt: "2026-10-25T08:00", title: "Ánh nhìn trong veo", url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80" },
-                { id: "m2", code: "DSC_2002", location: "Hồ Tuyền Lâm - Đà Lạt", capturedAt: "2026-10-25T08:35", title: "Nắng sớm bên hồ", url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80" },
-                { id: "m3", code: "DSC_2003", location: "Hồ Tuyền Lâm - Đà Lạt", capturedAt: "2026-10-25T09:15", title: "Góc nghiêng thần thái", url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80" },
-                { id: "m4", code: "DSC_2004", location: "Hồ Tuyền Lâm - Đà Lạt", capturedAt: "2026-10-25T09:50", title: "Gió chiều thảo nguyên", url: "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format&fit=crop&w=1200&q=80" },
-                { id: "m5", code: "DSC_2005", location: "Dốc Nhà Bò - Đà Lạt", capturedAt: "2026-10-25T15:20", title: "Màu phim hoài niệm", url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1200&q=80" },
-                { id: "m6", code: "DSC_2006", location: "Dốc Nhà Bò - Đà Lạt", capturedAt: "2026-10-25T16:00", title: "Dạo bước phố hoa", url: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1200&q=80" },
-                { id: "m7", code: "DSC_2007", location: "Dốc Nhà Bò - Đà Lạt", capturedAt: "2026-10-25T16:30", title: "Chiều thu lắng đọng", url: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=1200&q=80" },
-                { id: "m8", code: "DSC_2008", location: "Dốc Nhà Bò - Đà Lạt", capturedAt: "2026-10-25T17:00", title: "Nét đẹp tự nhiên", url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1200&q=80" }
-            ]
-        },
-        {
-            id: "private-hanoi-autumn",
-            title: "Pre-Wedding: Tuấn Kiệt & Mai Phương",
-            clientName: "Tuấn Kiệt & Mai Phương",
-            date: "2026-11-05",
-            city: "Hà Nội",
-            location: "Phố Cổ & Hồ Gươm, Hà Nội",
+            id: "gian-than-dat-09",
+            title: "Gian thần Đạt 09",
+            clientName: "Nguyễn Thành Đạt",
+            date: "2026-10-19",
+            city: "Thủ Dầu Một",
+            location: "Nhà thờ Phú Cường, Thủ Dầu Một",
             photographer: "Đức Thuận Studio",
             selectionLimit: 15,
             pinCode: "",
-            isPublic: false,
-            tags: ["Hà Nội", "Pre-Wedding", "Mùa Thu"],
+            isPublic: true,
+            tags: [
+                "Thủ Dầu Một",
+                "Chân dung"
+            ],
             sourceType: "drive",
-            driveLinks: ["https://drive.google.com/drive/folders/1HanoiAutumnFolderDemo"],
+            driveLinks: [
+                "https://drive.google.com/drive/folders/1GJ1XAfPhF5wYF9BwqZUL1f96IdLm9t09?usp=drive_link"
+            ],
             reminderEnabled: true,
-            reminderText: "Chào Tuấn Kiệt & Mai Phương! Đây là link ảnh gốc buổi chụp tại Hà Nội, hai bạn bấm thả tim chọn 15 ảnh để Studio hậu kỳ nhé.",
-            deadlineEnabled: true,
-            deadlineAt: "2026-11-20T23:59",
+            reminderText: "Chào Nguyễn Thành Đạt! Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé.",
+            deadlineEnabled: false,
+            deadlineAt: "2026-11-15T23:59",
             completeLockEnabled: true,
             isSelectionLockedBySubmit: false,
             youtubeId: "",
-            coverUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1800&q=85",
-            description: "Bộ ảnh ngoại cảnh mùa thu tại Phố Cổ & Hồ Gươm, Hà Nội.",
+            coverUrl: "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=w1600",
+            description: "Album Gian thần Đạt 09 của khách hàng Nguyễn Thành Đạt (Chụp tại Nhà thờ Phú Cường, Thủ Dầu Một).",
             photos: [
-                { id: "h1", code: "HN_4001", location: "Hồ Gươm - Hà Nội", capturedAt: "2026-11-05T06:30", title: "Thu Hà Nội bên hồ", url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80" },
-                { id: "h2", code: "HN_4002", location: "Hồ Gươm - Hà Nội", capturedAt: "2026-11-05T07:15", title: "Nắng thu dịu ngọt", url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80" },
-                { id: "h3", code: "HN_4003", location: "Phố Phan Đình Phùng - Hà Nội", capturedAt: "2026-11-05T08:45", title: "Con đường lá sấu", url: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1200&q=80" },
-                { id: "h4", code: "HN_4004", location: "Phố Phan Đình Phùng - Hà Nội", capturedAt: "2026-11-05T09:20", title: "Xe hoa mùa thu", url: "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1200&q=80" }
+                {
+                    id: "drv_1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7_1794052824913_1",
+                    driveFileId: "1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7",
+                    code: "DSC00346",
+                    location: "Trường Sa, Bình Dương",
+                    city: "Bình Dương",
+                    lat: 11.051376,
+                    lon: 106.678424,
+                    capturedAt: "2026-07-24T16:28",
+                    title: "DSC00346.jpg",
+                    url: "https://drive.google.com/thumbnail?id=1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7&sz=w1600",
+                    starred: true
+                },
+                {
+                    id: "drv_1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U_1794052824913_2",
+                    driveFileId: "1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U",
+                    code: "DSC01193",
+                    location: "Nhà thờ Phú Cường, Thủ Dầu Một",
+                    city: "Thủ Dầu Một",
+                    lat: 10.980004,
+                    lon: 106.654371,
+                    capturedAt: "2026-10-19T21:35",
+                    title: "DSC01193.jpg",
+                    url: "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=w1600"
+                },
+                {
+                    id: "drv_1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd_1794052824913_3",
+                    driveFileId: "1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd",
+                    code: "DSC01184",
+                    location: "Nhà thờ Phú Cường, Thủ Dầu Một",
+                    city: "Thủ Dầu Một",
+                    lat: 10.980002,
+                    lon: 106.654377,
+                    capturedAt: "2026-10-19T21:23",
+                    title: "DSC01184.jpg",
+                    url: "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd&sz=w1600"
+                }
             ]
         }
     ];
 
-    let activeAdminAlbumId = DEFAULT_ALBUMS[0].id;
+    let activeAdminAlbumId = DEFAULT_ALBUMS[0]?.id || "gian-than-dat-09";
     let memoryAlbumsCache = null;
 
     function getAllAlbums() {
@@ -816,10 +752,14 @@ function testRun() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY_ALBUMS);
             if (raw) {
-                const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    memoryAlbumsCache = parsed;
-                    return parsed;
+                let parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    // Tự động loại bỏ bất kỳ album mẫu cũ nào còn sót lại trong bộ nhớ trình duyệt
+                    parsed = parsed.filter(a => !DEMO_SAMPLE_IDS.includes(a.id));
+                    if (parsed.length > 0) {
+                        memoryAlbumsCache = parsed;
+                        return parsed;
+                    }
                 }
             }
         } catch (e) {
@@ -827,7 +767,6 @@ function testRun() {
         }
         const initial = JSON.parse(JSON.stringify(DEFAULT_ALBUMS));
         memoryAlbumsCache = initial;
-        // Không gọi syncAlbumsToCloud ở đây để tránh ghi đè dữ liệu Cloud DB khi thiết bị mới mở web lần đầu
         return initial;
     }
 
@@ -841,9 +780,13 @@ function testRun() {
         syncAlbumsToCloud(albums);
     }
 
-    // Luôn áp dụng bản DB mới nhất từ Cloud lên toàn bộ mọi thiết bị
+    // Luôn áp dụng bản DB mới nhất từ Cloud lên toàn bộ mọi thiết bị (tự động loại bỏ album mẫu)
     function applyLatestCloudAlbums(incomingAlbums) {
         if (!Array.isArray(incomingAlbums) || incomingAlbums.length === 0) return false;
+        incomingAlbums = incomingAlbums.filter(a => !DEMO_SAMPLE_IDS.includes(a.id));
+        if (incomingAlbums.length === 0) {
+            incomingAlbums = JSON.parse(JSON.stringify(DEFAULT_ALBUMS));
+        }
         
         const current = memoryAlbumsCache || [];
         const currentJson = JSON.stringify(current);

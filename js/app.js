@@ -7,7 +7,7 @@
  */
 const App = (function () {
     let currentView = 'home'; // 'home' | 'album' | 'admin'
-    let currentAlbumId = 'wedding-minhquan-lananh';
+    let currentAlbumId = 'gian-than-dat-09';
     let isClientMode = false; // true: Giao diện Link gửi khách chọn ảnh, false: Giao diện Trưng bày Trang chủ chỉ xem
 
     // State for Home Showcase (Page 1)
