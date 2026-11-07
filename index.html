@@ -981,14 +981,33 @@
 
                 <!-- Thông tin Vị trí & Ngày chụp tự động trích xuất từ metadata ảnh (EXIF / GPS / Google Drive) -->
                 <div id="createModalDetectedMetaBox"
-                    class="rounded-xl bg-zinc-50 border border-zinc-200/80 px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs">
+                    class="rounded-2xl bg-zinc-50 border border-zinc-200/80 p-3.5 space-y-2.5 text-xs">
                     <div class="flex items-center gap-2 text-zinc-600 min-w-0">
-                        <i class="fa-solid fa-wand-magic-sparkles text-emerald-600 shrink-0"></i>
-                        <span id="createModalDetectedMetaText" class="truncate">Vị trí &amp; Ngày chụp sẽ tự động trích
-                            xuất từ thông tin ảnh (EXIF / GPS)</span>
+                        <i class="fa-solid fa-wand-magic-sparkles text-emerald-600 shrink-0 text-sm"></i>
+                        <span id="createModalDetectedMetaText" class="truncate font-medium">Vị trí &amp; Ngày chụp sẽ tự động trích xuất từ thông tin ảnh (EXIF / GPS)</span>
                     </div>
-                    <input type="hidden" id="createAlbumCityInput" value="">
-                    <input type="hidden" id="createAlbumDateInput" value="">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 border-t border-zinc-200/60">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-zinc-600 mb-1 flex items-center gap-1">
+                                <i class="fa-solid fa-location-dot text-rose-500"></i>
+                                <span>Địa điểm / Thành phố (Tự động từ ảnh):</span>
+                            </label>
+                            <input type="text" id="createAlbumCityInput"
+                                oninput="delete this.dataset.autoFilled"
+                                placeholder="VD: Đà Lạt, Phú Quốc, Hội An..."
+                                class="w-full bg-white px-3 py-2 rounded-xl border border-zinc-200 text-xs font-medium text-zinc-800 outline-none focus:border-zinc-900 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-zinc-600 mb-1 flex items-center gap-1">
+                                <i class="fa-regular fa-calendar text-emerald-600"></i>
+                                <span>Ngày chụp (Tự động từ ảnh):</span>
+                            </label>
+                            <input type="date" id="createAlbumDateInput"
+                                oninput="delete this.dataset.autoFilled"
+                                class="w-full bg-white px-3 py-2 rounded-xl border border-zinc-200 text-xs font-medium text-zinc-800 outline-none focus:border-zinc-900 transition">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Lưu ý ảnh bìa (Giống hệt thiết kế Shotpik) -->
@@ -1166,11 +1185,17 @@
 
                     <!-- Step-by-step instructions for Google Apps Script -->
                     <div class="bg-zinc-50 rounded-xl p-3.5 border border-zinc-200 text-xs text-zinc-600 space-y-2">
-                        <p class="font-bold text-zinc-900 flex items-center gap-1.5"><i class="fa-solid fa-star text-amber-500"></i> Hướng dẫn tạo Google Apps Script miễn phí (Khuyên dùng - 2 phút):</p>
-                        <p class="text-[11px] text-zinc-500">Vì Google chặn lệnh đọc thư mục bằng API Key thông thường, tạo Apps Script là cách chuẩn 100% không bị chặn:</p>
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="font-bold text-zinc-900 flex items-center gap-1.5"><i class="fa-solid fa-star text-amber-500"></i> Hướng dẫn tạo Google Apps Script (Miễn phí 100%):</p>
+                            <button type="button" onclick="AdminModule.copyAppsScriptCode()"
+                                class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold px-2.5 py-1 rounded-lg border border-rose-200 transition flex items-center gap-1 shrink-0">
+                                <i class="fa-regular fa-copy"></i> Sao chép mã
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-zinc-500">Script giúp đọc toàn bộ ảnh, tự động trích xuất ngày giờ chụp (EXIF DateTimeOriginal) và GPS vị trí thực tế:</p>
                         <ol class="list-decimal pl-4 space-y-1.5 text-[11px] text-zinc-600">
                             <li>Vào <a href="https://script.google.com/home/start" target="_blank" rel="noopener noreferrer" class="text-rose-600 underline font-semibold">script.google.com</a> &rarr; Bấm <strong>Dự án mới (New project)</strong>.</li>
-                            <li>Xóa hết mã cũ, dán đoạn mã đọc thư mục Google Drive (xem hướng dẫn chi tiết) rồi bấm <strong>Lưu</strong>.</li>
+                            <li>Xóa hết mã cũ trong file <code>Mã.gs</code>, bấm nút <strong>Sao chép mã</strong> ở trên rồi dán vào và bấm <strong>Lưu</strong>.</li>
                             <li>Bấm <strong>Triển khai (Deploy)</strong> ở góc phải &rarr; Chọn <strong>Tùy chọn triển khai mới (New deployment)</strong> &rarr; Chọn <strong>Ứng dụng web (Web app)</strong>.</li>
                             <li>Mục <strong>Ai có quyền truy cập (Who has access)</strong>: Chọn <strong>Bất kỳ ai (Anyone)</strong> &rarr; Bấm <strong>Triển khai</strong>.</li>
                             <li>Sao chép đường link Web App (dạng <code>https://script.google.com/macros/s/.../exec</code>) và dán vào ô bên trên.</li>
