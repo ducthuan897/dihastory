@@ -13,11 +13,13 @@ const AdminModule = (function () {
     const STORAGE_KEY_REMOVED_BACKUP_MAP = "shotpik_removed_interactions_backup_v2";
     const STORAGE_KEY_GOOGLE_API_KEY = "shotpik_google_drive_api_key_v1";
 
+    const DEFAULT_GOOGLE_DRIVE_API_KEY = "";
+
     function getGoogleDriveApiKey() {
         try {
-            return (localStorage.getItem(STORAGE_KEY_GOOGLE_API_KEY) || "").trim();
+            return (localStorage.getItem(STORAGE_KEY_GOOGLE_API_KEY) || DEFAULT_GOOGLE_DRIVE_API_KEY || "").trim();
         } catch (e) {
-            return "";
+            return DEFAULT_GOOGLE_DRIVE_API_KEY || "";
         }
     }
 
@@ -329,6 +331,98 @@ const AdminModule = (function () {
         } catch (err) {
             console.warn("Bộ nhớ trình duyệt vượt giới hạn, dữ liệu ảnh độ phân giải cao được giữ trong phiên hiện tại:", err);
         }
+        syncAlbumsToCloud(albums);
+    }
+
+    function mergeCloudAlbums(incomingAlbums) {
+        if (!Array.isArray(incomingAlbums) || incomingAlbums.length === 0) return false;
+        const current = getAllAlbums();
+        let changed = false;
+
+        incomingAlbums.forEach(inc => {
+            if (!inc || !inc.id) return;
+            const existingIdx = current.findIndex(a => a.id === inc.id);
+            if (existingIdx !== -1) {
+                // If incoming has more photos or updated info, merge
+                if (JSON.stringify(current[existingIdx]) !== JSON.stringify(inc)) {
+                    current[existingIdx] = inc;
+                    changed = true;
+                }
+            } else {
+                current.push(inc);
+                changed = true;
+            }
+        });
+
+        if (changed) {
+            memoryAlbumsCache = current;
+            try {
+                localStorage.setItem(STORAGE_KEY_ALBUMS, JSON.stringify(current));
+            } catch (e) {}
+        }
+        return changed;
+    }
+
+    async function syncAlbumsToCloud(albums) {
+        const cloudUrl = getGoogleDriveApiKey();
+        if (cloudUrl && cloudUrl.startsWith('https://script.google.com/')) {
+            try {
+                await fetch(cloudUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'saveAlbums', albums })
+                });
+            } catch (e) {}
+        }
+    }
+
+    async function fetchCloudOrStaticAlbums() {
+        // 1. Try Google Apps Script cloud database
+        const cloudUrl = getGoogleDriveApiKey();
+        if (cloudUrl && cloudUrl.startsWith('https://script.google.com/')) {
+            try {
+                const resp = await fetch(`${cloudUrl}?action=getAlbums`).catch(() => null);
+                if (resp && resp.ok) {
+                    const data = await resp.json();
+                    if (data && Array.isArray(data.albums) && data.albums.length > 0) {
+                        return mergeCloudAlbums(data.albums);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // 2. Try static data/albums.json from GitHub Pages repository
+        try {
+            let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+            if (window.location.hostname.includes('github.io')) {
+                base = '/dutustory';
+            }
+            const staticUrl = `${base}/data/albums.json?v=${Date.now()}`;
+            const staticResp = await fetch(staticUrl).catch(() => null);
+            if (staticResp && staticResp.ok) {
+                const staticAlbums = await staticResp.json();
+                if (Array.isArray(staticAlbums) && staticAlbums.length > 0) {
+                    return mergeCloudAlbums(staticAlbums);
+                }
+            }
+        } catch (e) {}
+
+        return false;
+    }
+
+    function exportAlbumsJsonFile() {
+        const albums = getAllAlbums();
+        const jsonStr = JSON.stringify(albums, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'albums.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        App.showToast("Đã tải file albums.json! Bạn có thể lưu vào thư mục data/ và push lên GitHub để mọi thiết bị đều thấy.", "info");
     }
 
     function getAlbumById(albumId) {
@@ -3701,6 +3795,9 @@ const AdminModule = (function () {
         openDriveApiKeyModal,
         closeDriveApiKeyModal,
         handleSaveDriveApiKey,
-        testGoogleDriveApiKey
+        testGoogleDriveApiKey,
+        fetchCloudOrStaticAlbums,
+        mergeCloudAlbums,
+        exportAlbumsJsonFile
     };
 })();

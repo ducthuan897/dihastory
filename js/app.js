@@ -39,6 +39,13 @@ const App = (function () {
         window.addEventListener('popstate', () => {
             handleUrlRouting(true);
         });
+
+        // Background sync albums from Cloud or data/albums.json so other devices immediately see new albums
+        AdminModule.fetchCloudOrStaticAlbums().then(hasNewData => {
+            if (hasNewData) {
+                handleUrlRouting(true);
+            }
+        });
     }
 
     function handleUrlRouting(skipPush) {
@@ -47,12 +54,23 @@ const App = (function () {
         if (savedCleanPath) {
             sessionStorage.removeItem('spa_clean_path');
             const found = AdminModule.getAlbumById(savedCleanPath);
-            if (found) {
+            if (found && found.id === savedCleanPath) {
                 currentAlbumId = found.id;
                 showView('album', true);
                 let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
                 window.history.replaceState(null, '', `${base}/${savedCleanPath}`);
                 return;
+            } else {
+                // If opening on a new device, sync from cloud/data and load
+                AdminModule.fetchCloudOrStaticAlbums().then(() => {
+                    const retry = AdminModule.getAlbumById(savedCleanPath);
+                    if (retry && retry.id === savedCleanPath) {
+                        currentAlbumId = retry.id;
+                        showView('album', true);
+                        let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+                        window.history.replaceState(null, '', `${base}/${savedCleanPath}`);
+                    }
+                });
             }
         }
 

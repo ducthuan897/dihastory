@@ -502,6 +502,11 @@
                         class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md">
                         <i class="fa-solid fa-folder-plus"></i> Tạo album mới
                     </button>
+                    <button type="button" onclick="AdminModule.exportAlbumsJsonFile()"
+                        class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5"
+                        title="Tải file data/albums.json để đưa lên GitHub cho mọi thiết bị đều thấy">
+                        <i class="fa-solid fa-cloud-arrow-down text-emerald-400"></i> Xuất data/albums.json
+                    </button>
                     <button type="button" onclick="AdminModule.resetDemoData()"
                         class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3.5 py-2.5 rounded-xl text-xs font-medium transition"
                         title="Khôi phục 4 Album mẫu ban đầu">
