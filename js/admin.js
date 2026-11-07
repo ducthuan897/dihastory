@@ -426,6 +426,7 @@ const AdminModule = (function () {
         renderCreateModalTags();
         renderCreateModalLocalPreview();
         handleCreateModalToggleChange();
+        updateDriveApiKeyBadge();
 
         document.getElementById('createAlbumModal').classList.remove('hidden');
     }
@@ -979,12 +980,20 @@ const AdminModule = (function () {
 
     async function previewDriveMetadataInCreateModal(driveLink) {
         const metaText = document.getElementById('createModalDetectedMetaText');
+        const hasKey = !!getGoogleDriveApiKey();
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
         if (metaText) {
             metaText.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-emerald-600 mr-1"></i> Đang đọc Vị trí &amp; Ngày chụp từ thông tin ảnh Google Drive...`;
         }
         try {
             const samplePhotos = await fetchRealPhotosFromDriveLinks([driveLink], "", "", 0);
             updateCreateModalDetectedMetaSummary(samplePhotos);
+            if (!hasKey && !isLocal && (!samplePhotos || !samplePhotos.some(p => p.capturedAt || p.location))) {
+                if (metaText) {
+                    metaText.innerHTML = `<span class="text-amber-800 font-medium cursor-pointer" onclick="AdminModule.openDriveApiKeyModal()"><i class="fa-solid fa-key text-amber-600 mr-1"></i> <u>Cài đặt Google Drive API Key</u> để tự động đọc EXIF GPS &amp; Ngày chụp từ link Drive trên GitHub Pages.</span>`;
+                }
+            }
         } catch (e) {
             updateCreateModalDetectedMetaSummary();
         }
@@ -1834,12 +1843,14 @@ const AdminModule = (function () {
 
         renderAdminAlbumsTable();
         populateSelectedAlbumEditor();
+        updateDriveApiKeyBadge();
     }
 
     function selectAlbumForEditing(albumId) {
         activeAdminAlbumId = albumId;
         renderAdminAlbumsTable();
         populateSelectedAlbumEditor();
+        updateDriveApiKeyBadge();
     }
 
     function unlockAlbumSelectionForClient(albumId) {
@@ -3561,6 +3572,13 @@ const AdminModule = (function () {
         copyLightroomCodes,
         clearClientSelections,
         resetDemoData,
-        formatTimeShort
+        formatTimeShort,
+        getGoogleDriveApiKey,
+        setGoogleDriveApiKey,
+        updateDriveApiKeyBadge,
+        openDriveApiKeyModal,
+        closeDriveApiKeyModal,
+        handleSaveDriveApiKey,
+        testGoogleDriveApiKey
     };
 })();
