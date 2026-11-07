@@ -1973,7 +1973,7 @@ const AdminModule = (function () {
         const oldBtnHtml = submitBtn ? submitBtn.innerHTML : '';
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang đọc ảnh &amp; trích xuất Vị trí, Ngày chụp...</span>`;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang tạo album...</span>`;
         }
 
         let initialPhotos = [];
