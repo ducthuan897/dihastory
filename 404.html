@@ -20,7 +20,8 @@
             if (sub && sub.indexOf(".") === -1 && sub !== "index.html") {
                 // Save clean path into sessionStorage so app.js can restore clean URL in address bar
                 sessionStorage.setItem("spa_clean_path", sub);
-                var target = repo + "/?album=" + encodeURIComponent(sub) + (hash ? hash : "");
+                var searchParam = search ? ("&" + search.substring(1)) : "";
+                var target = repo + "/?album=" + encodeURIComponent(sub) + searchParam + (hash ? hash : "");
                 window.location.replace(target);
             } else {
                 window.location.replace(repo + "/" + search + hash);

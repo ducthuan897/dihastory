@@ -8,6 +8,7 @@
 const App = (function () {
     let currentView = 'home'; // 'home' | 'album' | 'admin'
     let currentAlbumId = 'wedding-minhquan-lananh';
+    let isClientMode = false; // true: Giao diện Link gửi khách chọn ảnh, false: Giao diện Trưng bày Trang chủ chỉ xem
 
     // State for Home Showcase (Page 1)
     let homeLocationFilter = 'ALL';
@@ -36,7 +37,10 @@ const App = (function () {
         setupKeyboardShortcuts();
         handleUrlRouting();
 
-        window.addEventListener('popstate', () => {
+        window.addEventListener('popstate', (e) => {
+            if (e.state && typeof e.state.isClientMode !== 'undefined') {
+                isClientMode = e.state.isClientMode;
+            }
             handleUrlRouting(true);
         });
 
@@ -49,6 +53,18 @@ const App = (function () {
     }
 
     function handleUrlRouting(skipPush) {
+        const params = new URLSearchParams(window.location.search);
+        let albumParam = params.get('album');
+        const viewParam = params.get('view');
+        const modeParam = params.get('mode');
+
+        // Phân biệt chế độ xem: Khách chọn ảnh (client) vs Trưng bày công khai (showcase)
+        if (modeParam === 'client' || params.get('client') === '1' || params.get('select') === '1') {
+            isClientMode = true;
+        } else if (viewParam === 'showcase' || modeParam === 'showcase') {
+            isClientMode = false;
+        }
+
         // 1. Check if redirected from GitHub Pages 404.html
         const savedCleanPath = sessionStorage.getItem('spa_clean_path');
         if (savedCleanPath) {
@@ -58,7 +74,8 @@ const App = (function () {
                 currentAlbumId = found.id;
                 showView('album', true);
                 let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-                window.history.replaceState(null, '', `${base}/${savedCleanPath}`);
+                const cleanUrl = isClientMode ? `${base}/${savedCleanPath}?mode=client` : `${base}/${savedCleanPath}`;
+                window.history.replaceState({ view: 'album', albumId: currentAlbumId, isClientMode }, '', cleanUrl);
                 return;
             } else {
                 // If opening on a new device, sync from cloud/data and load
@@ -68,15 +85,12 @@ const App = (function () {
                         currentAlbumId = retry.id;
                         showView('album', true);
                         let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-                        window.history.replaceState(null, '', `${base}/${savedCleanPath}`);
+                        const cleanUrl = isClientMode ? `${base}/${savedCleanPath}?mode=client` : `${base}/${savedCleanPath}`;
+                        window.history.replaceState({ view: 'album', albumId: currentAlbumId, isClientMode }, '', cleanUrl);
                     }
                 });
             }
         }
-
-        const params = new URLSearchParams(window.location.search);
-        let albumParam = params.get('album');
-        const viewParam = params.get('view');
 
         // 2. Check if clean URL path /dutustory/<album-slug> or hash was visited
         if (!albumParam && !viewParam) {
@@ -170,18 +184,28 @@ const App = (function () {
             if (adminView) adminView.classList.add('hidden');
             if (manageView) manageView.classList.add('hidden');
             if (mainHeader) mainHeader.classList.remove('hidden');
-            if (navAlbumContextual) navAlbumContextual.classList.remove('hidden');
+            if (navAlbumContextual) {
+                if (isClientMode) {
+                    navAlbumContextual.classList.remove('hidden');
+                } else {
+                    navAlbumContextual.classList.add('hidden');
+                }
+            }
 
             if (!skipHistoryPush) {
                 let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
                 if (window.location.hostname.includes('github.io')) {
                     base = '/dutustory';
                 }
-                const url = `${base}/${encodeURIComponent(currentAlbumId)}`;
-                window.history.pushState({ view: 'album', albumId: currentAlbumId }, '', url);
+                const url = isClientMode
+                    ? `${base}/${encodeURIComponent(currentAlbumId)}?mode=client`
+                    : `${base}/${encodeURIComponent(currentAlbumId)}`;
+                window.history.pushState({ view: 'album', albumId: currentAlbumId, isClientMode }, '', url);
             }
             renderPublicAlbum();
-            maybeShowClientReminderModal();
+            if (isClientMode) {
+                maybeShowClientReminderModal();
+            }
         } else {
             currentView = 'home';
             if (homeView) homeView.classList.remove('hidden');
@@ -225,12 +249,13 @@ const App = (function () {
         setTabClass(navAdmin, currentView === 'admin');
     }
 
-    function openAlbumPage(albumId) {
+    function openAlbumPage(albumId, isClient = false) {
         if (albumId) {
             currentAlbumId = albumId;
             activeCategory = 'ALL';
             searchQuery = '';
         }
+        isClientMode = !!isClient;
         showView('album');
     }
 
@@ -253,7 +278,7 @@ const App = (function () {
         const matched = albums.find(a => a.id.toLowerCase() === raw.toLowerCase());
         if (matched) {
             input.value = '';
-            openAlbumPage(matched.id);
+            openAlbumPage(matched.id, true);
             showToast(`Đang mở Album: ${matched.title}`);
         } else {
             showToast(`Không tìm thấy Album với mã "${raw}"!`, "error");
@@ -399,7 +424,7 @@ const App = (function () {
         const tagsHtml = (album.tags || []).slice(0, 3).map(t => `<span class="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">#${t}</span>`).join('');
         return `
             <article
-                onclick="App.openAlbumPage('${album.id}')"
+                onclick="App.openAlbumPage('${album.id}', false)"
                 class="group bg-white rounded-2xl overflow-hidden border border-zinc-200 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col"
             >
                 <div class="relative aspect-[4/3] overflow-hidden bg-zinc-100">
@@ -441,7 +466,7 @@ const App = (function () {
                     <div class="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
                         <span class="text-zinc-500">Khách hàng: <strong class="text-zinc-800">${album.clientName}</strong></span>
                         <span class="font-semibold text-zinc-900 group-hover:text-rose-600 transition flex items-center gap-1">
-                            Xem & Chọn ảnh <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            Xem Album <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </span>
                     </div>
                 </div>
@@ -466,6 +491,7 @@ const App = (function () {
     }
 
     function maybeShowClientReminderModal(forceOpen = false) {
+        if (!isClientMode && !forceOpen) return;
         const album = AdminModule.getAlbumById(currentAlbumId);
         if (!album) return;
 
@@ -594,8 +620,17 @@ const App = (function () {
         if (!album) return;
         const selections = AdminModule.getSelections(album.id);
 
-        checkAlbumPinLock(album);
-        updateDeadlineCountdownUI(album);
+        if (isClientMode) {
+            checkAlbumPinLock(album);
+            updateDeadlineCountdownUI(album);
+        } else {
+            const pinOverlay = document.getElementById('pinLockOverlay');
+            if (pinOverlay) pinOverlay.classList.add('hidden');
+            const deadlineBar = document.getElementById('albumDeadlineBar');
+            if (deadlineBar) deadlineBar.classList.add('hidden');
+            const lockedBanner = document.getElementById('albumSelectionLockedBanner');
+            if (lockedBanner) lockedBanner.classList.add('hidden');
+        }
 
         const setTxt = (id, txt) => {
             const el = document.getElementById(id);
@@ -612,9 +647,29 @@ const App = (function () {
         setTxt('heroLocation', `${album.location} (${album.city || ''})`);
         setTxt('heroPhotoCount', `${album.photos.length} Ảnh`);
 
+        // Mode toggling on Hero & Toolbars (Showcase Mode vs Client Link Mode)
+        const heroDownloadBtn = document.getElementById('heroClientDownloadBtn');
+        const heroSubmitBtn = document.getElementById('heroClientSubmitBtn');
+        const heroViewGalleryLabel = document.getElementById('heroViewGalleryBtnLabel');
+        const heroBackBtn = document.getElementById('heroBackToHomeBtn');
+        const guideToolbar = document.getElementById('galleryToolbarAnchor');
+        const navAlbumContextual = document.getElementById('navAlbumContextualControls');
         const reminderBtn = document.getElementById('albumTopReminderBtn');
+        const galleryBatchDownloadBtn = document.getElementById('galleryBatchDownloadBtn');
+
+        if (heroDownloadBtn) heroDownloadBtn.classList.toggle('hidden', !isClientMode);
+        if (heroSubmitBtn) heroSubmitBtn.classList.toggle('hidden', !isClientMode);
+        if (heroViewGalleryLabel) {
+            heroViewGalleryLabel.innerText = isClientMode ? 'Xem Ảnh & Chọn Ảnh Lưu Về' : 'Xem Danh Sách Ảnh';
+        }
+        if (heroBackBtn) heroBackBtn.classList.toggle('hidden', isClientMode);
+        if (guideToolbar) guideToolbar.classList.toggle('hidden', !isClientMode);
+        if (navAlbumContextual) navAlbumContextual.classList.toggle('hidden', !isClientMode);
         if (reminderBtn) {
-            reminderBtn.classList.toggle('hidden', !(album.reminderEnabled && album.reminderText));
+            reminderBtn.classList.toggle('hidden', !isClientMode || !(album.reminderEnabled && album.reminderText));
+        }
+        if (galleryBatchDownloadBtn) {
+            galleryBatchDownloadBtn.classList.toggle('hidden', !isClientMode);
         }
 
         const shareLinkText = document.getElementById('albumClientLinkDisplay');
@@ -666,6 +721,10 @@ const App = (function () {
         const container = document.getElementById('categoryTabsContainer');
         if (!container) return;
 
+        if (!isClientMode && (activeCategory === 'SELECTED' || activeCategory === 'NOTED')) {
+            activeCategory = 'ALL';
+        }
+
         const uniqueLocations = [];
         album.photos.forEach(p => {
             const loc = p.location || album.city || 'Khác';
@@ -676,16 +735,18 @@ const App = (function () {
 
         const deliveredCount = (album.deliveredPhotos || []).length;
         const tabs = [
-            { id: 'ALL', label: `Tất cả địa điểm (${album.photos.length})`, icon: 'fa-solid fa-layer-group' },
-            { id: 'SELECTED', label: `Ảnh đã chọn (${selectedCount})`, icon: 'fa-solid fa-heart text-rose-500' }
+            { id: 'ALL', label: `Tất cả địa điểm (${album.photos.length})`, icon: 'fa-solid fa-layer-group' }
         ];
+
+        if (isClientMode) {
+            tabs.push({ id: 'SELECTED', label: `Ảnh đã chọn (${selectedCount})`, icon: 'fa-solid fa-heart text-rose-500' });
+            if (notedCount > 0) {
+                tabs.push({ id: 'NOTED', label: `Có ghi chú (${notedCount})`, icon: 'fa-solid fa-comment-dots text-amber-500' });
+            }
+        }
 
         if (deliveredCount > 0) {
             tabs.push({ id: 'DELIVERED', label: `Ảnh đã chỉnh (${deliveredCount})`, icon: 'fa-solid fa-wand-magic-sparkles text-emerald-500' });
-        }
-
-        if (notedCount > 0) {
-            tabs.push({ id: 'NOTED', label: `Có ghi chú (${notedCount})`, icon: 'fa-solid fa-comment-dots text-amber-500' });
         }
 
         uniqueLocations.forEach(loc => {
@@ -840,8 +901,38 @@ const App = (function () {
         const isDeliveredItem = !!photo.beforeUrl || activeCategory === 'DELIVERED';
         const showWatermark = !!(album && album.watermarkEnabled);
 
+        const cardStateClass = isClientMode
+            ? `${isSelected ? 'is-selected' : ''} ${hasNote ? 'has-note' : ''}`
+            : '';
+
+        const clientActionIcons = isClientMode ? `
+            <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+                <button
+                    type="button"
+                    onclick="App.openPhotoNoteModal('${photo.id}')"
+                    title="${hasNote ? 'Sửa ghi chú chỉnh sửa' : 'Thêm ghi chú chỉnh sửa'}"
+                    class="card-icon-btn ${hasNote ? 'active-note' : ''}"
+                >
+                    <i class="fa-solid fa-comment-dots text-sm"></i>
+                </button>
+                <button
+                    type="button"
+                    onclick="App.toggleSelectPhoto('${photo.id}')"
+                    title="${isSelected ? 'Bỏ chọn ảnh này' : 'Chọn ảnh muốn lưu / in'}"
+                    class="card-icon-btn ${isSelected ? 'active-heart' : ''}"
+                >
+                    <i class="${isSelected ? 'fa-solid' : 'fa-regular'} fa-heart text-sm"></i>
+                </button>
+            </div>
+        ` : '<div></div>';
+
+        const clientMetaInfo = isClientMode ? `
+            ${st.selectorName ? `<span class="text-[10px] text-sky-300 block"><i class="fa-regular fa-user mr-1"></i>Người chọn: ${st.selectorName}</span>` : ''}
+            ${hasNote ? `<p class="text-[11px] text-amber-200 bg-black/50 px-1.5 py-0.5 rounded truncate mt-1"><i class="fa-regular fa-note-sticky mr-1"></i>${st.note}</p>` : ''}
+        ` : '';
+
         return `
-            <div class="photo-card ${isSelected ? 'is-selected' : ''} ${hasNote ? 'has-note' : ''}" onclick="App.openLightbox(${lightboxIdx})">
+            <div class="photo-card ${cardStateClass}" onclick="App.openLightbox(${lightboxIdx})">
                 <img src="${photo.url}" alt="${photo.code}" referrerpolicy="no-referrer" loading="lazy">
                 ${showWatermark ? `<div class="pointer-events-none absolute inset-0 flex items-center justify-center"><span class="text-white/35 font-serif-display text-sm sm:text-base font-bold tracking-widest uppercase -rotate-12 border border-white/25 px-3 py-1 rounded select-none">ĐỨC THUẬN STUDIO</span></div>` : ''}
                 <div class="photo-card-overlay">
@@ -850,24 +941,7 @@ const App = (function () {
                             ${isDeliveredItem ? '<i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i>' : ''}
                             <span>${photo.code}</span>
                         </span>
-                        <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
-                            <button
-                                type="button"
-                                onclick="App.openPhotoNoteModal('${photo.id}')"
-                                title="${hasNote ? 'Sửa ghi chú chỉnh sửa' : 'Thêm ghi chú chỉnh sửa'}"
-                                class="card-icon-btn ${hasNote ? 'active-note' : ''}"
-                            >
-                                <i class="fa-solid fa-comment-dots text-sm"></i>
-                            </button>
-                            <button
-                                type="button"
-                                onclick="App.toggleSelectPhoto('${photo.id}')"
-                                title="${isSelected ? 'Bỏ chọn ảnh này' : 'Chọn ảnh muốn lưu / in'}"
-                                class="card-icon-btn ${isSelected ? 'active-heart' : ''}"
-                            >
-                                <i class="${isSelected ? 'fa-solid' : 'fa-regular'} fa-heart text-sm"></i>
-                            </button>
-                        </div>
+                        ${clientActionIcons}
                     </div>
 
                     <div class="flex items-end justify-between gap-2">
@@ -877,8 +951,7 @@ const App = (function () {
                             </span>
                             <p class="text-xs sm:text-sm text-white font-medium truncate">${photo.title || photo.code}</p>
                             <span class="text-[10px] text-zinc-300 block"><i class="fa-regular fa-clock mr-1"></i>${timeStr}</span>
-                            ${st.selectorName ? `<span class="text-[10px] text-sky-300 block"><i class="fa-regular fa-user mr-1"></i>Người chọn: ${st.selectorName}</span>` : ''}
-                            ${hasNote ? `<p class="text-[11px] text-amber-200 bg-black/50 px-1.5 py-0.5 rounded truncate mt-1"><i class="fa-regular fa-note-sticky mr-1"></i>${st.note}</p>` : ''}
+                            ${clientMetaInfo}
                         </div>
                         <button
                             type="button"
@@ -1052,21 +1125,34 @@ const App = (function () {
             if (compareLabel) compareLabel.innerText = 'So sánh Trước / Sau';
         }
 
+        const proofingControls = document.getElementById('lightboxProofingControls');
+        if (proofingControls) {
+            proofingControls.classList.toggle('hidden', !isClientMode);
+        }
+
+        const noteBtn = document.getElementById('lightboxNoteBtn');
+        if (noteBtn) noteBtn.classList.toggle('hidden', !isClientMode);
+
         const heartBtn = document.getElementById('lightboxHeartBtn');
-        if (st.selected) {
-            heartBtn.className = "px-4 py-2 rounded-full bg-rose-600 text-white text-xs font-semibold flex items-center gap-2 transition shadow-lg";
-            heartBtn.innerHTML = `<i class="fa-solid fa-heart"></i> <span>Đã chọn lưu ảnh này</span>`;
-        } else {
-            heartBtn.className = "px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-2 transition";
-            heartBtn.innerHTML = `<i class="fa-regular fa-heart"></i> <span>Chọn lưu ảnh này</span>`;
+        if (heartBtn) {
+            heartBtn.classList.toggle('hidden', !isClientMode);
+            if (st.selected) {
+                heartBtn.className = "px-4 py-2 rounded-full bg-rose-600 text-white text-xs font-semibold flex items-center gap-2 transition shadow-lg";
+                heartBtn.innerHTML = `<i class="fa-solid fa-heart"></i> <span>Đã chọn lưu ảnh này</span>`;
+            } else {
+                heartBtn.className = "px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-2 transition";
+                heartBtn.innerHTML = `<i class="fa-regular fa-heart"></i> <span>Chọn lưu ảnh này</span>`;
+            }
         }
 
         const noteBadge = document.getElementById('lightboxNotePreview');
-        if (st.note && st.note.trim()) {
-            noteBadge.classList.remove('hidden');
-            noteBadge.innerHTML = `<i class="fa-regular fa-comment-dots mr-1.5 text-amber-400"></i>Ghi chú: "${st.note}"`;
-        } else {
-            noteBadge.classList.add('hidden');
+        if (noteBadge) {
+            if (isClientMode && st.note && st.note.trim()) {
+                noteBadge.classList.remove('hidden');
+                noteBadge.innerHTML = `<i class="fa-regular fa-comment-dots mr-1.5 text-amber-400"></i>Ghi chú: "${st.note}"`;
+            } else {
+                noteBadge.classList.add('hidden');
+            }
         }
     }
 
@@ -1385,8 +1471,10 @@ const App = (function () {
     }
 
     function scrollToGallery() {
-        const el = document.getElementById('galleryToolbarAnchor');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        const targetEl = (!isClientMode || document.getElementById('galleryToolbarAnchor')?.classList.contains('hidden'))
+            ? document.getElementById('categoryTabsContainer') || document.getElementById('gallerySectionsWrapper')
+            : document.getElementById('galleryToolbarAnchor');
+        if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
     }
 
     function scrollToVideoHighlight() {
@@ -1465,6 +1553,8 @@ const App = (function () {
         copyCurrentAlbumLink,
         scrollToGallery,
         scrollToVideoHighlight,
+        getIsClientMode: () => isClientMode,
+        setIsClientMode: (val) => { isClientMode = !!val; },
         showToast
     };
 })();

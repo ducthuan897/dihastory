@@ -284,7 +284,16 @@
                 <div class="album-hero-overlay"></div>
 
                 <div class="relative z-10 text-center text-white px-4 max-w-3xl mx-auto">
-                    <div
+                    <!-- Back to Home Showcase Button -->
+                    <div class="mb-4">
+                        <button id="heroBackToHomeBtn" type="button" onclick="App.showView('home')"
+                            class="inline-flex items-center gap-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white border border-white/20 text-xs font-semibold px-4 py-1.5 rounded-full transition shadow-md">
+                            <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                            <span>Quay lại Trang Chủ</span>
+                        </button>
+                    </div>
+
+                    <div id="heroClientNameBadge"
                         class="inline-flex items-center space-x-2 bg-white/15 backdrop-blur-md border border-white/20 px-3.5 py-1 rounded-full text-xs uppercase tracking-widest mb-4">
                         <i class="fa-solid fa-heart text-rose-400"></i>
                         <span id="heroClientName">Minh Quân & Lan Anh</span>
@@ -306,17 +315,17 @@
                     </div>
 
                     <div class="flex flex-wrap items-center justify-center gap-3">
-                        <button type="button" onclick="App.scrollToGallery()"
+                        <button id="heroViewGalleryBtn" type="button" onclick="App.scrollToGallery()"
                             class="bg-white text-zinc-900 hover:bg-zinc-100 font-semibold px-6 py-3 rounded-full text-sm transition shadow-lg flex items-center gap-2">
-                            <span>Xem Ảnh & Chọn Ảnh Lưu Về</span>
+                            <span id="heroViewGalleryBtnLabel">Xem Album</span>
                             <i class="fa-solid fa-arrow-down text-xs"></i>
                         </button>
-                        <button type="button" onclick="App.openDownloadModal()"
+                        <button id="heroClientDownloadBtn" type="button" onclick="App.openDownloadModal()"
                             class="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-5 py-3 rounded-full text-sm transition shadow-lg flex items-center gap-2">
                             <i class="fa-solid fa-cloud-arrow-down"></i>
                             <span>Lưu Ảnh Đã Chọn Về Máy</span>
                         </button>
-                        <button type="button" onclick="App.openSubmitSelectionModal()"
+                        <button id="heroClientSubmitBtn" type="button" onclick="App.openSubmitSelectionModal()"
                             class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-3 rounded-full text-sm transition shadow-lg flex items-center gap-2">
                             <i class="fa-regular fa-circle-check"></i>
                             <span>Hoàn Tất Chọn Ảnh</span>
@@ -408,7 +417,7 @@
                                 </button>
                             </div>
 
-                            <button type="button" onclick="App.openDownloadModal()"
+                            <button id="galleryBatchDownloadBtn" type="button" onclick="App.openDownloadModal()"
                                 class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5">
                                 <i class="fa-solid fa-download"></i>
                                 <span>Tải Ảnh Lưu Về</span>
@@ -1767,8 +1776,8 @@
             <div id="lightboxNotePreview"
                 class="hidden text-xs bg-amber-500/20 border border-amber-400/40 text-amber-200 px-3.5 py-1.5 rounded-full">
             </div>
-            <div class="flex items-center gap-3 mx-auto sm:mx-0 sm:ml-auto">
-                <button type="button" onclick="App.openLightboxCurrentNote()"
+            <div id="lightboxProofingControls" class="flex items-center gap-3 mx-auto sm:mx-0 sm:ml-auto">
+                <button id="lightboxNoteBtn" type="button" onclick="App.openLightboxCurrentNote()"
                     class="px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-2 transition">
                     <i class="fa-solid fa-comment-dots text-amber-400"></i>
                     <span>Ghi chú chỉnh sửa</span>

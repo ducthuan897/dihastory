@@ -839,9 +839,9 @@ function testRun() {
         let base = window.location.origin + window.location.pathname;
         base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
         if (window.location.hostname.includes('github.io')) {
-            return `https://ducthuan897.github.io/dutustory/${encodeURIComponent(albumId)}`;
+            return `https://ducthuan897.github.io/dutustory/${encodeURIComponent(albumId)}?mode=client`;
         }
-        return `${base}/${encodeURIComponent(albumId)}`;
+        return `${base}/${encodeURIComponent(albumId)}?mode=client`;
     }
 
     function getSelectionsMap() {
@@ -1606,7 +1606,7 @@ function testRun() {
         if (!files || !files.length) return;
 
         const countEl = document.getElementById('createModalLocalCount');
-        if (countEl) countEl.innerText = `Đang đọc ảnh & trích xuất Vị trí, Ngày chụp từ ${files.length} file...`;
+        if (countEl) countEl.innerText = `Đang xử lý ${files.length} ảnh...`;
 
         const fileList = Array.from(files);
         for (let idx = 0; idx < fileList.length; idx++) {
