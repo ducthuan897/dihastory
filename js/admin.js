@@ -11,6 +11,109 @@ const AdminModule = (function () {
     const STORAGE_KEY_SELECTIONS_MAP = "shotpik_multi_selections_v2";
     const STORAGE_KEY_SUBMISSIONS_MAP = "shotpik_multi_submissions_v2";
     const STORAGE_KEY_REMOVED_BACKUP_MAP = "shotpik_removed_interactions_backup_v2";
+    const STORAGE_KEY_GOOGLE_API_KEY = "shotpik_google_drive_api_key_v1";
+
+    function getGoogleDriveApiKey() {
+        try {
+            return (localStorage.getItem(STORAGE_KEY_GOOGLE_API_KEY) || "").trim();
+        } catch (e) {
+            return "";
+        }
+    }
+
+    function setGoogleDriveApiKey(key) {
+        try {
+            if (key) {
+                localStorage.setItem(STORAGE_KEY_GOOGLE_API_KEY, key.trim());
+            } else {
+                localStorage.removeItem(STORAGE_KEY_GOOGLE_API_KEY);
+            }
+            updateDriveApiKeyBadge();
+        } catch (e) {}
+    }
+
+    function updateDriveApiKeyBadge() {
+        const key = getGoogleDriveApiKey();
+        const badge = document.getElementById('driveApiKeyBadge');
+        if (badge) {
+            if (key) {
+                badge.innerText = "Đã kết nối";
+                badge.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold";
+            } else {
+                badge.innerText = "Chưa kết nối";
+                badge.className = "text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium";
+            }
+        }
+    }
+
+    function openDriveApiKeyModal() {
+        const modal = document.getElementById('driveApiKeyModal');
+        const input = document.getElementById('googleDriveApiKeyInput');
+        if (input) input.value = getGoogleDriveApiKey();
+        const alert = document.getElementById('driveApiKeyAlert');
+        if (alert) alert.classList.add('hidden');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeDriveApiKeyModal() {
+        const modal = document.getElementById('driveApiKeyModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    async function handleSaveDriveApiKey(event) {
+        if (event) event.preventDefault();
+        const input = document.getElementById('googleDriveApiKeyInput');
+        const key = input ? input.value.trim() : "";
+        setGoogleDriveApiKey(key);
+        closeDriveApiKeyModal();
+        if (key) {
+            App.showToast("Đã lưu Google Drive API Key! Hệ thống sẽ đọc EXIF GPS & Ngày chụp trực tiếp từ Google API.");
+        } else {
+            App.showToast("Đã xoá Google Drive API Key.");
+        }
+    }
+
+    async function testGoogleDriveApiKey() {
+        const input = document.getElementById('googleDriveApiKeyInput');
+        const key = input ? input.value.trim() : "";
+        const alert = document.getElementById('driveApiKeyAlert');
+        if (!key) {
+            if (alert) {
+                alert.className = "p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200";
+                alert.innerText = "Vui lòng nhập Google API Key trước khi kiểm tra!";
+                alert.classList.remove('hidden');
+            }
+            return;
+        }
+
+        if (alert) {
+            alert.className = "p-3 rounded-xl bg-zinc-100 text-zinc-700 text-xs border border-zinc-200";
+            alert.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang kiểm tra kết nối tới Google Drive API...`;
+            alert.classList.remove('hidden');
+        }
+
+        try {
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files?pageSize=1&fields=files(id)&key=${encodeURIComponent(key)}`);
+            if (res.ok) {
+                if (alert) {
+                    alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
+                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Google Drive API Key hợp lệ và sẵn sàng hoạt động trên GitHub Pages!`;
+                }
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}`;
+                if (alert) {
+                    alert.className = "p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200";
+                    alert.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600 mr-1"></i> Kiểm tra thất bại: ${errMsg}`;
+                }
+            }
+        } catch (e) {
+            if (alert) {
+                alert.className = "p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200";
+                alert.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600 mr-1"></i> Không thể kết nối tới Google API: ${e.message}`;
+            }
+        }
+    }
 
     // State for Shotpik "Tạo album" Modal & "Quản lý / Sửa album" Modal
     let createModalSourceTab = 'drive'; // 'drive' | 'local'
@@ -562,9 +665,10 @@ const AdminModule = (function () {
         const key = `${Number(lat).toFixed(3)},${Number(lon).toFixed(3)}`;
         if (clientGeoCache[key]) return clientGeoCache[key];
 
+        // 1. Try BigDataCloud (api-bdc.io)
         try {
             const resp = await fetch(
-                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&localityLanguage=vi`
+                `https://api-bdc.io/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&localityLanguage=vi`
             );
             if (resp.ok) {
                 const data = await resp.json();
@@ -580,6 +684,24 @@ const AdminModule = (function () {
                 return res;
             }
         } catch (e) {}
+
+        // 2. Fallback to OpenStreetMap Nominatim
+        try {
+            const resp = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&accept-language=vi`
+            );
+            if (resp.ok) {
+                const data = await resp.json();
+                const addr = data.address || {};
+                const city = addr.city || addr.town || addr.province || addr.state || "";
+                const sub = addr.suburb || addr.quarter || addr.neighbourhood || addr.road || "";
+                const location = sub && city ? `${sub} - ${city}` : (city || data.display_name || "");
+                const res = { city: city || location, location };
+                clientGeoCache[key] = res;
+                return res;
+            }
+        } catch (e) {}
+
         return null;
     }
 
@@ -1169,7 +1291,88 @@ const AdminModule = (function () {
     }
 
     async function fetchGoogleDriveFolderFiles(folderId) {
-        // 1. Try local server API endpoints (same-origin /api/drive-folder AND http://localhost:8080/api/drive-folder for GitHub Pages)
+        const apiKey = getGoogleDriveApiKey();
+
+        // 1. If Google Drive API Key is configured, use official Google Drive API v3 (100% reliable CORS support on GitHub Pages)
+        if (apiKey) {
+            try {
+                const apiUrl = `https://www.googleapis.com/drive/v3/files?q='${encodeURIComponent(folderId)}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,imageMediaMetadata,createdTime,modifiedTime)&pageSize=100&key=${encodeURIComponent(apiKey)}`;
+                const folderInfoUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?fields=name&key=${encodeURIComponent(apiKey)}`;
+
+                const [filesResp, folderResp] = await Promise.all([
+                    fetch(apiUrl),
+                    fetch(folderInfoUrl).catch(() => null)
+                ]);
+
+                if (filesResp.ok) {
+                    const data = await filesResp.json();
+                    let folderTitle = "";
+                    if (folderResp && folderResp.ok) {
+                        const folderData = await folderResp.json();
+                        folderTitle = folderData.name || "";
+                    }
+
+                    const rawFiles = (data && Array.isArray(data.files)) ? data.files : [];
+                    const imageFiles = rawFiles.filter(f => !f.mimeType || f.mimeType.startsWith('image/') || /\.(jpe?g|png|webp|heic|tiff?)$/i.test(f.name || ''));
+
+                    const processedFiles = await Promise.all(imageFiles.map(async (f) => {
+                        let capturedAt = null;
+                        let lat = null;
+                        let lon = null;
+                        let city = null;
+                        let location = null;
+
+                        const imm = f.imageMediaMetadata;
+                        if (imm) {
+                            if (imm.time) {
+                                capturedAt = normalizeDateToIsoMinute(imm.time);
+                            }
+                            if (imm.location && typeof imm.location.latitude === 'number' && typeof imm.location.longitude === 'number') {
+                                lat = imm.location.latitude;
+                                lon = imm.location.longitude;
+                                const geo = await reverseGeocodeCoords(lat, lon);
+                                if (geo) {
+                                    location = geo.location;
+                                    city = geo.city;
+                                }
+                            }
+                        }
+
+                        if (!capturedAt) {
+                            capturedAt = extractDateFromText(f.name) || normalizeDateToIsoMinute(f.createdTime || f.modifiedTime);
+                        }
+
+                        if (!location) {
+                            const nameLoc = extractLocationFromText(f.name);
+                            if (nameLoc) {
+                                location = nameLoc.location;
+                                city = nameLoc.city;
+                            }
+                        }
+
+                        return {
+                            id: f.id,
+                            name: f.name,
+                            folderTitle,
+                            capturedAt,
+                            location,
+                            city,
+                            lat,
+                            lon,
+                            url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`
+                        };
+                    }));
+
+                    if (processedFiles.length > 0) {
+                        return { folderTitle, files: processedFiles };
+                    }
+                }
+            } catch (e) {
+                console.warn("Google Drive API v3 query failed, falling back:", e);
+            }
+        }
+
+        // 2. Try local server API endpoints (same-origin /api/drive-folder AND http://localhost:8080/api/drive-folder for GitHub Pages)
         const apiEndpoints = [`/api/drive-folder?id=${encodeURIComponent(folderId)}`];
         if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
             apiEndpoints.push(`http://localhost:8080/api/drive-folder?id=${encodeURIComponent(folderId)}`);
@@ -1187,7 +1390,7 @@ const AdminModule = (function () {
             } catch (e) {}
         }
 
-        // 2. Fallback for static GitHub Pages without local server: fetch embeddedfolderview via CORS proxy + client-side EXIF extraction
+        // 3. Fallback for static GitHub Pages without API key: fetch embeddedfolderview via CORS proxy + client-side EXIF extraction
         const embedUrl = `https://drive.google.com/embeddedfolderview?id=${encodeURIComponent(folderId)}#list`;
         const proxyUrls = [
             `https://api.allorigins.win/raw?url=${encodeURIComponent(embedUrl)}`,
@@ -1234,6 +1437,59 @@ const AdminModule = (function () {
     }
 
     async function fetchGoogleDriveSingleFileMeta(fileId) {
+        const apiKey = getGoogleDriveApiKey();
+
+        // 1. Google Drive API v3
+        if (apiKey) {
+            try {
+                const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,imageMediaMetadata,createdTime,modifiedTime&key=${encodeURIComponent(apiKey)}`;
+                const resp = await fetch(url);
+                if (resp.ok) {
+                    const f = await resp.json();
+                    let capturedAt = null;
+                    let lat = null;
+                    let lon = null;
+                    let city = null;
+                    let location = null;
+
+                    const imm = f.imageMediaMetadata;
+                    if (imm) {
+                        if (imm.time) capturedAt = normalizeDateToIsoMinute(imm.time);
+                        if (imm.location && typeof imm.location.latitude === 'number' && typeof imm.location.longitude === 'number') {
+                            lat = imm.location.latitude;
+                            lon = imm.location.longitude;
+                            const geo = await reverseGeocodeCoords(lat, lon);
+                            if (geo) {
+                                location = geo.location;
+                                city = geo.city;
+                            }
+                        }
+                    }
+
+                    if (!capturedAt) {
+                        capturedAt = extractDateFromText(f.name) || normalizeDateToIsoMinute(f.createdTime || f.modifiedTime);
+                    }
+                    if (!location) {
+                        const nameLoc = extractLocationFromText(f.name);
+                        if (nameLoc) {
+                            location = nameLoc.location;
+                            city = nameLoc.city;
+                        }
+                    }
+
+                    return {
+                        name: f.name,
+                        capturedAt,
+                        location,
+                        city,
+                        lat,
+                        lon
+                    };
+                }
+            } catch (e) {}
+        }
+
+        // 2. Try local server API endpoints
         const apiEndpoints = [`/api/drive-file-meta?id=${encodeURIComponent(fileId)}`];
         if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
             apiEndpoints.push(`http://localhost:8080/api/drive-file-meta?id=${encodeURIComponent(fileId)}`);
