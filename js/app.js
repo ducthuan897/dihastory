@@ -1,48 +1,464 @@
 /**
- * App Module - Giao diện Trả Ảnh & Chọn Ảnh Khách Hàng (Shotpik Style)
+ * App Module - Điều phối 3 trang:
+ * 1. Trang Chủ (home): Chiếu các dự án công khai, nhóm theo địa điểm & sắp xếp theo thời gian
+ * 2. Trang Album (album): Link riêng gửi khách (?album=...) kèm Lời nhắc, Đếm ngược Hạn chọn ảnh,
+ *    Nút "Hoàn tất chọn ảnh" tự khoá và nút "Đặt làm ảnh bìa" khi mở ảnh
+ * 3. Trang Quản Trị (admin): Quản lý các Album đã tải ảnh lên, Tạo album chuẩn Shotpik (Google Drive / Local)
  */
 const App = (function () {
+    let currentView = 'home'; // 'home' | 'album' | 'admin'
+    let currentAlbumId = 'wedding-minhquan-lananh';
+
+    // State for Home Showcase (Page 1)
+    let homeLocationFilter = 'ALL';
+    let homeTimeSort = 'newest';
+    let homeGroupByLocation = true;
+
+    // State for Client Album Page (Page 2)
     let activeCategory = 'ALL';
     let searchQuery = '';
+    let albumTimeSort = 'asc';
+    let albumGroupByLocation = true;
     let gridCols = 'cols-4';
     let currentFilteredPhotos = [];
     let currentLightboxIndex = -1;
     let isLightboxZoomed = false;
     let slideshowTimer = null;
-    let unlockedPinSession = false;
+    let countdownInterval = null;
+    let unlockedPinMap = {};
+    let shownReminderSessionMap = {};
     let activeNotePhotoId = null;
 
     function init() {
         AuthModule.checkAuthUI();
-        renderPublicAlbum();
         setupKeyboardShortcuts();
+        handleUrlRouting();
+
+        window.addEventListener('popstate', () => {
+            handleUrlRouting(true);
+        });
     }
 
-    function showView(viewName) {
+    function handleUrlRouting(skipPush) {
+        const params = new URLSearchParams(window.location.search);
+        const albumParam = params.get('album');
+        const viewParam = params.get('view');
+
+        if (albumParam) {
+            const found = AdminModule.getAlbumById(albumParam);
+            if (found) {
+                currentAlbumId = found.id;
+            }
+            showView('album', skipPush);
+        } else if (viewParam === 'admin') {
+            showView('admin', skipPush);
+        } else {
+            showView('home', skipPush);
+        }
+    }
+
+    function getCurrentAlbumId() {
+        return currentAlbumId;
+    }
+
+    function showView(viewName, skipHistoryPush = false) {
+        const homeView = document.getElementById('homeView');
         const publicView = document.getElementById('publicView');
         const adminView = document.getElementById('adminView');
+        const navAlbumContextual = document.getElementById('navAlbumContextualControls');
 
         if (viewName === 'admin') {
             if (!AuthModule.isLoggedIn()) {
                 AuthModule.openLoginModal();
                 return;
             }
-            publicView.classList.add('hidden');
-            adminView.classList.remove('hidden');
+            currentView = 'admin';
+            if (homeView) homeView.classList.add('hidden');
+            if (publicView) publicView.classList.add('hidden');
+            if (adminView) adminView.classList.remove('hidden');
+            if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
+
+            if (!skipHistoryPush) {
+                const url = `${window.location.pathname}?view=admin`;
+                window.history.pushState({ view: 'admin' }, '', url);
+            }
             AdminModule.populateAdminDashboard();
-        } else {
-            publicView.classList.remove('hidden');
-            adminView.classList.add('hidden');
+        } else if (viewName === 'album') {
+            currentView = 'album';
+            if (homeView) homeView.classList.add('hidden');
+            if (publicView) publicView.classList.remove('hidden');
+            if (adminView) adminView.classList.add('hidden');
+            if (navAlbumContextual) navAlbumContextual.classList.remove('hidden');
+
+            if (!skipHistoryPush) {
+                const url = `${window.location.pathname}?album=${encodeURIComponent(currentAlbumId)}`;
+                window.history.pushState({ view: 'album', albumId: currentAlbumId }, '', url);
+            }
             renderPublicAlbum();
+            maybeShowClientReminderModal();
+        } else {
+            currentView = 'home';
+            if (homeView) homeView.classList.remove('hidden');
+            if (publicView) publicView.classList.add('hidden');
+            if (adminView) adminView.classList.add('hidden');
+            if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
+
+            if (!skipHistoryPush) {
+                window.history.pushState({ view: 'home' }, '', window.location.pathname);
+            }
+            renderHomeShowcase();
         }
+
+        updateActiveNavButtons();
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateActiveNavButtons() {
+        const navHome = document.getElementById('navTabHome');
+        const navAlbum = document.getElementById('navTabAlbum');
+        const navAdmin = document.getElementById('navTabAdmin');
+
+        const setTabClass = (el, active) => {
+            if (!el) return;
+            if (active) {
+                el.className = "px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-zinc-900 text-white transition flex items-center gap-1.5 shadow-sm";
+            } else {
+                el.className = "px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition flex items-center gap-1.5";
+            }
+        };
+
+        setTabClass(navHome, currentView === 'home');
+        setTabClass(navAlbum, currentView === 'album');
+        setTabClass(navAdmin, currentView === 'admin');
+    }
+
+    function openAlbumPage(albumId) {
+        if (albumId) {
+            currentAlbumId = albumId;
+            activeCategory = 'ALL';
+            searchQuery = '';
+        }
+        showView('album');
+    }
+
+    function handleQuickAlbumCodeAccess(event) {
+        event.preventDefault();
+        const input = document.getElementById('quickAlbumCodeInput');
+        if (!input || !input.value.trim()) return;
+
+        let raw = input.value.trim();
+        if (raw.includes('album=')) {
+            try {
+                const u = new URL(raw, window.location.origin);
+                raw = u.searchParams.get('album') || raw;
+            } catch (e) {}
+        } else if (raw.includes('/albums/')) {
+            raw = raw.split('/albums/').pop().replace(/\/+$/, '');
+        }
+
+        const albums = AdminModule.getAllAlbums();
+        const matched = albums.find(a => a.id.toLowerCase() === raw.toLowerCase());
+        if (matched) {
+            input.value = '';
+            openAlbumPage(matched.id);
+            showToast(`Đang mở Album: ${matched.title}`);
+        } else {
+            showToast(`Không tìm thấy Album với mã "${raw}"!`, "error");
+        }
+    }
+
+    // =========================================================================
+    // TRANG 1: TRANG CHỦ DỰ ÁN CÔNG KHAI (SORT BY TIME & GROUP BY LOCATION)
+    // =========================================================================
+
+    function setHomeLocationFilter(city) {
+        homeLocationFilter = city;
+        renderHomeShowcase();
+    }
+
+    function setHomeTimeSort(sortOrder) {
+        homeTimeSort = sortOrder;
+        renderHomeShowcase();
+    }
+
+    function toggleHomeGroupByLocation() {
+        homeGroupByLocation = !homeGroupByLocation;
+        renderHomeShowcase();
+    }
+
+    function renderHomeShowcase() {
+        const allAlbums = AdminModule.getAllAlbums();
+        const publicAlbums = allAlbums.filter(a => a.isPublic);
+
+        const countEl = document.getElementById('homePublicAlbumsCount');
+        if (countEl) countEl.innerText = `${publicAlbums.length} Dự Án Công Khai`;
+
+        const locPillsContainer = document.getElementById('homeLocationFilterPills');
+        if (locPillsContainer) {
+            const cities = [];
+            publicAlbums.forEach(a => {
+                const c = a.city || 'Khác';
+                if (!cities.includes(c)) cities.push(c);
+            });
+
+            const pills = [
+                { id: 'ALL', label: `Tất cả địa điểm (${publicAlbums.length})` },
+                ...cities.map(c => ({
+                    id: c,
+                    label: `${c} (${publicAlbums.filter(a => (a.city || 'Khác') === c).length})`
+                }))
+            ];
+
+            locPillsContainer.innerHTML = pills.map(p => {
+                const active = homeLocationFilter === p.id;
+                return `
+                    <button
+                        type="button"
+                        onclick="App.setHomeLocationFilter('${p.id}')"
+                        class="px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap flex items-center gap-1.5 ${
+                            active
+                                ? 'bg-zinc-900 text-white shadow-sm'
+                                : 'bg-white text-zinc-600 hover:bg-zinc-100 border border-zinc-200'
+                        }"
+                    >
+                        <i class="fa-solid fa-location-dot ${active ? 'text-rose-400' : 'text-zinc-400'}"></i>
+                        <span>${p.label}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        const groupBtn = document.getElementById('homeGroupToggleBtn');
+        if (groupBtn) {
+            groupBtn.className = `px-3.5 py-2 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 ${
+                homeGroupByLocation
+                    ? 'bg-zinc-900 text-white border-zinc-900'
+                    : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+            }`;
+        }
+
+        let filtered = publicAlbums.filter(a => {
+            if (homeLocationFilter === 'ALL') return true;
+            return (a.city || 'Khác') === homeLocationFilter;
+        });
+
+        filtered.sort((a, b) => {
+            const cmp = (a.date || '').localeCompare(b.date || '');
+            return homeTimeSort === 'newest' ? -cmp : cmp;
+        });
+
+        const container = document.getElementById('homeShowcaseContainer');
+        if (!container) return;
+
+        if (!filtered.length) {
+            container.innerHTML = `
+                <div class="text-center py-16 bg-white rounded-3xl border border-zinc-200">
+                    <i class="fa-regular fa-folder-open text-3xl text-zinc-300 mb-3 block"></i>
+                    <h3 class="text-base font-bold text-zinc-800">Chưa có dự án công khai nào ở địa điểm này</h3>
+                    <p class="text-xs text-zinc-500 mt-1">Nhiếp ảnh gia có thể bật trạng thái "Công khai" cho Album trong Trang Quản Trị.</p>
+                </div>
+            `;
+            return;
+        }
+
+        if (homeGroupByLocation) {
+            const groupsMap = new Map();
+            filtered.forEach(album => {
+                const city = album.city || 'Địa Điểm Khác';
+                if (!groupsMap.has(city)) groupsMap.set(city, []);
+                groupsMap.get(city).push(album);
+            });
+
+            let html = '';
+            groupsMap.forEach((albumsInCity, city) => {
+                html += `
+                    <div class="mb-12 last:mb-0">
+                        <div class="flex items-center justify-between mb-5 pb-3 border-b border-zinc-200">
+                            <div class="flex items-center gap-3">
+                                <span class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center shadow-sm">
+                                    <i class="fa-solid fa-location-dot text-lg"></i>
+                                </span>
+                                <div>
+                                    <h2 class="font-serif-display text-2xl sm:text-3xl font-bold text-zinc-900">${city}</h2>
+                                    <p class="text-xs text-zinc-500">${albumsInCity.length} bộ ảnh công khai • Sắp xếp theo thời gian (${homeTimeSort === 'newest' ? 'Mới nhất trước' : 'Cũ nhất trước'})</p>
+                                </div>
+                            </div>
+                            <span class="text-xs bg-zinc-100 text-zinc-700 px-3 py-1 rounded-full font-semibold">${albumsInCity.length} Album</span>
+                        </div>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${albumsInCity.map(album => renderHomeAlbumCard(album)).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${filtered.map(album => renderHomeAlbumCard(album)).join('')}
+                </div>
+            `;
+        }
+    }
+
+    function renderHomeAlbumCard(album) {
+        const formattedDate = album.date ? album.date.split('-').reverse().join('.') : '';
+        const tagsHtml = (album.tags || []).slice(0, 3).map(t => `<span class="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">#${t}</span>`).join('');
+        return `
+            <article
+                onclick="App.openAlbumPage('${album.id}')"
+                class="group bg-white rounded-2xl overflow-hidden border border-zinc-200 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col"
+            >
+                <div class="relative aspect-[4/3] overflow-hidden bg-zinc-100">
+                    <img
+                        src="${album.coverUrl}"
+                        alt="${album.title}"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    >
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent"></div>
+
+                    <div class="absolute top-3 left-3 flex items-center gap-1.5">
+                        <span class="bg-black/65 backdrop-blur-md text-white text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-rose-400"></i> ${album.city}
+                        </span>
+                    </div>
+
+                    <div class="absolute top-3 right-3">
+                        <span class="bg-white/90 backdrop-blur-md text-zinc-900 text-[11px] font-bold px-2.5 py-1 rounded-full">
+                            <i class="fa-regular fa-images mr-1"></i>${album.photos.length} ảnh
+                        </span>
+                    </div>
+
+                    <div class="absolute bottom-3 left-3 right-3 text-white">
+                        <span class="text-[11px] text-amber-300 font-medium block"><i class="fa-regular fa-calendar mr-1"></i>Ngày chụp: ${formattedDate}</span>
+                        <h3 class="font-serif-display text-2xl font-bold leading-snug">${album.title}</h3>
+                    </div>
+                </div>
+
+                <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+                    <div>
+                        <p class="text-xs text-zinc-500 flex items-center gap-1.5">
+                            <i class="fa-solid fa-map-pin text-zinc-400"></i>
+                            <span class="truncate">${album.location}</span>
+                        </p>
+                        ${tagsHtml ? `<div class="flex flex-wrap gap-1 mt-2">${tagsHtml}</div>` : ''}
+                    </div>
+
+                    <div class="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                        <span class="text-zinc-500">Khách hàng: <strong class="text-zinc-800">${album.clientName}</strong></span>
+                        <span class="font-semibold text-zinc-900 group-hover:text-rose-600 transition flex items-center gap-1">
+                            Xem & Chọn ảnh <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </span>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
+    // =========================================================================
+    // TRANG 2: TRANG ALBUM GỬI KHÁCH (SHOTPIK REMINDER, DEADLINE & COMPLETE LOCK)
+    // =========================================================================
+
+    function isAlbumSelectionLocked(album) {
+        if (!album) return false;
+        if (album.isSelectionLockedBySubmit) return true;
+        if (album.deadlineEnabled && album.deadlineAt) {
+            const deadlineMs = new Date(album.deadlineAt).getTime();
+            if (!isNaN(deadlineMs) && Date.now() > deadlineMs) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function maybeShowClientReminderModal(forceOpen = false) {
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        if (!album) return;
+
+        if (!forceOpen) {
+            if (!album.reminderEnabled || !album.reminderText) return;
+            if (shownReminderSessionMap[album.id]) return;
+        }
+
+        shownReminderSessionMap[album.id] = true;
+        const titleEl = document.getElementById('reminderModalAlbumTitle');
+        const textEl = document.getElementById('reminderModalContentText');
+        if (titleEl) titleEl.innerText = album.title;
+        if (textEl) textEl.innerText = album.reminderText || "Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé!";
+
+        const modal = document.getElementById('clientReminderModal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeClientReminderModal() {
+        const modal = document.getElementById('clientReminderModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function updateDeadlineCountdownUI(album) {
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+
+        const deadlineBanner = document.getElementById('albumDeadlineCountdownBox');
+        const lockBanner = document.getElementById('albumSelectionLockedBanner');
+        const lockReasonText = document.getElementById('albumSelectionLockedReasonText');
+        const unlockBtnAdmin = document.getElementById('albumLockedAdminUnlockBtn');
+
+        const lockedBySubmit = !!album.isSelectionLockedBySubmit;
+        const hasDeadline = !!(album.deadlineEnabled && album.deadlineAt);
+
+        const tick = () => {
+            let expired = false;
+            if (hasDeadline) {
+                const diff = new Date(album.deadlineAt).getTime() - Date.now();
+                if (diff <= 0) {
+                    expired = true;
+                    if (deadlineBanner) deadlineBanner.classList.add('hidden');
+                } else {
+                    if (deadlineBanner) {
+                        deadlineBanner.classList.remove('hidden');
+                        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                        const mins = Math.floor((diff / (1000 * 60)) % 60);
+                        const secs = Math.floor((diff / 1000) % 60);
+                        const timerEl = document.getElementById('albumCountdownTimerText');
+                        if (timerEl) {
+                            timerEl.innerText = `${days} ngày ${hours.toString().padStart(2, '0')}g ${mins.toString().padStart(2, '0')}p ${secs.toString().padStart(2, '0')}s`;
+                        }
+                    }
+                }
+            } else {
+                if (deadlineBanner) deadlineBanner.classList.add('hidden');
+            }
+
+            if (lockedBySubmit || expired) {
+                if (lockBanner) lockBanner.classList.remove('hidden');
+                if (lockReasonText) {
+                    lockReasonText.innerText = lockedBySubmit
+                        ? "Bạn đã bấm 'Hoàn tất chọn ảnh' và gửi kết quả cho Studio. Phần chọn ảnh hiện đã tự động khoá (bạn vẫn xem và tải ảnh được)."
+                        : "Đã hết thời hạn chọn ảnh cho Album này. Phần chọn ảnh đã tự động khoá, bạn vẫn có thể xem và tải ảnh về máy.";
+                }
+                if (unlockBtnAdmin) {
+                    unlockBtnAdmin.classList.toggle('hidden', !lockedBySubmit);
+                }
+            } else {
+                if (lockBanner) lockBanner.classList.add('hidden');
+            }
+        };
+
+        tick();
+        if (hasDeadline) {
+            countdownInterval = setInterval(tick, 1000);
+        }
     }
 
     function checkAlbumPinLock(album) {
         const lockOverlay = document.getElementById('pinLockOverlay');
         if (!lockOverlay) return false;
 
-        if (album.pinCode && album.pinCode.trim() !== "" && !unlockedPinSession && !AuthModule.isLoggedIn()) {
+        if (album.pinCode && album.pinCode.trim() !== "" && !unlockedPinMap[album.id] && !AuthModule.isLoggedIn()) {
             const titleEl = document.getElementById('pinLockAlbumTitle');
             if (titleEl) titleEl.innerText = album.title;
             lockOverlay.classList.remove('hidden');
@@ -57,10 +473,10 @@ const App = (function () {
         event.preventDefault();
         const input = document.getElementById('pinCodeInput');
         const err = document.getElementById('pinErrorMsg');
-        const album = AdminModule.getAlbumData();
+        const album = AdminModule.getAlbumById(currentAlbumId);
 
         if (input && input.value.trim() === album.pinCode.trim()) {
-            unlockedPinSession = true;
+            unlockedPinMap[album.id] = true;
             if (err) err.classList.add('hidden');
             document.getElementById('pinLockOverlay').classList.add('hidden');
             showToast("Đã mở khoá Album thành công!");
@@ -69,13 +485,24 @@ const App = (function () {
         }
     }
 
+    function setAlbumTimeSort(order) {
+        albumTimeSort = order;
+        renderPublicAlbum();
+    }
+
+    function toggleAlbumGroupByLocation() {
+        albumGroupByLocation = !albumGroupByLocation;
+        renderPublicAlbum();
+    }
+
     function renderPublicAlbum() {
-        const album = AdminModule.getAlbumData();
-        const selections = AdminModule.getSelections();
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        if (!album) return;
+        const selections = AdminModule.getSelections(album.id);
 
         checkAlbumPinLock(album);
+        updateDeadlineCountdownUI(album);
 
-        // 1. Update Hero Banner
         const setTxt = (id, txt) => {
             const el = document.getElementById(id);
             if (el) el.innerText = txt;
@@ -84,13 +511,23 @@ const App = (function () {
         const coverImg = document.getElementById('heroCoverImage');
         if (coverImg) coverImg.src = album.coverUrl;
 
+        const formattedDate = album.date ? album.date.split('-').reverse().join('.') : '';
         setTxt('heroAlbumTitle', album.title);
         setTxt('heroClientName', album.clientName);
-        setTxt('heroShootDate', album.date);
-        setTxt('heroLocation', album.location || 'Việt Nam');
+        setTxt('heroShootDate', formattedDate);
+        setTxt('heroLocation', `${album.location} (${album.city || ''})`);
         setTxt('heroPhotoCount', `${album.photos.length} Ảnh`);
 
-        // 2. Update Selection Counters in Navbar & Toolbar
+        const reminderBtn = document.getElementById('albumTopReminderBtn');
+        if (reminderBtn) {
+            reminderBtn.classList.toggle('hidden', !(album.reminderEnabled && album.reminderText));
+        }
+
+        const shareLinkText = document.getElementById('albumClientLinkDisplay');
+        if (shareLinkText) {
+            shareLinkText.innerText = AdminModule.getClientShareUrl(album.id);
+        }
+
         const selectedIds = album.photos.filter(p => selections[p.id] && selections[p.id].selected).map(p => p.id);
         const notedIds = album.photos.filter(p => selections[p.id] && selections[p.id].note && selections[p.id].note.trim()).map(p => p.id);
         const limitText = album.selectionLimit > 0 ? `${selectedIds.length}/${album.selectionLimit}` : `${selectedIds.length}`;
@@ -98,13 +535,24 @@ const App = (function () {
         setTxt('navSelectedCounter', limitText);
         setTxt('toolbarSelectedCounter', limitText);
 
-        // 3. Render Category Filter Tabs
-        renderCategoryTabs(album, selectedIds.length, notedIds.length);
+        // Update label on Submit button according to Shotpik "Hoàn tất chọn ảnh"
+        const navSubmitBtnLabel = document.getElementById('navSubmitBtnLabel');
+        if (navSubmitBtnLabel) {
+            navSubmitBtnLabel.innerText = album.isSelectionLockedBySubmit ? 'Đã hoàn tất chọn' : 'Hoàn tất chọn ảnh';
+        }
 
-        // 4. Filter & Render Photo Grid
+        const groupBtn = document.getElementById('albumGroupLocationBtn');
+        if (groupBtn) {
+            groupBtn.className = `px-3.5 py-2 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 ${
+                albumGroupByLocation
+                    ? 'bg-zinc-900 text-white border-zinc-900'
+                    : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+            }`;
+        }
+
+        renderCategoryTabs(album, selectedIds.length, notedIds.length);
         renderPhotoGrid(album, selections);
 
-        // 5. Update Video Highlight Section
         const videoSection = document.getElementById('videoHighlightSection');
         const mainPlayer = document.getElementById('mainVideoPlayer');
         if (videoSection && mainPlayer) {
@@ -124,25 +572,26 @@ const App = (function () {
         const container = document.getElementById('categoryTabsContainer');
         if (!container) return;
 
-        const uniqueCats = [];
+        const uniqueLocations = [];
         album.photos.forEach(p => {
-            if (p.category && !uniqueCats.includes(p.category)) {
-                uniqueCats.push(p.category);
+            const loc = p.location || album.city || 'Khác';
+            if (loc && !uniqueLocations.includes(loc)) {
+                uniqueLocations.push(loc);
             }
         });
 
         const tabs = [
-            { id: 'ALL', label: `Tất cả (${album.photos.length})`, icon: 'fa-solid fa-border-all' },
-            { id: 'SELECTED', label: `Đã chọn (${selectedCount})`, icon: 'fa-solid fa-heart text-rose-500' }
+            { id: 'ALL', label: `Tất cả địa điểm (${album.photos.length})`, icon: 'fa-solid fa-layer-group' },
+            { id: 'SELECTED', label: `Ảnh đã chọn (${selectedCount})`, icon: 'fa-solid fa-heart text-rose-500' }
         ];
 
         if (notedCount > 0) {
             tabs.push({ id: 'NOTED', label: `Có ghi chú (${notedCount})`, icon: 'fa-solid fa-comment-dots text-amber-500' });
         }
 
-        uniqueCats.forEach(cat => {
-            const count = album.photos.filter(p => p.category === cat).length;
-            tabs.push({ id: `CAT:${cat}`, label: `${cat} (${count})`, icon: '' });
+        uniqueLocations.forEach(loc => {
+            const count = album.photos.filter(p => (p.location || album.city || 'Khác') === loc).length;
+            tabs.push({ id: `LOC:${loc}`, label: `${loc} (${count})`, icon: 'fa-solid fa-location-dot text-rose-400' });
         });
 
         container.innerHTML = tabs.map(tab => {
@@ -153,8 +602,8 @@ const App = (function () {
                     onclick="App.setCategoryFilter('${tab.id}')"
                     class="px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap flex items-center gap-1.5 ${
                         isActive
-                            ? 'bg-slate-900 text-white shadow-sm'
-                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                            ? 'bg-zinc-900 text-white shadow-sm'
+                            : 'bg-white text-zinc-600 hover:bg-zinc-100 border border-zinc-200'
                     }"
                 >
                     ${tab.icon ? `<i class="${tab.icon}"></i>` : ''}
@@ -171,17 +620,17 @@ const App = (function () {
 
     function handleSearchInput(val) {
         searchQuery = (val || '').trim().toLowerCase();
-        const album = AdminModule.getAlbumData();
-        const selections = AdminModule.getSelections();
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        const selections = AdminModule.getSelections(album.id);
         renderPhotoGrid(album, selections);
     }
 
     function setGridCols(colsClass) {
         gridCols = colsClass;
-        const grid = document.getElementById('galleryPhotoGrid');
-        if (grid) {
-            grid.className = `photo-grid ${gridCols}`;
-        }
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        const selections = AdminModule.getSelections(album.id);
+        renderPhotoGrid(album, selections);
+
         ['cols-4', 'cols-3', 'cols-2'].forEach(c => {
             const btn = document.getElementById(`gridBtn_${c}`);
             if (btn) {
@@ -197,100 +646,158 @@ const App = (function () {
     }
 
     function renderPhotoGrid(album, selections) {
-        const grid = document.getElementById('galleryPhotoGrid');
+        const wrapper = document.getElementById('gallerySectionsWrapper');
         const emptyState = document.getElementById('galleryEmptyState');
-        if (!grid) return;
+        if (!wrapper) return;
 
-        grid.className = `photo-grid ${gridCols}`;
-
-        const filtered = album.photos.filter(p => {
+        let filtered = album.photos.filter(p => {
             const st = selections[p.id] || {};
+            const loc = p.location || album.city || 'Khác';
             if (activeCategory === 'SELECTED' && !st.selected) return false;
             if (activeCategory === 'NOTED' && !(st.note && st.note.trim())) return false;
-            if (activeCategory.startsWith('CAT:')) {
-                const targetCat = activeCategory.slice(4);
-                if (p.category !== targetCat) return false;
+            if (activeCategory.startsWith('LOC:')) {
+                const targetLoc = activeCategory.slice(4);
+                if (loc !== targetLoc) return false;
             }
             if (searchQuery) {
-                const hay = `${p.code} ${p.title || ''} ${p.category || ''} ${st.note || ''}`.toLowerCase();
+                const hay = `${p.code} ${p.title || ''} ${loc} ${st.note || ''}`.toLowerCase();
                 if (!hay.includes(searchQuery)) return false;
             }
             return true;
         });
 
+        filtered.sort((a, b) => {
+            const cmp = (a.capturedAt || '').localeCompare(b.capturedAt || '');
+            return albumTimeSort === 'asc' ? cmp : -cmp;
+        });
+
         currentFilteredPhotos = filtered;
 
         if (!filtered.length) {
-            grid.innerHTML = '';
+            wrapper.innerHTML = '';
             if (emptyState) emptyState.classList.remove('hidden');
             return;
         }
 
         if (emptyState) emptyState.classList.add('hidden');
 
-        grid.innerHTML = filtered.map((photo, index) => {
-            const st = selections[photo.id] || {};
-            const isSelected = !!st.selected;
-            const hasNote = !!(st.note && st.note.trim());
+        const indexMap = new Map();
+        filtered.forEach((p, idx) => indexMap.set(p.id, idx));
 
-            return `
-                <div class="photo-card ${isSelected ? 'is-selected' : ''} ${hasNote ? 'has-note' : ''}" onclick="App.openLightbox(${index})">
-                    <img src="${photo.url}" alt="${photo.code}" loading="lazy">
-                    <div class="photo-card-overlay">
-                        <!-- Top Row -->
-                        <div class="flex items-center justify-between">
-                            <span class="bg-black/60 backdrop-blur-md text-white text-[11px] font-mono px-2.5 py-1 rounded-full tracking-wide">
-                                ${photo.code}
+        if (albumGroupByLocation) {
+            const groups = new Map();
+            filtered.forEach(p => {
+                const loc = p.location || album.city || 'Địa Điểm Chụp';
+                if (!groups.has(loc)) groups.set(loc, []);
+                groups.get(loc).push(p);
+            });
+
+            let html = '';
+            groups.forEach((photosInLoc, locName) => {
+                const firstTime = AdminModule.formatTimeShort(photosInLoc[0]?.capturedAt);
+                const lastTime = AdminModule.formatTimeShort(photosInLoc[photosInLoc.length - 1]?.capturedAt);
+                const timeRange = firstTime && lastTime && firstTime !== lastTime ? `${firstTime} → ${lastTime}` : firstTime;
+
+                html += `
+                    <div class="mb-10 last:mb-0">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2.5 border-b border-zinc-200">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-8 h-8 rounded-xl bg-zinc-900 text-rose-400 flex items-center justify-center text-sm shadow-sm">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </span>
+                                <div>
+                                    <h3 class="text-base sm:text-lg font-bold text-zinc-900">${locName}</h3>
+                                    <p class="text-xs text-zinc-500"><i class="fa-regular fa-clock mr-1"></i>Khung giờ chụp: ${timeRange || album.date}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs bg-zinc-100 text-zinc-700 px-3 py-1 rounded-full font-semibold self-start sm:self-auto">
+                                ${photosInLoc.length} ảnh tại địa điểm này
                             </span>
-                            <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
-                                <button
-                                    type="button"
-                                    onclick="App.openPhotoNoteModal('${photo.id}')"
-                                    title="${hasNote ? 'Sửa ghi chú chỉnh sửa' : 'Thêm ghi chú chỉnh sửa'}"
-                                    class="card-icon-btn ${hasNote ? 'active-note' : ''}"
-                                >
-                                    <i class="fa-solid fa-comment-dots text-sm"></i>
-                                </button>
-                                <button
-                                    type="button"
-                                    onclick="App.toggleSelectPhoto('${photo.id}')"
-                                    title="${isSelected ? 'Bỏ chọn ảnh này' : 'Chọn ảnh in / chỉnh sửa'}"
-                                    class="card-icon-btn ${isSelected ? 'active-heart' : ''}"
-                                >
-                                    <i class="${isSelected ? 'fa-solid' : 'fa-regular'} fa-heart text-sm"></i>
-                                </button>
-                            </div>
                         </div>
+                        <div class="photo-grid ${gridCols}">
+                            ${photosInLoc.map(photo => renderSinglePhotoCard(photo, selections, indexMap.get(photo.id))).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            wrapper.innerHTML = html;
+        } else {
+            wrapper.innerHTML = `
+                <div class="photo-grid ${gridCols}">
+                    ${filtered.map((photo, index) => renderSinglePhotoCard(photo, selections, index)).join('')}
+                </div>
+            `;
+        }
+    }
 
-                        <!-- Bottom Row -->
-                        <div class="flex items-end justify-between gap-2">
-                            <div class="min-w-0">
-                                <span class="text-[10px] uppercase tracking-wider text-white/80 font-semibold block">${photo.category || ''}</span>
-                                <p class="text-xs sm:text-sm text-white font-medium truncate">${photo.title || photo.code}</p>
-                                ${hasNote ? `<p class="text-[11px] text-amber-300 truncate mt-0.5"><i class="fa-regular fa-note-sticky mr-1"></i>${st.note}</p>` : ''}
-                            </div>
+    function renderSinglePhotoCard(photo, selections, lightboxIdx) {
+        const st = selections[photo.id] || {};
+        const isSelected = !!st.selected;
+        const hasNote = !!(st.note && st.note.trim());
+        const timeStr = AdminModule.formatTimeShort(photo.capturedAt);
+
+        return `
+            <div class="photo-card ${isSelected ? 'is-selected' : ''} ${hasNote ? 'has-note' : ''}" onclick="App.openLightbox(${lightboxIdx})">
+                <img src="${photo.url}" alt="${photo.code}" loading="lazy">
+                <div class="photo-card-overlay">
+                    <div class="flex items-center justify-between">
+                        <span class="bg-black/65 backdrop-blur-md text-white text-[11px] font-mono px-2.5 py-1 rounded-full tracking-wide">
+                            ${photo.code}
+                        </span>
+                        <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
                             <button
                                 type="button"
-                                onclick="event.stopPropagation(); App.downloadSinglePhoto('${photo.id}')"
-                                title="Tải ảnh này về máy"
-                                class="card-icon-btn !w-8 !h-8 shrink-0"
+                                onclick="App.openPhotoNoteModal('${photo.id}')"
+                                title="${hasNote ? 'Sửa ghi chú chỉnh sửa' : 'Thêm ghi chú chỉnh sửa'}"
+                                class="card-icon-btn ${hasNote ? 'active-note' : ''}"
                             >
-                                <i class="fa-solid fa-download text-xs"></i>
+                                <i class="fa-solid fa-comment-dots text-sm"></i>
+                            </button>
+                            <button
+                                type="button"
+                                onclick="App.toggleSelectPhoto('${photo.id}')"
+                                title="${isSelected ? 'Bỏ chọn ảnh này' : 'Chọn ảnh muốn lưu / in'}"
+                                class="card-icon-btn ${isSelected ? 'active-heart' : ''}"
+                            >
+                                <i class="${isSelected ? 'fa-solid' : 'fa-regular'} fa-heart text-sm"></i>
                             </button>
                         </div>
                     </div>
+
+                    <div class="flex items-end justify-between gap-2">
+                        <div class="min-w-0">
+                            <span class="text-[10px] text-amber-300 font-medium block truncate">
+                                <i class="fa-solid fa-location-dot mr-1"></i>${photo.location || ''}
+                            </span>
+                            <p class="text-xs sm:text-sm text-white font-medium truncate">${photo.title || photo.code}</p>
+                            <span class="text-[10px] text-zinc-300 block"><i class="fa-regular fa-clock mr-1"></i>${timeStr}</span>
+                            ${hasNote ? `<p class="text-[11px] text-amber-200 bg-black/50 px-1.5 py-0.5 rounded truncate mt-1"><i class="fa-regular fa-note-sticky mr-1"></i>${st.note}</p>` : ''}
+                        </div>
+                        <button
+                            type="button"
+                            onclick="event.stopPropagation(); App.downloadSinglePhoto('${photo.id}')"
+                            title="Lưu ảnh này về máy"
+                            class="card-icon-btn !w-8 !h-8 shrink-0"
+                        >
+                            <i class="fa-solid fa-download text-xs"></i>
+                        </button>
+                    </div>
                 </div>
-            `;
-        }).join('');
+            </div>
+        `;
     }
 
     function toggleSelectPhoto(photoId) {
-        const album = AdminModule.getAlbumData();
-        const selections = AdminModule.getSelections();
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        if (isAlbumSelectionLocked(album)) {
+            showToast("Album hiện đã khoá phần chọn ảnh (Hết hạn hoặc bạn đã gửi kết quả Hoàn tất)!", "error");
+            return;
+        }
+
+        const selections = AdminModule.getSelections(album.id);
         const current = selections[photoId] || { selected: false, note: "" };
 
         if (!current.selected) {
-            // Check selection limit
             const currentCount = album.photos.filter(p => selections[p.id] && selections[p.id].selected).length;
             if (album.selectionLimit > 0 && currentCount >= album.selectionLimit) {
                 showToast(`Gói chụp cho phép chọn tối đa ${album.selectionLimit} ảnh! Bạn hãy bỏ chọn ảnh khác trước nhé.`, 'error');
@@ -298,13 +805,13 @@ const App = (function () {
             }
             current.selected = true;
             selections[photoId] = current;
-            AdminModule.saveSelections(selections);
+            AdminModule.saveSelections(selections, album.id);
             const p = album.photos.find(x => x.id === photoId);
-            showToast(`Đã thêm ${p ? p.code : 'ảnh'} vào danh sách chọn ♥`);
+            showToast(`Đã chọn ảnh ${p ? p.code : ''} vào danh sách lưu/in ♥`);
         } else {
             current.selected = false;
             selections[photoId] = current;
-            AdminModule.saveSelections(selections);
+            AdminModule.saveSelections(selections, album.id);
         }
 
         renderPublicAlbum();
@@ -313,17 +820,21 @@ const App = (function () {
         }
     }
 
-    // Individual Photo Retouch Note Modal
     function openPhotoNoteModal(photoId) {
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        if (isAlbumSelectionLocked(album)) {
+            showToast("Album hiện đã khoá phần chọn và ghi chú ảnh!", "error");
+            return;
+        }
+
         activeNotePhotoId = photoId;
-        const album = AdminModule.getAlbumData();
-        const selections = AdminModule.getSelections();
+        const selections = AdminModule.getSelections(album.id);
         const photo = album.photos.find(p => p.id === photoId);
         if (!photo) return;
 
         const st = selections[photoId] || { selected: false, note: "" };
         document.getElementById('noteModalPhotoThumb').src = photo.url;
-        document.getElementById('noteModalPhotoCode').innerText = photo.code;
+        document.getElementById('noteModalPhotoCode').innerText = `${photo.code} • ${photo.location || ''}`;
         document.getElementById('noteModalInput').value = st.note || "";
         document.getElementById('photoNoteModal').classList.remove('hidden');
         setTimeout(() => document.getElementById('noteModalInput').focus(), 50);
@@ -338,27 +849,26 @@ const App = (function () {
         if (event) event.preventDefault();
         if (!activeNotePhotoId) return;
 
+        const album = AdminModule.getAlbumById(currentAlbumId);
         const val = document.getElementById('noteModalInput').value.trim();
-        const selections = AdminModule.getSelections();
+        const selections = AdminModule.getSelections(album.id);
         const current = selections[activeNotePhotoId] || { selected: false, note: "" };
         current.note = val;
         if (val && !current.selected) {
-            // Automatically select photo if client writes a retouch request and under limit
-            const album = AdminModule.getAlbumData();
             const currentCount = album.photos.filter(p => selections[p.id] && selections[p.id].selected).length;
             if (!album.selectionLimit || currentCount < album.selectionLimit) {
                 current.selected = true;
             }
         }
         selections[activeNotePhotoId] = current;
-        AdminModule.saveSelections(selections);
+        AdminModule.saveSelections(selections, album.id);
 
         closePhotoNoteModal();
         renderPublicAlbum();
         if (currentLightboxIndex >= 0) {
             updateLightboxContent();
         }
-        showToast(val ? "Đã lưu ghi chú chỉnh sửa cho ảnh!" : "Đã xoá ghi chú trên ảnh.");
+        showToast(val ? "Đã lưu ghi chú cho ảnh!" : "Đã xoá ghi chú trên ảnh.");
     }
 
     function fillQuickNoteChip(text) {
@@ -389,8 +899,9 @@ const App = (function () {
         const photo = currentFilteredPhotos[currentLightboxIndex];
         if (!photo) return;
 
-        const selections = AdminModule.getSelections();
+        const selections = AdminModule.getSelections(currentAlbumId);
         const st = selections[photo.id] || { selected: false, note: "" };
+        const timeStr = AdminModule.formatTimeShort(photo.capturedAt);
 
         const img = document.getElementById('lightboxImage');
         img.src = photo.url;
@@ -398,16 +909,16 @@ const App = (function () {
         isLightboxZoomed = false;
 
         document.getElementById('lightboxCode').innerText = photo.code;
-        document.getElementById('lightboxTitle').innerText = `${photo.title || photo.code} • ${photo.category || ''}`;
+        document.getElementById('lightboxTitle').innerText = `${photo.location || ''} • ${timeStr}`;
         document.getElementById('lightboxCounter').innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
 
         const heartBtn = document.getElementById('lightboxHeartBtn');
         if (st.selected) {
             heartBtn.className = "px-4 py-2 rounded-full bg-rose-600 text-white text-xs font-semibold flex items-center gap-2 transition shadow-lg";
-            heartBtn.innerHTML = `<i class="fa-solid fa-heart"></i> <span>Đã chọn ảnh này</span>`;
+            heartBtn.innerHTML = `<i class="fa-solid fa-heart"></i> <span>Đã chọn lưu ảnh này</span>`;
         } else {
             heartBtn.className = "px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-2 transition";
-            heartBtn.innerHTML = `<i class="fa-regular fa-heart"></i> <span>Chọn ảnh (Retouch/In)</span>`;
+            heartBtn.innerHTML = `<i class="fa-regular fa-heart"></i> <span>Chọn lưu ảnh này</span>`;
         }
 
         const noteBadge = document.getElementById('lightboxNotePreview');
@@ -417,6 +928,12 @@ const App = (function () {
         } else {
             noteBadge.classList.add('hidden');
         }
+    }
+
+    function setLightboxCurrentAsCover() {
+        const photo = currentFilteredPhotos[currentLightboxIndex];
+        if (!photo) return;
+        AdminModule.setPhotoAsCover(photo.url, currentAlbumId);
     }
 
     function nextLightboxPhoto() {
@@ -488,13 +1005,12 @@ const App = (function () {
         });
     }
 
-    // Download Functions
     async function downloadSinglePhoto(photoId) {
-        const album = AdminModule.getAlbumData();
+        const album = AdminModule.getAlbumById(currentAlbumId);
         const photo = album.photos.find(p => p.id === photoId);
         if (!photo) return;
 
-        showToast(`Đang chuẩn bị tải ảnh ${photo.code}...`);
+        showToast(`Đang chuẩn bị lưu ảnh ${photo.code} về máy...`);
         try {
             const response = await fetch(photo.url);
             const blob = await response.blob();
@@ -512,8 +1028,8 @@ const App = (function () {
     }
 
     function openDownloadModal() {
-        const album = AdminModule.getAlbumData();
-        const selections = AdminModule.getSelections();
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        const selections = AdminModule.getSelections(album.id);
         const selectedCount = album.photos.filter(p => selections[p.id] && selections[p.id].selected).length;
 
         document.getElementById('dlModalTotalCount').innerText = `${album.photos.length} ảnh`;
@@ -529,64 +1045,71 @@ const App = (function () {
         event.preventDefault();
         const scope = document.querySelector('input[name="dlScope"]:checked').value;
         const quality = document.querySelector('input[name="dlQuality"]:checked').value;
-        const album = AdminModule.getAlbumData();
-        const selections = AdminModule.getSelections();
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        const selections = AdminModule.getSelections(album.id);
 
         let targetPhotos = album.photos;
         if (scope === 'selected') {
             targetPhotos = album.photos.filter(p => selections[p.id] && selections[p.id].selected);
             if (!targetPhotos.length) {
-                showToast("Bạn chưa thả tim chọn bức ảnh nào để tải!", "error");
+                showToast("Bạn chưa thả tim chọn bức ảnh nào để lưu về!", "error");
                 return;
             }
         }
 
         closeDownloadModal();
-        showToast(`Đang bắt đầu tải ${targetPhotos.length} ảnh (${quality === 'original' ? 'Chất lượng Gốc 4K' : 'Bản nén Web'})...`);
+        showToast(`Đang bắt đầu lưu ${targetPhotos.length} ảnh (${quality === 'original' ? 'Chất lượng Gốc 4K' : 'Bản nén Web'})...`);
 
-        // Trigger download for first 3 photos to avoid browser popup blocker, or single photo
         const batch = targetPhotos.slice(0, 3);
         for (let i = 0; i < batch.length; i++) {
             await downloadSinglePhoto(batch[i].id);
         }
         if (targetPhotos.length > 3) {
             setTimeout(() => {
-                showToast(`Đã tải mẫu ${batch.length}/${targetPhotos.length} ảnh (Trình duyệt giới hạn tải hàng loạt cùng lúc).`);
+                showToast(`Đã tải mẫu ${batch.length}/${targetPhotos.length} ảnh về máy.`);
             }, 1500);
         }
     }
 
-    // Submit Selection Modal (Client sends chosen photos to Photographer)
     function openSubmitSelectionModal() {
-        const album = AdminModule.getAlbumData();
-        const selections = AdminModule.getSelections();
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        if (isAlbumSelectionLocked(album)) {
+            showToast("Album hiện đã khoá phần chọn ảnh. Vui lòng liên hệ Studio nếu bạn muốn mở khoá chọn lại!", "error");
+            return;
+        }
+
+        const selections = AdminModule.getSelections(album.id);
         const selectedPhotos = album.photos.filter(p => selections[p.id] && selections[p.id].selected);
 
         const codesEl = document.getElementById('submitModalCodesPreview');
         const countEl = document.getElementById('submitModalCountBadge');
         const nameInput = document.getElementById('submitClientName');
+        const lockNotice = document.getElementById('submitModalAutoLockNotice');
 
         if (countEl) {
             countEl.innerText = `${selectedPhotos.length} / ${album.selectionLimit || '∞'} ảnh đã chọn`;
         }
-        if (nameInput && !nameInput.value) {
+        if (nameInput) {
             nameInput.value = album.clientName || '';
+        }
+        if (lockNotice) {
+            lockNotice.classList.toggle('hidden', !album.completeLockEnabled);
         }
 
         if (codesEl) {
             if (!selectedPhotos.length) {
-                codesEl.innerHTML = `<p class="text-xs text-rose-600 py-2">Bạn chưa bấm biểu tượng Trái Tim (♥) trên bức ảnh nào. Hãy chọn các bức ảnh ưng ý trước khi gửi nhé!</p>`;
+                codesEl.innerHTML = `<p class="text-xs text-rose-600 py-2">Bạn chưa bấm biểu tượng Trái Tim (♥) trên bức ảnh nào. Hãy chọn các bức ảnh ưng ý trước khi hoàn tất nhé!</p>`;
             } else {
                 codesEl.innerHTML = selectedPhotos.map(p => {
                     const note = selections[p.id]?.note;
                     return `
-                        <div class="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0 text-xs">
+                        <div class="flex items-center justify-between py-1.5 border-b border-zinc-100 last:border-0 text-xs">
                             <div class="flex items-center gap-2">
                                 <img src="${p.url}" class="w-8 h-8 rounded object-cover">
-                                <span class="font-mono font-bold text-slate-800">${p.code}</span>
-                                <span class="text-slate-400">${p.category}</span>
+                                <span class="font-mono font-bold text-zinc-800">${p.code}</span>
+                                <span class="text-zinc-400 truncate max-w-[140px]">${p.location || ''}</span>
                             </div>
-                            <span class="text-amber-700 truncate max-w-[180px]">${note ? `✎ ${note}` : ''}</span>
+                            <span class="text-amber-700 truncate max-w-[160px]">${note ? `✎ ${note}` : ''}</span>
                         </div>
                     `;
                 }).join('');
@@ -602,12 +1125,12 @@ const App = (function () {
 
     function handleClientSubmitSelections(event) {
         event.preventDefault();
-        const album = AdminModule.getAlbumData();
-        const selections = AdminModule.getSelections();
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        const selections = AdminModule.getSelections(album.id);
         const selectedPhotos = album.photos.filter(p => selections[p.id] && selections[p.id].selected);
 
         if (!selectedPhotos.length) {
-            showToast("Vui lòng thả tim ít nhất 1 bức ảnh trước khi gửi!", "error");
+            showToast("Vui lòng thả tim ít nhất 1 bức ảnh trước khi bấm Hoàn tất chọn ảnh!", "error");
             return;
         }
 
@@ -624,15 +1147,24 @@ const App = (function () {
             generalNote,
             codes: selectedPhotos.map(p => p.code),
             submittedAt: timeStr
-        });
+        }, album.id);
+
+        if (album.completeLockEnabled) {
+            AdminModule.lockAlbumAfterClientSubmit(album.id);
+        }
 
         closeSubmitSelectionModal();
-        showToast(`Đã gửi danh sách ${selectedPhotos.length} ảnh cho ${album.photographer || 'Studio'} thành công!`);
+        renderPublicAlbum();
+        showToast(
+            album.completeLockEnabled
+                ? `Đã hoàn tất gửi ${selectedPhotos.length} ảnh & tự động khoá phần chọn ảnh!`
+                : `Đã gửi danh sách ${selectedPhotos.length} ảnh cho Studio thành công!`
+        );
     }
 
     function copyClientSelectionSummary() {
-        const album = AdminModule.getAlbumData();
-        const selections = AdminModule.getSelections();
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        const selections = AdminModule.getSelections(album.id);
         const selectedPhotos = album.photos.filter(p => selections[p.id] && selections[p.id].selected);
 
         if (!selectedPhotos.length) {
@@ -642,19 +1174,24 @@ const App = (function () {
 
         const lines = [
             `ALBUM: ${album.title}`,
+            `LINK ALBUM: ${AdminModule.getClientShareUrl(album.id)}`,
             `KHÁCH HÀNG: ${album.clientName}`,
             `DANH SÁCH MÃ ẢNH CHỌN (${selectedPhotos.length} ảnh):`,
             selectedPhotos.map(p => p.code).join(', '),
-            `--- CHI TIẾT GHI CHÚ ---`,
+            `--- CHI TIẾT THEO ĐỊA ĐIỂM & GHI CHÚ ---`,
             ...selectedPhotos.map(p => {
                 const n = selections[p.id]?.note;
-                return `- ${p.code}: ${n ? n : 'Chỉnh chuẩn màu Studio'}`;
+                return `- ${p.code} (${p.location || ''}): ${n ? n : 'Chỉnh chuẩn màu Studio'}`;
             })
         ];
 
         navigator.clipboard.writeText(lines.join('\n')).then(() => {
-            showToast("Đã sao chép danh sách ảnh & ghi chú (Bạn có thể dán gửi qua Zalo/Messenger)!");
+            showToast("Đã sao chép danh sách ảnh & ghi chú!");
         });
+    }
+
+    function copyCurrentAlbumLink() {
+        AdminModule.copyAlbumClientLink(currentAlbumId);
     }
 
     function scrollToGallery() {
@@ -694,8 +1231,19 @@ const App = (function () {
     return {
         init,
         showView,
+        getCurrentAlbumId,
+        openAlbumPage,
+        handleQuickAlbumCodeAccess,
+        setHomeLocationFilter,
+        setHomeTimeSort,
+        toggleHomeGroupByLocation,
+        renderHomeShowcase,
         renderPublicAlbum,
+        maybeShowClientReminderModal,
+        closeClientReminderModal,
         handlePinUnlock,
+        setAlbumTimeSort,
+        toggleAlbumGroupByLocation,
         setCategoryFilter,
         handleSearchInput,
         setGridCols,
@@ -706,6 +1254,7 @@ const App = (function () {
         fillQuickNoteChip,
         openLightbox,
         closeLightbox,
+        setLightboxCurrentAsCover,
         nextLightboxPhoto,
         prevLightboxPhoto,
         toggleLightboxZoom,
@@ -721,6 +1270,7 @@ const App = (function () {
         closeSubmitSelectionModal,
         handleClientSubmitSelections,
         copyClientSelectionSummary,
+        copyCurrentAlbumLink,
         scrollToGallery,
         scrollToVideoHighlight,
         showToast

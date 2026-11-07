@@ -1,5 +1,5 @@
 /**
- * AuthModule - Quản lý đăng nhập, đăng xuất và phân quyền
+ * AuthModule - Quản lý đăng nhập, đăng xuất và phân quyền Admin Nhiếp Ảnh Gia
  */
 const AuthModule = (function () {
     const STORAGE_KEY_AUTH = "site_admin_logged_in";
@@ -13,11 +13,11 @@ const AuthModule = (function () {
         const navAdminControls = document.getElementById('navAdminControls');
 
         if (isLoggedIn()) {
-            navLoginBtn.classList.add('hidden');
-            navAdminControls.classList.remove('hidden');
+            if (navLoginBtn) navLoginBtn.classList.add('hidden');
+            if (navAdminControls) navAdminControls.classList.remove('hidden');
         } else {
-            navLoginBtn.classList.remove('hidden');
-            navAdminControls.classList.add('hidden');
+            if (navLoginBtn) navLoginBtn.classList.remove('hidden');
+            if (navAdminControls) navAdminControls.classList.add('hidden');
         }
     }
 
@@ -33,7 +33,7 @@ const AuthModule = (function () {
             closeLoginModal();
             checkAuthUI();
             App.showView('admin');
-            App.showToast('Đăng nhập thành công với quyền Admin!');
+            App.showToast('Đăng nhập thành công vào Trang Quản Trị Studio!');
         } else {
             alertBox.classList.remove('hidden');
         }
@@ -42,8 +42,8 @@ const AuthModule = (function () {
     function logout() {
         localStorage.removeItem(STORAGE_KEY_AUTH);
         checkAuthUI();
-        App.showView('public');
-        App.showToast('Đã đăng xuất tài khoản.');
+        App.showView('home');
+        App.showToast('Đã đăng xuất tài khoản Quản trị.');
     }
 
     function openLoginModal() {
