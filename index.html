@@ -148,78 +148,28 @@
                 </div>
             </section>
 
-            <!-- Filter, Sort by Time & Group by Location Bar (Optimized for Mobile & Desktop) -->
+            <!-- Showcase Header -->
             <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-4">
-                <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-zinc-200">
                     <div>
                         <div class="flex items-center gap-2">
                             <span
                                 class="bg-emerald-100 text-emerald-800 text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                                 <i class="fa-solid fa-globe mr-1"></i>Bộ Sưu Tập Tiêu Biểu
                             </span>
-                            <span id="homePublicAlbumsCount" class="text-xs text-zinc-500 font-semibold">3 Dự Án</span>
+                            <span id="homePublicAlbumsCount" class="text-xs text-zinc-500 font-semibold">2 Dự Án</span>
                         </div>
                         <h2 class="font-serif-display text-2xl sm:text-4xl font-bold text-zinc-900 mt-1">
                             Các Dự Án Đã Thực Hiện
                         </h2>
                         <p class="text-xs sm:text-sm text-zinc-500">
-                            Khám phá các bộ ảnh kỷ niệm theo từng điểm đến và dấu ấn thời gian.
+                            Các bộ ảnh kỷ niệm được sắp xếp tự nhiên theo dấu ấn thời gian của những khoảnh khắc đầu tiên.
                         </p>
-                    </div>
-
-                    <!-- Desktop Controls (md+) -->
-                    <div class="hidden md:flex items-center gap-2 shrink-0">
-                        <button id="homeGroupToggleBtn" type="button" onclick="App.toggleHomeGroupByLocation()"
-                            class="px-3 py-1.5 rounded-full text-xs font-semibold bg-zinc-900 text-white border border-zinc-900 transition flex items-center gap-1.5 shadow-xs"
-                            title="Bật/Tắt gom nhóm theo địa điểm chụp">
-                            <i class="fa-solid fa-layer-group text-[11px]"></i>
-                            <span>Nhóm địa điểm</span>
-                        </button>
-
-                        <div
-                            class="flex items-center bg-white border border-zinc-200 hover:border-zinc-300 rounded-full px-2.5 py-1.5 text-xs transition shadow-2xs">
-                            <i class="fa-solid fa-arrow-down-short-wide text-zinc-400 mr-1.5 text-[11px]"></i>
-                            <select onchange="App.setHomeTimeSort(this.value)"
-                                class="bg-transparent font-medium text-zinc-800 outline-none cursor-pointer text-xs pr-1">
-                                <option value="newest">Mới nhất</option>
-                                <option value="oldest">Cũ nhất</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Unified Horizontal Scroll Strip (Ultra-compact & thumb-friendly on Mobile) -->
-                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-3 border-b border-zinc-200">
-                    <!-- Mobile-only compact quick toggles inside the same horizontal scroll strip -->
-                    <div class="flex md:hidden items-center gap-1.5 shrink-0">
-                        <button id="homeGroupToggleBtnMobile" type="button" onclick="App.toggleHomeGroupByLocation()"
-                            class="px-2.5 py-1.5 rounded-full text-xs font-semibold bg-zinc-900 text-white border border-zinc-900 transition flex items-center gap-1 shrink-0 shadow-xs"
-                            title="Bật/Tắt gom nhóm">
-                            <i class="fa-solid fa-layer-group text-[11px]"></i>
-                            <span>Nhóm</span>
-                        </button>
-
-                        <div
-                            class="flex items-center bg-white border border-zinc-200 rounded-full px-2 py-1 text-xs transition shadow-2xs shrink-0">
-                            <i class="fa-solid fa-arrow-down-short-wide text-zinc-400 mr-1 text-[10px]"></i>
-                            <select onchange="App.setHomeTimeSort(this.value)"
-                                class="bg-transparent font-medium text-zinc-800 outline-none cursor-pointer text-xs pr-0.5">
-                                <option value="newest">Mới nhất</option>
-                                <option value="oldest">Cũ nhất</option>
-                            </select>
-                        </div>
-
-                        <div class="w-px h-5 bg-zinc-200 shrink-0 mx-0.5"></div>
-                    </div>
-
-                    <!-- Location Filter Pills -->
-                    <div id="homeLocationFilterPills" class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                        <!-- Rendered dynamically by App.js -->
                     </div>
                 </div>
             </section>
 
-            <!-- Public Projects Showcase Container (Grouped by Location & Sorted by Date) -->
+            <!-- Public Projects Showcase Container -->
             <section id="homeShowcaseContainer" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
                 <!-- Rendered dynamically by App.js -->
             </section>

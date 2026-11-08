@@ -355,7 +355,22 @@ const App = (function () {
         renderHomeShowcase();
     }
 
-    function renderHomeShowcase() {
+    // Lấy thời gian của bức ảnh cũ nhất (sớm nhất) trong album để làm mốc sắp xếp
+    function getAlbumOldestPhotoTime(album) {
+        if (!album || !Array.isArray(album.photos) || !album.photos.length) {
+            return album.date || '9999-99-99';
+        }
+        let oldest = null;
+        album.photos.forEach(p => {
+            const t = p.capturedAt || '';
+            if (t) {
+                if (!oldest || t.localeCompare(oldest) < 0) {
+                    oldest = t;
+                }
+            }
+        });
+        return oldest || album.date || '9999-99-99';
+    }
         const allAlbums = AdminModule.getAllAlbums();
         const publicAlbums = allAlbums.filter(a => a.isPublic);
 
@@ -412,72 +427,51 @@ const App = (function () {
             }`;
         }
 
-        let filtered = publicAlbums.filter(a => {
-            if (homeLocationFilter === 'ALL') return true;
-            return (a.city || 'Khác') === homeLocationFilter;
-        });
+    function renderHomeShowcase() {
+        const allAlbums = AdminModule.getAllAlbums();
+        const publicAlbums = allAlbums.filter(a => a.isPublic);
 
-        filtered.sort((a, b) => {
-            const cmp = (a.date || '').localeCompare(b.date || '');
-            return homeTimeSort === 'newest' ? -cmp : cmp;
+        const countEl = document.getElementById('homePublicAlbumsCount');
+        if (countEl) countEl.innerText = `${publicAlbums.length} Dự Án Công Khai`;
+
+        // 1. Sắp xếp danh sách Album theo thời gian của bức ảnh cũ nhất (sớm nhất) trong album
+        let sortedAlbums = [...publicAlbums];
+        sortedAlbums.sort((a, b) => {
+            const timeA = getAlbumOldestPhotoTime(a);
+            const timeB = getAlbumOldestPhotoTime(b);
+            // Sớm nhất trước (cũ nhất đứng đầu)
+            return timeA.localeCompare(timeB);
         });
 
         const container = document.getElementById('homeShowcaseContainer');
         if (!container) return;
 
-        if (!filtered.length) {
+        if (!sortedAlbums.length) {
             container.innerHTML = `
                 <div class="text-center py-16 bg-white rounded-3xl border border-zinc-200">
                     <i class="fa-regular fa-folder-open text-3xl text-zinc-300 mb-3 block"></i>
-                    <h3 class="text-base font-bold text-zinc-800">Chưa có dự án công khai nào ở địa điểm này</h3>
+                    <h3 class="text-base font-bold text-zinc-800">Chưa có dự án công khai nào</h3>
                     <p class="text-xs text-zinc-500 mt-1">Nhiếp ảnh gia có thể bật trạng thái "Công khai" cho Album trong Trang Quản Trị.</p>
                 </div>
             `;
             return;
         }
 
-        if (homeGroupByLocation) {
-            const groupsMap = new Map();
-            filtered.forEach(album => {
-                const city = album.city || 'Địa Điểm Khác';
-                if (!groupsMap.has(city)) groupsMap.set(city, []);
-                groupsMap.get(city).push(album);
-            });
-
-            let html = '';
-            groupsMap.forEach((albumsInCity, city) => {
-                html += `
-                    <div class="mb-12 last:mb-0">
-                        <div class="flex items-center justify-between mb-5 pb-3 border-b border-zinc-200">
-                            <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center shadow-sm">
-                                    <i class="fa-solid fa-location-dot text-lg"></i>
-                                </span>
-                                <div>
-                                    <h2 class="font-serif-display text-2xl sm:text-3xl font-bold text-zinc-900">${city}</h2>
-                                    <p class="text-xs text-zinc-500">${albumsInCity.length} bộ ảnh kỷ niệm tại ${city}</p>
-                                </div>
-                            </div>
-                            <span class="text-xs bg-zinc-100 text-zinc-700 px-3 py-1 rounded-full font-semibold">${albumsInCity.length} Album</span>
-                        </div>
-                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            ${albumsInCity.map(album => renderHomeAlbumCard(album)).join('')}
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        } else {
-            container.innerHTML = `
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${filtered.map(album => renderHomeAlbumCard(album)).join('')}
-                </div>
-            `;
-        }
+        // Trình chiếu danh sách Album tinh gọn, không gom nhóm địa điểm trùng lặp
+        container.innerHTML = `
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                ${sortedAlbums.map(album => renderHomeAlbumCard(album)).join('')}
+            </div>
+        `;
     }
 
     function renderHomeAlbumCard(album) {
-        const formattedDate = album.date ? album.date.split('-').reverse().join('.') : '';
+        // Tìm bức ảnh cũ nhất (sớm nhất) trong album để hiển thị ngày và vị trí đại diện
+        const oldestTime = getAlbumOldestPhotoTime(album);
+        const formattedDate = oldestTime && oldestTime !== '9999-99-99'
+            ? oldestTime.split('T')[0].split('-').reverse().join('.')
+            : (album.date ? album.date.split('-').reverse().join('.') : '');
+
         const tagsHtml = (album.tags || []).slice(0, 3).map(t => `<span class="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">#${t}</span>`).join('');
         return `
             <article
@@ -493,12 +487,6 @@ const App = (function () {
                     >
                     <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent"></div>
 
-                    <div class="absolute top-3 left-3 flex items-center gap-1.5">
-                        <span class="bg-black/65 backdrop-blur-md text-white text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
-                            <i class="fa-solid fa-location-dot text-rose-400"></i> ${album.city}
-                        </span>
-                    </div>
-
                     <div class="absolute top-3 right-3">
                         <span class="bg-white/90 backdrop-blur-md text-zinc-900 text-[11px] font-bold px-2.5 py-1 rounded-full">
                             <i class="fa-regular fa-images mr-1"></i>${album.photos.length} ảnh
@@ -506,7 +494,7 @@ const App = (function () {
                     </div>
 
                     <div class="absolute bottom-3 left-3 right-3 text-white">
-                        <span class="text-[11px] text-amber-300 font-medium block"><i class="fa-regular fa-calendar mr-1"></i>Ngày chụp: ${formattedDate}</span>
+                        <span class="text-[11px] text-amber-300 font-medium block"><i class="fa-regular fa-clock mr-1"></i>Từ: ${formattedDate}</span>
                         <h3 class="font-serif-display text-2xl font-bold leading-snug">${album.title}</h3>
                     </div>
                 </div>
@@ -515,7 +503,7 @@ const App = (function () {
                     <div>
                         <p class="text-xs text-zinc-500 flex items-center gap-1.5">
                             <i class="fa-solid fa-map-pin text-zinc-400"></i>
-                            <span class="truncate">${album.location}</span>
+                            <span class="truncate">${album.location || album.city || ''}</span>
                         </p>
                         ${tagsHtml ? `<div class="flex flex-wrap gap-1 mt-2">${tagsHtml}</div>` : ''}
                     </div>
