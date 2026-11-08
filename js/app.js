@@ -144,7 +144,7 @@ const App = (function () {
                         base = '/dutustory';
                     }
                     if (photoCodeParam) {
-                        const targetPhotoIdx = found.photos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
+                        const targetPhotoIdx = currentFilteredPhotos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
                         if (targetPhotoIdx >= 0) {
                             setTimeout(() => openLightbox(targetPhotoIdx), 150);
                         }
@@ -204,7 +204,7 @@ const App = (function () {
             }
             showView('album', skipPush);
             if (photoCodeParam && found) {
-                const targetPhotoIdx = found.photos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
+                const targetPhotoIdx = currentFilteredPhotos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
                 if (targetPhotoIdx >= 0) {
                     setTimeout(() => openLightbox(targetPhotoIdx), 150);
                 }
