@@ -1681,7 +1681,7 @@ const App = (function () {
         document.addEventListener('contextmenu', (e) => {
             if (currentView === 'album' && !isClientMode) {
                 e.preventDefault();
-                showToast("Không được lưu ảnh. Hình ảnh có bản quyền", "error");
+                showToast("Hình ảnh này là tài sản của studio và khách hàng. Vui lòng không lưu ảnh khi không được phép", "error");
             }
         });
 
