@@ -32,3 +32,7 @@ Các quy tắc bắt buộc phải luôn tuân thủ trong toàn bộ quá trìn
    - Vô hiệu hoá chuột phải (`contextmenu`), chặn phím tắt chụp màn hình / lưu trang / in / copy (`PrintScreen`, `Ctrl+S`, `Ctrl+P`, `Ctrl+Shift+I`, `Ctrl+U`, `F12`, `Win+Shift+S`).
    - Tự động làm mờ nội dung hoặc chèn màn chắn bảo vệ khi người dùng chuyển tab, mất tiêu điểm hoặc khi phát hiện phím chụp màn hình.
    - Chặn kéo thả ảnh (`dragstart`) và chặn bôi đen/chọn ảnh (`user-select: none`).
+
+8. **Chỉ sửa đúng khu vực code được yêu cầu (Strict Scope Control)**:
+   - Chỉ được phép chỉnh sửa đúng phần tử, chức năng và khu vực mã nguồn mà người dùng chỉ định cụ thể trong yêu cầu.
+   - Tuyệt đối không tự ý đụng chạm, sửa đổi, tái cấu trúc hoặc can thiệp vào các khu vực code khác ngoài phạm vi khi chưa có sự đồng ý hoặc yêu cầu rõ ràng từ người dùng.
