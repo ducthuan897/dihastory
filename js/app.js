@@ -1252,32 +1252,38 @@ const App = (function () {
 
     // ─── Lightbox Free Zoom / Pan ────────────────────────────────────────────────
 
+    // Nâng độ phân giải ảnh Google Drive khi zoom (tránh ảnh bị mờ)
+    function _lbUpgradeImageSrc(img) {
+        if (!img || !img.src) return;
+        // Google Drive thumbnail: thay sz=w1600 → sz=w3200 để ảnh nét hơn khi zoom
+        if (img.src.includes('drive.google.com/thumbnail') && img.src.includes('sz=')) {
+            const hiResSrc = img.src.replace(/sz=w\d+/, 'sz=w3200');
+            if (img.src !== hiResSrc) {
+                img.src = hiResSrc;
+            }
+        }
+    }
+
     function _lbApplyTransform(animate) {
         const img = document.getElementById('lightboxImage');
         if (!img) return;
-        img.style.transition = animate ? 'transform 0.2s ease' : 'none';
+        img.style.transition = animate ? 'transform 0.15s ease-out' : 'none';
         img.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px) scale(${_lbScale})`;
         img.style.cursor = _lbDragging ? 'grabbing' : (_lbScale > 1 ? 'grab' : 'default');
-        // show/hide reset button & level
-        const resetBtn = document.getElementById('lightboxZoomResetBtn');
-        const label = document.getElementById('lightboxZoomLevelLabel');
-        if (resetBtn) {
-            if (_lbScale > 1.01) {
-                resetBtn.classList.remove('hidden');
-                resetBtn.classList.add('flex');
-            } else {
-                resetBtn.classList.add('hidden');
-                resetBtn.classList.remove('flex');
-            }
+        // Nâng resolution khi bắt đầu zoom ra khỏi 1x
+        if (_lbScale > 1.05) {
+            _lbUpgradeImageSrc(img);
         }
-        if (label) label.textContent = Math.round(_lbScale * 100) + '%';
     }
 
     function resetLightboxZoom(animate) {
         _lbScale = 1; _lbPanX = 0; _lbPanY = 0;
         isLightboxZoomed = false;
         const img = document.getElementById('lightboxImage');
-        if (img) img.classList.remove('lightbox-img-zoomed');
+        if (img) {
+            img.classList.remove('lightbox-img-zoomed');
+            img.style.cursor = 'default';
+        }
         _lbApplyTransform(animate !== false);
     }
 
@@ -1316,7 +1322,6 @@ const App = (function () {
         const img = document.getElementById('lightboxImage');
         if (!img || _lbScale <= 1) { _lbPanX = 0; _lbPanY = 0; return; }
         const rect = img.getBoundingClientRect();
-        // natural (unscaled) size
         const nw = rect.width / _lbScale;
         const nh = rect.height / _lbScale;
         const maxX = (nw * (_lbScale - 1)) / 2;
@@ -1332,10 +1337,8 @@ const App = (function () {
         const rect = img.getBoundingClientRect();
         const imgCx = rect.left + rect.width / 2;
         const imgCy = rect.top + rect.height / 2;
-        // cursor offset from image center in screen coords
         const dx = clientX - imgCx;
         const dy = clientY - imgCy;
-        // adjust pan so the zoomed point stays under cursor
         const ratio = newScale / _lbScale;
         _lbPanX = dx - ratio * (dx - _lbPanX);
         _lbPanY = dy - ratio * (dy - _lbPanY);
@@ -1349,13 +1352,24 @@ const App = (function () {
         const img = document.getElementById('lightboxImage');
         if (!img) return;
 
-        // ── Mouse wheel ────────────────────────────────────────────────────
+        // ── Mouse wheel (cuộn chuột để zoom) ──────────────────────────────
         img.addEventListener('wheel', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+            // Tốc độ zoom mượt hơn với trackpad (deltaMode 0 = pixel, 1 = line)
+            const delta = e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY;
+            const factor = delta < 0 ? 1.12 : 1 / 1.12;
             _lbZoomToward(e.clientX, e.clientY, _lbScale * factor, true);
         }, { passive: false });
+
+        // Cũng bắt wheel trên container để không bị scroll page khi hover vào ảnh
+        const container = img.parentElement;
+        if (container) {
+            container.addEventListener('wheel', (e) => {
+                if (currentLightboxIndex < 0) return;
+                e.preventDefault();
+            }, { passive: false });
+        }
 
         // ── Mouse drag / pan ───────────────────────────────────────────────
         img.addEventListener('mousedown', (e) => {
@@ -1398,7 +1412,6 @@ const App = (function () {
         img.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (e.touches.length === 2) {
-                // pinch start
                 const t0 = e.touches[0], t1 = e.touches[1];
                 _lbPinchDist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
                 _lbPinchCenterX = (t0.clientX + t1.clientX) / 2;
@@ -1407,10 +1420,8 @@ const App = (function () {
                 _lbPinchPanStartX = _lbPanX;
                 _lbPinchPanStartY = _lbPanY;
             } else if (e.touches.length === 1) {
-                // double-tap detection
                 const now = Date.now();
                 if (now - _lbLastTap < 300) {
-                    // double tap
                     if (_lbScale > 1.05) {
                         resetLightboxZoom(true);
                     } else {
@@ -1420,21 +1431,17 @@ const App = (function () {
                 } else {
                     _lbLastTap = now;
                 }
-                // start pan tracking
                 _lbDragging = (_lbScale > 1.05);
                 _lbDragStartX = e.touches[0].clientX;
                 _lbDragStartY = e.touches[0].clientY;
                 _lbPanStartX = _lbPanX;
                 _lbPanStartY = _lbPanY;
-                _lbTouchPanX = _lbPanStartX;
-                _lbTouchPanY = _lbPanStartY;
             }
         }, { passive: false });
 
         img.addEventListener('touchmove', (e) => {
             e.preventDefault();
             if (e.touches.length === 2) {
-                // pinch
                 const t0 = e.touches[0], t1 = e.touches[1];
                 const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
                 const newScale = Math.max(LB_MIN_SCALE, Math.min(LB_MAX_SCALE,
@@ -1443,7 +1450,6 @@ const App = (function () {
                 const cy = (t0.clientY + t1.clientY) / 2;
                 _lbZoomToward(cx, cy, newScale, true);
             } else if (e.touches.length === 1 && _lbDragging) {
-                // drag pan
                 _lbPanX = _lbPanStartX + (e.touches[0].clientX - _lbDragStartX);
                 _lbPanY = _lbPanStartY + (e.touches[0].clientY - _lbDragStartY);
                 _lbClampPan();
@@ -1452,12 +1458,8 @@ const App = (function () {
         }, { passive: false });
 
         img.addEventListener('touchend', (e) => {
-            if (e.touches.length < 2) {
-                _lbPinchDist = 0;
-            }
-            if (e.touches.length === 0) {
-                _lbDragging = false;
-            }
+            if (e.touches.length < 2) _lbPinchDist = 0;
+            if (e.touches.length === 0) _lbDragging = false;
         });
     }
 
