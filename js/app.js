@@ -459,7 +459,7 @@ const App = (function () {
 
         // Trình chiếu danh sách Album tinh gọn, không gom nhóm địa điểm trùng lặp
         container.innerHTML = `
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-6">
                 ${sortedAlbums.map(album => renderHomeAlbumCard(album)).join('')}
             </div>
         `;
