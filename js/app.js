@@ -144,7 +144,7 @@ const App = (function () {
                         base = '/dutustory';
                     }
                     if (photoCodeParam) {
-                        const targetPhotoIdx = currentFilteredPhotos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
+                        const targetPhotoIdx = found.photos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
                         if (targetPhotoIdx >= 0) {
                             setTimeout(() => openLightbox(targetPhotoIdx), 150);
                         }
@@ -204,7 +204,7 @@ const App = (function () {
             }
             showView('album', skipPush);
             if (photoCodeParam && found) {
-                const targetPhotoIdx = currentFilteredPhotos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
+                const targetPhotoIdx = found.photos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
                 if (targetPhotoIdx >= 0) {
                     setTimeout(() => openLightbox(targetPhotoIdx), 150);
                 }
@@ -431,8 +431,6 @@ const App = (function () {
         });
         return oldest || album.date || '9999-99-99';
     }
-
-    function renderHomeShowcase() {
         const allAlbums = AdminModule.getAllAlbums();
         const publicAlbums = allAlbums.filter(a => a.isPublic);
 
@@ -489,6 +487,13 @@ const App = (function () {
             }`;
         }
 
+    function renderHomeShowcase() {
+        const allAlbums = AdminModule.getAllAlbums();
+        const publicAlbums = allAlbums.filter(a => a.isPublic);
+
+        const countEl = document.getElementById('homePublicAlbumsCount');
+        if (countEl) countEl.innerText = `${publicAlbums.length} Dự Án Công Khai`;
+
         // 1. Sắp xếp danh sách Album theo thời gian của bức ảnh cũ nhất (sớm nhất) trong album
         let sortedAlbums = [...publicAlbums];
         sortedAlbums.sort((a, b) => {
@@ -527,9 +532,7 @@ const App = (function () {
             ? oldestTime.split('T')[0].split('-').reverse().join('.')
             : (album.date ? album.date.split('-').reverse().join('.') : '');
 
-        const photoCount = Array.isArray(album.photos) ? album.photos.length : 0;
-        const tagsList = Array.isArray(album.tags) ? album.tags : (typeof album.tags === 'string' && album.tags.trim() ? album.tags.split(/\s+/) : []);
-        const tagsHtml = tagsList.slice(0, 3).map(t => `<span class="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">#${t}</span>`).join('');
+        const tagsHtml = (album.tags || []).slice(0, 3).map(t => `<span class="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">#${t}</span>`).join('');
         return `
             <article
                 onclick="App.openAlbumPage('${album.id}', false)"
@@ -546,7 +549,7 @@ const App = (function () {
 
                     <div class="absolute top-3 right-3">
                         <span class="bg-white/90 backdrop-blur-md text-zinc-900 text-[11px] font-bold px-2.5 py-1 rounded-full">
-                            <i class="fa-regular fa-images mr-1"></i>${photoCount} ảnh
+                            <i class="fa-regular fa-images mr-1"></i>${album.photos.length} ảnh
                         </span>
                     </div>
 
@@ -1286,22 +1289,16 @@ const App = (function () {
         _lbNaturalHeight = 0;
 
         // BẮT BUỘC dùng nguồn ảnh trực tiếp từ Google User Content với độ phân giải gốc (=s0)
-        // Luôn hiển thị bản ảnh hoàn thiện chất lượng cao nhất (JPG đã chỉnh sửa)
-        const jpgDriveId = photo.jpgDriveFileId || photo.driveFileId;
-        let displayUrl = photo.jpgUrl || photo.url;
-        if (jpgDriveId) {
-            displayUrl = `https://lh3.googleusercontent.com/d/${jpgDriveId}=s0`;
-        } else if (displayUrl && displayUrl.includes('drive.google.com/thumbnail')) {
-            displayUrl = displayUrl.replace(/sz=w\d+/, 'sz=w4096');
+        const driveId = getDriveIdFromPhoto(photo);
+        let bestQualityUrl = photo.url;
+        if (driveId) {
+            bestQualityUrl = `https://lh3.googleusercontent.com/d/${driveId}=s0`;
+        } else if (photo.url && photo.url.includes('drive.google.com/thumbnail')) {
+            bestQualityUrl = photo.url.replace(/sz=w\d+/, 'sz=w4096');
         }
 
-        const album = AdminModule.getAlbumById(currentAlbumId);
-        const matchedDelivered = (album && album.deliveredPhotos ? album.deliveredPhotos : []).find(d => d.originalPhotoId === photo.id);
-        if (matchedDelivered && matchedDelivered.url) {
-            displayUrl = matchedDelivered.url;
-        }
-
-        img.src = displayUrl;
+        // Gán thẳng ảnh chất lượng cao nhất ngay từ đầu
+        img.src = bestQualityUrl;
 
         img.classList.remove('lightbox-img-zoomed');
         isLightboxZoomed = false;
@@ -1309,6 +1306,22 @@ const App = (function () {
         document.getElementById('lightboxCode').innerText = photo.code;
         document.getElementById('lightboxTitle').innerText = `${photo.location || ''} • ${timeStr}`;
         document.getElementById('lightboxCounter').innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
+
+        // Check if Before/After comparison is available for this photo
+        const compareBtn = document.getElementById('lightboxCompareBtn');
+        const compareLabel = document.getElementById('lightboxCompareBtnLabel');
+        const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
+        const hasComparison = !!(photo.beforeUrl || matchedDelivered);
+        if (compareBtn) {
+            compareBtn.classList.toggle('hidden', !hasComparison);
+            if (compareLabel) compareLabel.innerText = 'So sánh Trước / Sau';
+        }
+
+        // Nút "Đặt làm ảnh bìa" ẩn hoàn toàn ở Trang chỉ xem (chỉ hiện khi Admin đăng nhập hoặc ở trang quản lý)
+        const coverBtn = document.getElementById('lightboxSetCoverBtn');
+        if (coverBtn) {
+            coverBtn.classList.toggle('hidden', !isClientMode && !AuthModule.isLoggedIn());
+        }
 
         const downloadBtn = document.getElementById('lightboxDownloadBtn');
         if (downloadBtn) {
@@ -1346,8 +1359,25 @@ const App = (function () {
         }
     }
 
-    function toggleLightboxJpgEdited() {
-        // Chế độ xem đồng nhất ảnh hoàn thiện JPG (không dùng RAW)
+    function toggleLightboxBeforeAfter() {
+        const photo = currentFilteredPhotos[currentLightboxIndex];
+        if (!photo) return;
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
+        const img = document.getElementById('lightboxImage');
+        const compareLabel = document.getElementById('lightboxCompareBtnLabel');
+
+        isLightboxShowingBefore = !isLightboxShowingBefore;
+        if (photo.beforeUrl) {
+            img.src = isLightboxShowingBefore ? photo.beforeUrl : photo.url;
+            img.style.filter = isLightboxShowingBefore ? 'saturate(0.75) contrast(0.92)' : 'none';
+        } else if (matchedDelivered) {
+            img.src = isLightboxShowingBefore ? photo.url : matchedDelivered.url;
+            img.style.filter = isLightboxShowingBefore ? 'saturate(0.75) contrast(0.92)' : 'none';
+        }
+        if (compareLabel) {
+            compareLabel.innerText = isLightboxShowingBefore ? 'Đang xem: Ảnh Gốc (Trước)' : 'Đang xem: Ảnh Đã Chỉnh (Sau)';
+        }
     }
 
     function setLightboxCurrentAsCover() {
@@ -1767,32 +1797,17 @@ const App = (function () {
             return;
         }
         const album = AdminModule.getAlbumById(currentAlbumId);
-        let photo =
+        const photo =
             album.photos.find(p => p.id === photoId) ||
             (album.deliveredPhotos || []).find(p => p.id === photoId);
         if (!photo) return;
 
-        // Ưu tiên tải bản ảnh JPG đã chỉnh sửa nếu có (hoặc jpgDriveFileId)
-        let downloadDriveId = photo.jpgDriveFileId || null;
-        let downloadUrl = photo.jpgUrl || null;
-
-        const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
-        if (matchedDelivered && matchedDelivered.url) {
-            photo = matchedDelivered;
-            downloadUrl = photo.url;
-        }
-
-        if (!downloadDriveId && !downloadUrl) {
-            downloadDriveId = photo.driveFileId || (photo.url && (photo.url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/) || [])[1]);
-            downloadUrl = photo.url;
-        }
-
         showToast(`Đang chuẩn bị lưu ảnh ${photo.code} về máy...`);
 
         // Handle Base64 local computer images directly
-        if (downloadUrl && downloadUrl.startsWith('data:image')) {
+        if (photo.url && photo.url.startsWith('data:image')) {
             const link = document.createElement('a');
-            link.href = downloadUrl;
+            link.href = photo.url;
             link.download = `${photo.code}-DucThuanStudio.jpg`;
             document.body.appendChild(link);
             link.click();
@@ -1801,8 +1816,9 @@ const App = (function () {
         }
 
         // Handle Google Drive photos with direct download link
-        if (downloadDriveId) {
-            const dlUrl = `https://drive.google.com/uc?export=download&id=${downloadDriveId}`;
+        const driveIdMatch = photo.driveFileId || (photo.url && (photo.url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/) || [])[1]);
+        if (driveIdMatch) {
+            const dlUrl = `https://drive.google.com/uc?export=download&id=${driveIdMatch}`;
             const link = document.createElement('a');
             link.href = dlUrl;
             link.target = '_blank';
@@ -2064,7 +2080,8 @@ const App = (function () {
         openLightbox,
         openLightboxWithPhotos,
         closeLightbox,
-        toggleLightboxJpgEdited,
+        toggleLightboxBeforeAfter,
+        setLightboxCurrentAsCover,
         nextLightboxPhoto,
         prevLightboxPhoto,
         toggleLightboxZoom,
