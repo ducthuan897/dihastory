@@ -1368,20 +1368,18 @@ const App = (function () {
         newScale = Math.max(LB_MIN_SCALE, Math.min(LB_MAX_SCALE, newScale));
         if (newScale === _lbScale) return;
 
-        // Lưu kích thước cơ sở unscaled 1 lần
-        if (!_lbNaturalWidth || !_lbNaturalHeight) {
-            _lbNaturalWidth = img.offsetWidth;
-            _lbNaturalHeight = img.offsetHeight;
-        }
-
+        // Tọa độ tâm ảnh unscaled (ổn định tuyệt đối, không trôi lệch khi phóng to)
         const rect = img.getBoundingClientRect();
-        const imgCx = rect.left + rect.width / 2;
-        const imgCy = rect.top + rect.height / 2;
-        const dx = clientX - imgCx;
-        const dy = clientY - imgCy;
-        const ratio = newScale / _lbScale;
-        _lbPanX = dx - ratio * (dx - _lbPanX);
-        _lbPanY = dy - ratio * (dy - _lbPanY);
+        const imgCx = rect.left + rect.width / 2 - _lbPanX;
+        const imgCy = rect.top + rect.height / 2 - _lbPanY;
+
+        // Vị trí con trỏ chuột tương đối so với tâm gốc của ảnh
+        const mouseOffsetX = clientX - imgCx;
+        const mouseOffsetY = clientY - imgCy;
+
+        // Tính toán vị trí pan mới chuẩn xác để điểm dưới con trỏ chuột đứng yên
+        _lbPanX = mouseOffsetX - (mouseOffsetX - _lbPanX) * (newScale / _lbScale);
+        _lbPanY = mouseOffsetY - (mouseOffsetY - _lbPanY) * (newScale / _lbScale);
         _lbScale = newScale;
         isLightboxZoomed = _lbScale > 1.05;
         _lbClampPan();
@@ -1403,14 +1401,20 @@ const App = (function () {
         const img = document.getElementById('lightboxImage');
         if (!img) return;
 
-        // ── Mouse wheel (cuộn chuột để zoom mượt tức thì) ──────────────────────────
+        // ── Mouse wheel (cuộn chuột để zoom bám sát tốc độ thật) ─────────────────
         const onWheelZoom = (e) => {
             if (currentLightboxIndex < 0) return;
             e.preventDefault();
             e.stopPropagation();
-            // Hệ số zoom cố định, vừa phải mỗi nấc cuộn để mắt bắt kịp mượt mà
-            const factor = e.deltaY < 0 ? 1.15 : (1 / 1.15);
-            _lbZoomToward(e.clientX, e.clientY, _lbScale * factor, false);
+
+            // Tính toán mức độ cuộn thực tế theo deltaY chuẩn hóa (chống vọt tốc độ)
+            const rawDelta = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+            const clampedDelta = Math.max(-100, Math.min(100, rawDelta));
+            // Mỗi nấc cuộn nhẹ chỉ thay đổi khoảng 4% - 6%, zoom êm dịu theo đúng tay lăn
+            const zoomDelta = -clampedDelta * 0.0012;
+            const newScale = _lbScale * (1 + zoomDelta);
+
+            _lbZoomToward(e.clientX, e.clientY, newScale, false);
         };
 
         img.addEventListener('wheel', onWheelZoom, { passive: false });
