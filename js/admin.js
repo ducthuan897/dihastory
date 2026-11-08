@@ -2760,14 +2760,44 @@ function testRun() {
                                 <span>Copy Link Khách</span>
                             </button>
 
-                            <button
-                                type="button"
-                                onclick="App.openAlbumPage('${album.id}')"
-                                class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-1.5"
-                            >
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                <span>Mở Trang Album</span>
-                            </button>
+                            <!-- Nút Mở Trang Album (2 tùy chọn: 1. Chỉ xem | 2. Khách chọn ảnh) -->
+                            <div class="relative inline-block text-left" id="openAlbumMenuWrap_${album.id}">
+                                <button
+                                    type="button"
+                                    onclick="event.stopPropagation(); AdminModule.toggleOpenAlbumDropdown('${album.id}')"
+                                    class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs"
+                                >
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>Mở Trang Album</span>
+                                    <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-80"></i>
+                                </button>
+                                <div id="openAlbumDropdown_${album.id}"
+                                    class="hidden absolute right-0 sm:left-0 mt-1.5 w-56 rounded-2xl bg-white shadow-xl border border-zinc-200 py-1.5 z-30 text-xs animate-in fade-in zoom-in-95 duration-100">
+                                    <button type="button"
+                                        onclick="App.openAlbumPage('${album.id}', false); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
+                                        class="w-full text-left px-3.5 py-2.5 hover:bg-zinc-100 flex items-center gap-2.5 text-zinc-800 font-medium">
+                                        <div class="w-6 h-6 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-700 shrink-0">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </div>
+                                        <div>
+                                            <span class="block font-semibold">1. Trang chỉ xem</span>
+                                            <span class="text-[10px] text-zinc-400 block">Xem album trưng bày, không chọn ảnh</span>
+                                        </div>
+                                    </button>
+                                    <div class="border-t border-zinc-100 my-1"></div>
+                                    <button type="button"
+                                        onclick="App.openAlbumPage('${album.id}', true); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
+                                        class="w-full text-left px-3.5 py-2.5 hover:bg-rose-50 flex items-center gap-2.5 text-rose-700 font-medium">
+                                        <div class="w-6 h-6 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+                                            <i class="fa-solid fa-heart"></i>
+                                        </div>
+                                        <div>
+                                            <span class="block font-semibold">2. Trang chọn ảnh của khách</span>
+                                            <span class="text-[10px] text-rose-500/80 block">Giao diện khách thả tim chọn ảnh</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
 
                             <button
                                 type="button"
@@ -2925,6 +2955,17 @@ function testRun() {
         const el = document.getElementById('manageMoreFeaturesDropdown');
         if (!el) return;
         const show = typeof forceVal === 'boolean' ? forceVal : el.classList.contains('hidden');
+        el.classList.toggle('hidden', !show);
+    }
+
+    function toggleOpenAlbumDropdown(albumId, forceVal) {
+        const el = document.getElementById(`openAlbumDropdown_${albumId}`);
+        if (!el) return;
+        const show = typeof forceVal === 'boolean' ? forceVal : el.classList.contains('hidden');
+        // Đóng các dropdown khác nếu đang mở
+        document.querySelectorAll('[id^="openAlbumDropdown_"]').forEach(d => {
+            if (d !== el) d.classList.add('hidden');
+        });
         el.classList.toggle('hidden', !show);
     }
 
@@ -4400,6 +4441,7 @@ function testRun() {
         setManagePersonFilter,
         handleFaceSampleSearch,
         toggleMoreFeaturesDropdown,
+        toggleOpenAlbumDropdown,
         toggleLockAlbumFromManagePage,
         sendAlbumAction,
         togglePhotoStar,

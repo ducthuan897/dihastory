@@ -780,11 +780,18 @@
                                         <span>Khôi phục tương tác đã gỡ</span>
                                     </button>
                                     <div class="border-t border-zinc-100 my-1"></div>
+                                    <div class="px-3 py-1 text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Mở Album</div>
                                     <button type="button"
-                                        onclick="App.openAlbumPage(AdminModule.getActiveAdminAlbum()?.id); AdminModule.toggleMoreFeaturesDropdown(false);"
+                                        onclick="App.openAlbumPage(AdminModule.getActiveAdminAlbum()?.id, false); AdminModule.toggleMoreFeaturesDropdown(false);"
                                         class="w-full text-left px-3 py-2 rounded-xl hover:bg-zinc-100 flex items-center gap-2.5 text-zinc-700 font-medium">
-                                        <i class="fa-solid fa-arrow-up-right-from-square text-zinc-500 w-4"></i>
-                                        <span>Xem giao diện Khách hàng</span>
+                                        <i class="fa-regular fa-eye text-zinc-500 w-4"></i>
+                                        <span>1. Trang chỉ xem</span>
+                                    </button>
+                                    <button type="button"
+                                        onclick="App.openAlbumPage(AdminModule.getActiveAdminAlbum()?.id, true); AdminModule.toggleMoreFeaturesDropdown(false);"
+                                        class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-50 flex items-center gap-2.5 text-rose-700 font-medium">
+                                        <i class="fa-solid fa-heart text-rose-600 w-4"></i>
+                                        <span>2. Trang chọn ảnh của khách</span>
                                     </button>
                                 </div>
                             </div>

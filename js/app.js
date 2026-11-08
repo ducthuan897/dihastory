@@ -66,6 +66,17 @@ const App = (function () {
             handleUrlRouting(true);
         });
 
+        // Tự động đóng các menu dropdown khi click ra ngoài
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('[id^="openAlbumMenuWrap_"]')) {
+                document.querySelectorAll('[id^="openAlbumDropdown_"]').forEach(d => d.classList.add('hidden'));
+            }
+            if (!e.target.closest('#manageMoreFeaturesDropdown') && !e.target.closest('button[onclick*="toggleMoreFeaturesDropdown"]')) {
+                const el = document.getElementById('manageMoreFeaturesDropdown');
+                if (el) el.classList.add('hidden');
+            }
+        });
+
         // 1. Luôn tải bản DB mới nhất từ Cloud ngay khi khởi động
         AdminModule.fetchCloudOrStaticAlbums().then(hasNewData => {
             if (hasNewData) {
