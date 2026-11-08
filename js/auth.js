@@ -418,6 +418,16 @@ const AuthModule = (function () {
         if (adminEl) adminEl.innerText = users.filter(u => u.role === 'admin').length;
         if (editorEl) editorEl.innerText = users.filter(u => u.role === 'editor').length;
 
+        // Chỉ hiển thị nút "Thêm Người Dùng" nếu người đăng nhập là Admin hoặc Super Admin (curLevel >= 2)
+        const addUserBtn = document.getElementById('addUserBtnOnPage');
+        if (addUserBtn) {
+            if (curLevel >= 2) {
+                addUserBtn.classList.remove('hidden');
+            } else {
+                addUserBtn.classList.add('hidden');
+            }
+        }
+
         if (!container) return;
 
         const roleBadges = {
@@ -503,14 +513,22 @@ const AuthModule = (function () {
         document.getElementById('editUserAvatar').value = '';
         document.getElementById('editUserPassword').value = '';
 
-        // Tùy chọn vai trò chỉ cho phép cấp dưới
+        // Tùy chọn vai trò phân quyền
         const roleSelect = document.getElementById('editUserRole');
         if (roleSelect) {
-            roleSelect.innerHTML = `
-                <option value="editor">3. Editor (Nhiếp ảnh gia phụ / Chỉnh sửa album)</option>
-                ${curLevel >= 3 ? '<option value="admin">2. Admin (Quản trị viên Studio)</option>' : ''}
-            `;
-            roleSelect.value = 'editor';
+            if (curLevel >= 3) {
+                // Super Admin: có thể tạo Super Admin, Admin, hoặc Editor
+                roleSelect.innerHTML = `
+                    <option value="super_admin">1. Super Admin (Chủ sở hữu Studio / Toàn quyền)</option>
+                    <option value="admin">2. Admin (Quản trị viên Studio / Quản lý Editor & Album)</option>
+                    <option value="editor" selected>3. Editor (Nhiếp ảnh gia phụ / Chỉnh sửa album)</option>
+                `;
+            } else {
+                // Admin (cấp 2): chỉ có thể tạo Editor (cấp 1)
+                roleSelect.innerHTML = `
+                    <option value="editor" selected>3. Editor (Nhiếp ảnh gia phụ / Chỉnh sửa album)</option>
+                `;
+            }
             roleSelect.removeAttribute('disabled');
         }
 
@@ -556,10 +574,11 @@ const AuthModule = (function () {
                 roleSelect.innerHTML = `<option value="${targetUser.role}" selected>${ROLE_LABELS[targetUser.role]}</option>`;
                 roleSelect.setAttribute('disabled', 'true');
             } else if (curLevel === 3) {
-                // Super Admin: có thể set Editor hoặc Admin
+                // Super Admin: có thể set cả 3 quyền cho cấp dưới
                 roleSelect.innerHTML = `
-                    <option value="editor" ${targetUser.role === 'editor' ? 'selected' : ''}>3. Editor (Nhiếp ảnh gia phụ)</option>
-                    <option value="admin" ${targetUser.role === 'admin' ? 'selected' : ''}>2. Admin (Quản trị viên Studio)</option>
+                    <option value="super_admin" ${targetUser.role === 'super_admin' ? 'selected' : ''}>1. Super Admin (Chủ sở hữu Studio / Toàn quyền)</option>
+                    <option value="admin" ${targetUser.role === 'admin' ? 'selected' : ''}>2. Admin (Quản trị viên Studio / Quản lý Editor & Album)</option>
+                    <option value="editor" ${targetUser.role === 'editor' ? 'selected' : ''}>3. Editor (Nhiếp ảnh gia phụ / Chỉnh sửa album)</option>
                 `;
                 roleSelect.removeAttribute('disabled');
             } else {
@@ -604,7 +623,7 @@ const AuthModule = (function () {
                 users[idx].email = email;
                 // Nếu tự sửa chính mình thì giữ nguyên role, cấp trên mới có quyền đổi role cấp dưới
                 const isSelf = currentUser && (currentUser.id === targetUser.id || currentUser.username === targetUser.username);
-                if (!isSelf && curLevel > getRoleLevel(role)) {
+                if (!isSelf && (curLevel > getRoleLevel(targetUser.role) || curLevel === 3)) {
                     users[idx].role = role;
                     users[idx].roleName = ROLE_FULL_NAMES[role] || role;
                 }
@@ -629,8 +648,15 @@ const AuthModule = (function () {
                 alert('Tên đăng nhập này đã tồn tại!');
                 return;
             }
-            // Không được tạo tài khoản có quyền cao hơn hoặc bằng mình
-            const assignedRole = (curLevel > getRoleLevel(role)) ? role : 'editor';
+            // Kiểm tra quyền khi gán vai trò:
+            // Super Admin (cấp 3) có thể tạo super_admin, admin hoặc editor.
+            // Admin (cấp 2) chỉ có thể tạo editor (cấp 1).
+            let assignedRole = 'editor';
+            if (curLevel >= 3) {
+                assignedRole = ['super_admin', 'admin', 'editor'].includes(role) ? role : 'editor';
+            } else if (curLevel === 2) {
+                assignedRole = 'editor';
+            }
             const hashedPass = await hashPassword(pass || '123456');
             const newUser = {
                 id: 'usr_' + Date.now(),
