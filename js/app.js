@@ -169,20 +169,30 @@ const App = (function () {
         return { albumSlug, photoCode };
     }
 
+    function buildClientAlbumUrl(albumId, photoCodeParam) {
+        const base = getAppBasePath();
+        const token = (typeof AdminModule !== 'undefined' && typeof AdminModule.computeAlbumClientToken === 'function')
+            ? AdminModule.computeAlbumClientToken(albumId)
+            : '';
+        const tokenQuery = token ? `?k=${token}` : '?mode=client';
+        if (photoCodeParam) {
+            return `${base}/${encodeURIComponent(albumId)}/${encodeURIComponent(photoCodeParam)}${tokenQuery}`;
+        }
+        return `${base}/${encodeURIComponent(albumId)}${tokenQuery}`;
+    }
+
     function handleUrlRouting(skipPush) {
         const params = new URLSearchParams(window.location.search);
         let albumParam = params.get('album');
         let albumPathParam = params.get('album_path');
         const viewParam = params.get('view');
         const modeParam = params.get('mode');
+        const clientKeyParam = params.get('k') || params.get('key') || params.get('token');
         let photoCodeParam = params.get('photo');
 
-        // Phân biệt chế độ xem: Khách chọn ảnh (client) vs Trưng bày công khai (showcase)
-        if (modeParam === 'client' || params.get('client') === '1' || params.get('select') === '1') {
-            isClientMode = true;
-        } else {
-            isClientMode = false;
-        }
+        // Phân biệt chế độ xem: Khách chọn ảnh qua mã bí mật token (?k=...) hoặc mode=client
+        // Nếu có mã bí mật hợp lệ (?k=...) thì tự động mở chế độ Khách Chọn Ảnh (Client Mode)
+        let hasValidClientKey = false;
 
         // Ưu tiên cao nhất cho view=admin, view=users hoặc view=manage-album
         if (viewParam === 'admin') {
@@ -215,6 +225,14 @@ const App = (function () {
                 const found = AdminModule.getAlbumById(targetSlug);
                 if (found) {
                     currentAlbumId = found.id;
+                    if (clientKeyParam && typeof AdminModule.verifyAlbumClientToken === 'function') {
+                        isClientMode = AdminModule.verifyAlbumClientToken(found.id, clientKeyParam);
+                    } else if (modeParam === 'client' || params.get('client') === '1' || params.get('select') === '1') {
+                        isClientMode = true;
+                    } else {
+                        isClientMode = false;
+                    }
+
                     showView('album', true);
                     const base = getAppBasePath();
                     if (photoCodeParam) {
@@ -224,7 +242,7 @@ const App = (function () {
                         }
                     }
                     const cleanUrl = isClientMode
-                        ? (photoCodeParam ? `${base}/${targetSlug}/${encodeURIComponent(photoCodeParam)}?mode=client` : `${base}/${targetSlug}?mode=client`)
+                        ? buildClientAlbumUrl(targetSlug, photoCodeParam)
                         : (photoCodeParam ? `${base}/${targetSlug}/${encodeURIComponent(photoCodeParam)}` : `${base}/${targetSlug}`);
                     window.history.replaceState({ view: 'album', albumId: currentAlbumId, isClientMode, photoCode: photoCodeParam }, '', cleanUrl);
                     return true;
@@ -269,6 +287,13 @@ const App = (function () {
             const found = AdminModule.getAlbumById(albumParam);
             if (found) {
                 currentAlbumId = found.id;
+                if (clientKeyParam && typeof AdminModule.verifyAlbumClientToken === 'function') {
+                    isClientMode = AdminModule.verifyAlbumClientToken(found.id, clientKeyParam);
+                } else if (modeParam === 'client' || params.get('client') === '1' || params.get('select') === '1') {
+                    isClientMode = true;
+                } else {
+                    isClientMode = false;
+                }
             }
             showView('album', skipPush);
             if (photoCodeParam && found) {
@@ -396,7 +421,7 @@ const App = (function () {
             if (!skipHistoryPush) {
                 const base = getAppBasePath();
                 const url = isClientMode
-                    ? `${base}/${encodeURIComponent(currentAlbumId)}?mode=client`
+                    ? buildClientAlbumUrl(currentAlbumId)
                     : `${base}/${encodeURIComponent(currentAlbumId)}`;
                 window.history.pushState({ view: 'album', albumId: currentAlbumId, isClientMode }, '', url);
             }
@@ -1272,7 +1297,7 @@ const App = (function () {
         const base = getAppBasePath();
         const photoCode = encodeURIComponent(photo.code || photo.id);
         const url = isClientMode
-            ? `${base}/${encodeURIComponent(currentAlbumId)}/${photoCode}?mode=client`
+            ? buildClientAlbumUrl(currentAlbumId, photoCode)
             : `${base}/${encodeURIComponent(currentAlbumId)}/${photoCode}`;
         window.history.replaceState({ view: 'album', albumId: currentAlbumId, isClientMode, photoCode }, '', url);
     }
@@ -1280,7 +1305,7 @@ const App = (function () {
     function syncAlbumCloseUrl() {
         const base = getAppBasePath();
         const url = isClientMode
-            ? `${base}/${encodeURIComponent(currentAlbumId)}?mode=client`
+            ? buildClientAlbumUrl(currentAlbumId)
             : `${base}/${encodeURIComponent(currentAlbumId)}`;
         window.history.replaceState({ view: 'album', albumId: currentAlbumId, isClientMode }, '', url);
     }

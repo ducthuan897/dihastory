@@ -992,6 +992,31 @@ function testRun() {
         App.showToast("Đã tải file albums.json! Bạn có thể lưu vào thư mục data/ và push lên GitHub để mọi thiết bị đều thấy.", "info");
     }
 
+    const CLIENT_TOKEN_SECRET = "DihaStory_Client_Key_#2026";
+
+    function computeAlbumClientToken(albumId) {
+        if (!albumId) return "";
+        // Thuật toán hash FNV-1a 32-bit + hex chuyển thành token 10 ký tự bí mật
+        let h1 = 0x811c9dc5;
+        let h2 = 0x9e3779b9;
+        const s = String(albumId) + "_" + CLIENT_TOKEN_SECRET;
+        for (let i = 0; i < s.length; i++) {
+            const code = s.charCodeAt(i);
+            h1 ^= code;
+            h1 = Math.imul(h1, 0x01000193);
+            h2 ^= code ^ (h1 >>> 16);
+            h2 = Math.imul(h2, 0x01000193);
+        }
+        const hex1 = (h1 >>> 0).toString(16).padStart(8, '0');
+        const hex2 = (h2 >>> 0).toString(16).padStart(8, '0');
+        return (hex1 + hex2).slice(0, 10);
+    }
+
+    function verifyAlbumClientToken(albumId, token) {
+        if (!albumId || !token) return false;
+        return computeAlbumClientToken(albumId).toLowerCase() === String(token).trim().toLowerCase();
+    }
+
     function getAlbumById(albumId) {
         const albums = getAllAlbums();
         return albums.find(a => a.id === albumId) || albums[0];
@@ -1002,12 +1027,13 @@ function testRun() {
     }
 
     function getClientShareUrl(albumId) {
+        const token = computeAlbumClientToken(albumId);
         let base = window.location.origin + window.location.pathname;
         base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
         if (window.location.hostname.includes('github.io')) {
-            return `https://ducthuan897.github.io/dutustory/${encodeURIComponent(albumId)}?mode=client`;
+            return `https://ducthuan897.github.io/dutustory/${encodeURIComponent(albumId)}?k=${token}`;
         }
-        return `${base}/${encodeURIComponent(albumId)}?mode=client`;
+        return `${base}/${encodeURIComponent(albumId)}?k=${token}`;
     }
 
     function getSelectionsMap() {
@@ -4489,6 +4515,8 @@ function testRun() {
         getAlbumById,
         getActiveAdminAlbum,
         getClientShareUrl,
+        computeAlbumClientToken,
+        verifyAlbumClientToken,
         getSelections,
         saveSelections,
         addSubmission,
