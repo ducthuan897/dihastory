@@ -37,7 +37,9 @@ Các quy tắc bắt buộc phải luôn tuân thủ trong toàn bộ quá trìn
    - Chỉ được phép chỉnh sửa đúng phần tử, chức năng và khu vực mã nguồn mà người dùng chỉ định cụ thể trong yêu cầu.
    - Tuyệt đối không tự ý đụng chạm, sửa đổi, tái cấu trúc hoặc can thiệp vào các khu vực code khác ngoài phạm vi khi chưa có sự đồng ý hoặc yêu cầu rõ ràng từ người dùng.
 
-9. **Quy trình xem & tải ảnh trên Trang Chọn Ảnh của khách (RAW vs JPG Đã Chỉnh)**:
-   - Khi khách mở xem chi tiết một bức ảnh trong Trang Chọn Ảnh, hệ thống mặc định hiển thị bức ảnh gốc RAW để khách chọn và thả tim.
-   - Trên thanh công cụ góc trên bên phải (bên cạnh nút Trình chiếu, nút Tải xuống và nút Đóng), hiển thị nút chuyển đổi xem bản ảnh đã chỉnh sửa định dạng JPG (nếu bức ảnh đó đã có bản hậu kỳ/chỉnh sửa). Khi chuyển đổi, khách xem được chất lượng ảnh đã chỉnh và có thể tải ảnh này về.
+9. **Quy trình xem & chọn ảnh trên Trang Chọn Ảnh của khách (Chỉ xem và chọn ảnh đã chỉnh sửa JPG)**:
+   - Khách chỉ xem và chọn ảnh đã chỉnh sửa hoàn thiện (định dạng JPG) được tối ưu chất lượng cao. Không hiển thị ảnh gốc RAW.
+   - Bỏ nút chuyển đổi "ẢNH GỐC / ẢNH ĐÃ SỬA". Khách duyệt trực tiếp ảnh đã chỉnh sửa.
+   - Nếu khách muốn yêu cầu chỉnh sửa thêm, khách nhập ghi chú vào bức ảnh đó.
+   - Khi khách lưu hoặc gửi ghi chú, hệ thống tự động đồng bộ và hiển thị thông báo ghi chú của khách trên Trang Quản Trị của Studio (thông qua badge số lượng "Có ghi chú", danh sách thông báo và cập nhật tức thì).
    - Xóa bỏ nút "Đặt làm ảnh bìa" trong Lightbox của Trang Chọn Ảnh.

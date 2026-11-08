@@ -948,6 +948,21 @@ function testRun() {
         const map = getSelectionsMap();
         map[id] = selections;
         localStorage.setItem(STORAGE_KEY_SELECTIONS_MAP, JSON.stringify(map));
+
+        // Tự động đồng bộ selections/ghi chú lên Cloud để Trang Quản Trị Studio hiển thị thông báo
+        syncSelectionsToCloud(id, selections);
+    }
+
+    async function syncSelectionsToCloud(albumId, selections) {
+        const cloudUrl = getGoogleDriveApiKey();
+        if (cloudUrl && cloudUrl.startsWith('https://script.google.com/')) {
+            try {
+                fetch(`${cloudUrl}?action=saveSelections&albumId=${encodeURIComponent(albumId)}&data=${encodeURIComponent(JSON.stringify(selections))}`, {
+                    method: 'GET',
+                    mode: 'no-cors'
+                }).catch(() => {});
+            } catch (e) {}
+        }
     }
 
     function getSubmissionsMap() {
