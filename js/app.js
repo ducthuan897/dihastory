@@ -448,61 +448,6 @@ const App = (function () {
         });
         return oldest || album.date || '9999-99-99';
     }
-        const allAlbums = AdminModule.getAllAlbums();
-        const publicAlbums = allAlbums.filter(a => a.isPublic);
-
-        const countEl = document.getElementById('homePublicAlbumsCount');
-        if (countEl) countEl.innerText = `${publicAlbums.length} Dự Án Công Khai`;
-
-        const locPillsContainer = document.getElementById('homeLocationFilterPills');
-        if (locPillsContainer) {
-            const cities = [];
-            publicAlbums.forEach(a => {
-                const c = a.city || 'Khác';
-                if (!cities.includes(c)) cities.push(c);
-            });
-
-            const pills = [
-                { id: 'ALL', label: `Tất cả (${publicAlbums.length})` },
-                ...cities.map(c => ({
-                    id: c,
-                    label: `${c} (${publicAlbums.filter(a => (a.city || 'Khác') === c).length})`
-                }))
-            ];
-
-            locPillsContainer.innerHTML = pills.map(p => {
-                const active = homeLocationFilter === p.id;
-                return `
-                    <button
-                        type="button"
-                        onclick="App.setHomeLocationFilter('${p.id}')"
-                        class="px-3 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                            active
-                                ? 'bg-zinc-900 text-white shadow-xs'
-                                : 'bg-white text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200'
-                        }"
-                    >
-                        <i class="fa-solid fa-location-dot text-[11px] ${active ? 'text-rose-400' : 'text-zinc-400'}"></i>
-                        <span>${p.label}</span>
-                    </button>
-                `;
-            }).join('');
-        }
-
-        const groupBtn = document.getElementById('homeGroupToggleBtn');
-        const groupBtnMob = document.getElementById('homeGroupToggleBtnMobile');
-        const activeClass = 'bg-zinc-900 text-white border-zinc-900 shadow-xs';
-        const inactiveClass = 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100 shadow-xs';
-        if (groupBtn) {
-            groupBtn.className = `px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 shrink-0 ${
-                homeGroupByLocation ? activeClass : inactiveClass
-            }`;
-        }
-        if (groupBtnMob) {
-            groupBtnMob.className = `px-2.5 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1 shrink-0 ${
-                homeGroupByLocation ? activeClass : inactiveClass
-            }`;
-        }
 
     function renderHomeShowcase() {
         const allAlbums = AdminModule.getAllAlbums();
