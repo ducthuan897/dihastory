@@ -188,7 +188,7 @@ const App = (function () {
             if (publicView) publicView.classList.add('hidden');
             if (adminView) adminView.classList.add('hidden');
             if (manageView) manageView.classList.remove('hidden');
-            if (mainHeader) mainHeader.classList.add('hidden');
+            if (mainHeader) mainHeader.classList.remove('hidden');
             if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
 
             const targetId = AdminModule.getActiveAdminAlbum()?.id || currentAlbumId;
@@ -197,6 +197,7 @@ const App = (function () {
                 const url = `${window.location.pathname}?view=manage-album&album=${encodeURIComponent(targetId)}`;
                 window.history.pushState({ view: 'manage-album', albumId: targetId }, '', url);
             }
+            updateActiveNavButtons();
             AdminModule.renderAlbumManagePage();
         } else if (viewName === 'admin') {
             if (!AuthModule.isLoggedIn()) {
@@ -285,7 +286,7 @@ const App = (function () {
 
         setTabClass(navHome, currentView === 'home');
         setTabClass(navAlbum, currentView === 'album');
-        setTabClass(navAdmin, currentView === 'admin');
+        setTabClass(navAdmin, currentView === 'admin' || currentView === 'manage-album');
     }
 
     function openAlbumPage(albumId, isClient = false) {
