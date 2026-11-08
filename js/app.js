@@ -998,7 +998,6 @@ const App = (function () {
                             <span class="text-[10px] text-amber-300 font-medium block truncate">
                                 <i class="fa-solid fa-location-dot mr-1"></i>${photo.location || ''}
                             </span>
-                            <p class="text-xs sm:text-sm text-white font-medium truncate">${photo.title || photo.code}</p>
                             <span class="text-[10px] text-zinc-300 block"><i class="fa-regular fa-clock mr-1"></i>${timeStr}</span>
                             ${clientMetaInfo}
                         </div>
