@@ -1349,15 +1349,25 @@ const App = (function () {
 
     function _lbClampPan() {
         if (_lbScale <= 1) { _lbPanX = 0; _lbPanY = 0; return; }
-        if (!_lbNaturalWidth || !_lbNaturalHeight) {
-            const img = document.getElementById('lightboxImage');
-            if (img) {
-                _lbNaturalWidth = img.offsetWidth || 800;
-                _lbNaturalHeight = img.offsetHeight || 600;
-            }
-        }
-        const maxX = (_lbNaturalWidth * (_lbScale - 1)) / 2;
-        const maxY = (_lbNaturalHeight * (_lbScale - 1)) / 2;
+        const img = document.getElementById('lightboxImage');
+        if (!img) return;
+
+        const container = img.parentElement;
+        const containerW = container ? container.clientWidth : window.innerWidth;
+        const containerH = container ? container.clientHeight : window.innerHeight;
+
+        const renderedW = img.offsetWidth || 800;
+        const renderedH = img.offsetHeight || 600;
+
+        // Chiều rộng & chiều cao thực tế của ảnh sau khi phóng to
+        const scaledW = renderedW * _lbScale;
+        const scaledH = renderedH * _lbScale;
+
+        // Cho phép kéo di chuyển tự do khắp 4 góc ảnh:
+        // Nếu ảnh to hơn màn hình, được kéo chạm mép trái, mép phải, trên cùng và dưới cùng
+        const maxX = Math.max(0, (scaledW - containerW) / 2 + 100);
+        const maxY = Math.max(0, (scaledH - containerH) / 2 + 100);
+
         _lbPanX = Math.max(-maxX, Math.min(maxX, _lbPanX));
         _lbPanY = Math.max(-maxY, Math.min(maxY, _lbPanY));
     }
@@ -1441,7 +1451,12 @@ const App = (function () {
             _lbPanX = _lbPanStartX + (e.clientX - _lbDragStartX);
             _lbPanY = _lbPanStartY + (e.clientY - _lbDragStartY);
             _lbClampPan();
-            _lbApplyTransform(false);
+            if (!_lbRafId) {
+                _lbRafId = requestAnimationFrame(() => {
+                    _lbRenderTransform();
+                    _lbRafId = null;
+                });
+            }
         });
 
         document.addEventListener('mouseup', () => {
