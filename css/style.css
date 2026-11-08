@@ -227,8 +227,6 @@ body {
     touch-action: none;
     cursor: grab;
     will-change: transform;
-    image-rendering: -webkit-optimize-contrast; /* sharp on Chrome/Safari */
-    image-rendering: crisp-edges;               /* sharp on Firefox */
 }
 
 #lightboxImage.lightbox-dragging {

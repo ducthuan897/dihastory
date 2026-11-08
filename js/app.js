@@ -1159,12 +1159,34 @@ const App = (function () {
 
         isLightboxShowingBefore = false;
         const img = document.getElementById('lightboxImage');
-        // Reset trạng thái hi-res trước khi set src mới
-        delete img.dataset.lbHiRes;
+        // Reset transform & scale khi chuyển ảnh
+        resetLightboxZoom(false);
+
+        // Lấy URL gốc chất lượng cao nhất (Original =s0 từ Google Drive) cho Lightbox
+        let hiResUrl = photo.url;
+        const driveFileId = photo.driveFileId || AdminModule.extractGoogleDriveFileId(photo.url);
+        if (driveFileId) {
+            hiResUrl = `https://lh3.googleusercontent.com/d/${driveFileId}=s0`;
+        } else if (photo.url && photo.url.includes('drive.google.com/thumbnail')) {
+            hiResUrl = photo.url.replace(/sz=w\d+/, 'sz=w4096');
+        }
+
+        // Tải trước ảnh gốc chất lượng cao, giữ ảnh preview tạm thời để không bị giật màn hình
         img.src = photo.url;
+        if (hiResUrl !== photo.url) {
+            const hiLoader = new Image();
+            hiLoader.referrerPolicy = 'no-referrer';
+            hiLoader.onload = () => {
+                // Chỉ gán nếu người dùng vẫn đang xem bức ảnh này
+                if (currentFilteredPhotos[currentLightboxIndex]?.id === photo.id) {
+                    img.src = hiResUrl;
+                }
+            };
+            hiLoader.src = hiResUrl;
+        }
+
         img.classList.remove('lightbox-img-zoomed');
         isLightboxZoomed = false;
-        resetLightboxZoom(false);
 
         document.getElementById('lightboxCode').innerText = photo.code;
         document.getElementById('lightboxTitle').innerText = `${photo.location || ''} • ${timeStr}`;
@@ -1254,49 +1276,20 @@ const App = (function () {
 
     // ─── Lightbox Free Zoom / Pan ────────────────────────────────────────────────
 
-    // Chuyển URL Google Drive sang độ phân giải cao nhất có thể
-    function _lbUpgradeImageSrc(img) {
-        if (!img || !img.src) return;
-        if (img.dataset.lbHiRes === '1') return; // đã nâng rồi, bỏ qua
-        let hiSrc = img.src;
-        if (hiSrc.includes('drive.google.com/thumbnail') && hiSrc.includes('sz=')) {
-            // Lấy ảnh full-size thay vì thumbnail
-            hiSrc = hiSrc.replace(/sz=w\d+/, 'sz=w4096');
-        } else if (hiSrc.includes('lh3.googleusercontent.com') && hiSrc.includes('=s')) {
-            // Lh3 format: ...=s800 → =s0 (original size)
-            hiSrc = hiSrc.replace(/=s\d+/, '=s0');
-        }
-        if (img.src !== hiSrc) {
-            img.dataset.lbHiRes = '1';
-            // Load hi-res vào Image() để preload trước, tránh nháy
-            const preload = new Image();
-            preload.referrerPolicy = 'no-referrer';
-            preload.onload = () => { img.src = hiSrc; };
-            preload.src = hiSrc;
-        }
-    }
-
     function _lbApplyTransform(animate) {
         const img = document.getElementById('lightboxImage');
         if (!img) return;
-        img.style.transition = animate ? 'transform 0.15s ease-out' : 'none';
+        img.style.transition = animate ? 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)' : 'none';
         img.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px) scale(${_lbScale})`;
         img.style.cursor = _lbDragging ? 'grabbing' : (_lbScale > 1 ? 'grab' : 'default');
 
-        if (_lbScale > 1.05) {
-            // Bỏ giới hạn kích thước để ảnh render ở độ phân giải thực → scale sắc nét
+        // Bỏ trần kích thước khi zoom để ảnh hiển thị chi tiết điểm ảnh gốc sắc nét
+        if (_lbScale > 1.02) {
             img.style.maxHeight = 'none';
             img.style.maxWidth = 'none';
-            img.style.width = 'auto';
-            img.style.height = 'auto';
-            // Nâng src lên hi-res chỉ 1 lần
-            _lbUpgradeImageSrc(img);
         } else {
-            // Khôi phục constraint mặc định
             img.style.maxHeight = '';
             img.style.maxWidth = '';
-            img.style.width = '';
-            img.style.height = '';
         }
     }
 
@@ -1309,9 +1302,6 @@ const App = (function () {
             img.style.cursor = 'default';
             img.style.maxHeight = '';
             img.style.maxWidth = '';
-            img.style.width = '';
-            img.style.height = '';
-            delete img.dataset.lbHiRes;
         }
         _lbApplyTransform(animate !== false);
     }
