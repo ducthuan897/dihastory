@@ -1011,14 +1011,16 @@ const App = (function () {
                             <span class="text-[10px] text-zinc-300 block"><i class="fa-regular fa-clock mr-1"></i>${timeStr}</span>
                             ${clientMetaInfo}
                         </div>
-                        <button
-                            type="button"
-                            onclick="event.stopPropagation(); App.downloadSinglePhoto('${photo.id}')"
-                            title="Lưu ảnh này về máy"
-                            class="card-icon-btn !w-8 !h-8 shrink-0"
-                        >
-                            <i class="fa-solid fa-download text-xs"></i>
-                        </button>
+                        ${isClientMode ? `
+                            <button
+                                type="button"
+                                onclick="event.stopPropagation(); App.downloadSinglePhoto('${photo.id}')"
+                                title="Lưu ảnh này về máy"
+                                class="card-icon-btn !w-8 !h-8 shrink-0"
+                            >
+                                <i class="fa-solid fa-download text-xs"></i>
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             </div>
