@@ -103,6 +103,14 @@ const App = (function () {
         }, 15000);
     }
 
+    function getAppBasePath() {
+        let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+        if (window.location.hostname.includes('github.io')) {
+            base = '/dutustory';
+        }
+        return base || '';
+    }
+
     function parsePathRouting(rawPath) {
         if (!rawPath) return { albumSlug: null, photoCode: null };
         const parts = decodeURIComponent(rawPath).split('/').filter(Boolean);
@@ -127,6 +135,21 @@ const App = (function () {
             isClientMode = false;
         }
 
+        // Ưu tiên cao nhất cho view=admin hoặc view=manage-album
+        if (viewParam === 'admin') {
+            showView('admin', skipPush);
+            return;
+        }
+
+        if (viewParam === 'manage-album') {
+            if (albumParam) {
+                const found = AdminModule.getAlbumById(albumParam);
+                if (found) currentAlbumId = found.id;
+            }
+            AdminModule.openAlbumManagePage(currentAlbumId, skipPush);
+            return;
+        }
+
         // 1. Check if redirected from GitHub Pages 404.html
         let savedCleanPath = sessionStorage.getItem('spa_clean_path') || albumPathParam;
         if (savedCleanPath) {
@@ -139,10 +162,7 @@ const App = (function () {
                 if (found) {
                     currentAlbumId = found.id;
                     showView('album', true);
-                    let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-                    if (window.location.hostname.includes('github.io')) {
-                        base = '/dutustory';
-                    }
+                    const base = getAppBasePath();
                     if (photoCodeParam) {
                         const targetPhotoIdx = found.photos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
                         if (targetPhotoIdx >= 0) {
@@ -191,13 +211,7 @@ const App = (function () {
             }
         }
 
-        if (viewParam === 'manage-album') {
-            if (albumParam) {
-                const found = AdminModule.getAlbumById(albumParam);
-                if (found) currentAlbumId = found.id;
-            }
-            AdminModule.openAlbumManagePage(currentAlbumId, skipPush);
-        } else if (albumParam) {
+        if (albumParam) {
             const found = AdminModule.getAlbumById(albumParam);
             if (found) {
                 currentAlbumId = found.id;
@@ -209,8 +223,6 @@ const App = (function () {
                     setTimeout(() => openLightbox(targetPhotoIdx), 150);
                 }
             }
-        } else if (viewParam === 'admin') {
-            showView('admin', skipPush);
         } else {
             showView('home', skipPush);
         }
@@ -248,7 +260,9 @@ const App = (function () {
             const targetId = AdminModule.getActiveAdminAlbum()?.id || currentAlbumId;
             currentAlbumId = targetId;
             if (!skipHistoryPush) {
-                const url = `${window.location.pathname}?view=manage-album&album=${encodeURIComponent(targetId)}`;
+                const base = getAppBasePath();
+                const cleanBase = base ? `${base}/` : '/';
+                const url = `${cleanBase}?view=manage-album&album=${encodeURIComponent(targetId)}`;
                 window.history.pushState({ view: 'manage-album', albumId: targetId }, '', url);
             }
             updateActiveNavButtons();
@@ -267,7 +281,9 @@ const App = (function () {
             if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
 
             if (!skipHistoryPush) {
-                const url = `${window.location.pathname}?view=admin`;
+                const base = getAppBasePath();
+                const cleanBase = base ? `${base}/` : '/';
+                const url = `${cleanBase}?view=admin`;
                 window.history.pushState({ view: 'admin' }, '', url);
             }
             AdminModule.populateAdminDashboard();
@@ -287,10 +303,7 @@ const App = (function () {
             }
 
             if (!skipHistoryPush) {
-                let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-                if (window.location.hostname.includes('github.io')) {
-                    base = '/dutustory';
-                }
+                const base = getAppBasePath();
                 const url = isClientMode
                     ? `${base}/${encodeURIComponent(currentAlbumId)}?mode=client`
                     : `${base}/${encodeURIComponent(currentAlbumId)}`;
@@ -310,10 +323,7 @@ const App = (function () {
             if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
 
             if (!skipHistoryPush) {
-                let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-                if (window.location.hostname.includes('github.io')) {
-                    base = '/dutustory';
-                }
+                const base = getAppBasePath();
                 const homeUrl = base ? `${base}/` : '/';
                 window.history.pushState({ view: 'home' }, '', homeUrl);
             }
@@ -1219,10 +1229,7 @@ const App = (function () {
     function syncLightboxUrl() {
         const photo = currentFilteredPhotos[currentLightboxIndex];
         if (!photo) return;
-        let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-        if (window.location.hostname.includes('github.io')) {
-            base = '/dutustory';
-        }
+        const base = getAppBasePath();
         const photoCode = encodeURIComponent(photo.code || photo.id);
         const url = isClientMode
             ? `${base}/${encodeURIComponent(currentAlbumId)}/${photoCode}?mode=client`
@@ -1231,10 +1238,7 @@ const App = (function () {
     }
 
     function syncAlbumCloseUrl() {
-        let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-        if (window.location.hostname.includes('github.io')) {
-            base = '/dutustory';
-        }
+        const base = getAppBasePath();
         const url = isClientMode
             ? `${base}/${encodeURIComponent(currentAlbumId)}?mode=client`
             : `${base}/${encodeURIComponent(currentAlbumId)}`;
