@@ -671,13 +671,14 @@ const AuthModule = (function () {
         const pass = document.getElementById('editUserPassword').value.trim();
 
         let users = [...getUsersList()];
+        const currentUser = getCurrentUser();
+        const curLevel = currentUser ? getRoleLevel(currentUser.role) : 1;
 
         if (id) {
             // Edit existing user
             const idx = users.findIndex(u => u.id === id);
             if (idx >= 0) {
                 const targetUser = users[idx];
-                const currentUser = getCurrentUser();
                 if (!canModifyUser(currentUser, targetUser)) {
                     alert('Bạn không có quyền chỉnh sửa tài khoản có cấp bậc bằng hoặc cao hơn bạn!');
                     return;
@@ -706,8 +707,6 @@ const AuthModule = (function () {
             }
         } else {
             // Add new user (Chỉ Super Admin & Admin mới có quyền thêm)
-            const currentUser = getCurrentUser();
-            const curLevel = currentUser ? getRoleLevel(currentUser.role) : 1;
             if (curLevel < 2) {
                 alert('Editor không có quyền thêm tài khoản mới!');
                 return;
