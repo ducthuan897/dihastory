@@ -431,6 +431,8 @@ const App = (function () {
         });
         return oldest || album.date || '9999-99-99';
     }
+
+    function renderHomeShowcase() {
         const allAlbums = AdminModule.getAllAlbums();
         const publicAlbums = allAlbums.filter(a => a.isPublic);
 
@@ -486,13 +488,6 @@ const App = (function () {
                 homeGroupByLocation ? activeClass : inactiveClass
             }`;
         }
-
-    function renderHomeShowcase() {
-        const allAlbums = AdminModule.getAllAlbums();
-        const publicAlbums = allAlbums.filter(a => a.isPublic);
-
-        const countEl = document.getElementById('homePublicAlbumsCount');
-        if (countEl) countEl.innerText = `${publicAlbums.length} Dự Án Công Khai`;
 
         // 1. Sắp xếp danh sách Album theo thời gian của bức ảnh cũ nhất (sớm nhất) trong album
         let sortedAlbums = [...publicAlbums];
