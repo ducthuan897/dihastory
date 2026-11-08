@@ -8,6 +8,9 @@ const AuthModule = (function () {
     const STORAGE_KEY_USERS = "site_admin_users_list_v1";
     const DEFAULT_PASS = "123456";
 
+    // Chuỗi salt bí mật để băm mật khẩu bảo mật (SHA-256 + Salt)
+    const HASH_SALT = "DihaStory_Security_Salt_#2026";
+
     // Thứ tự phân quyền theo cấp bậc: 1. super_admin > 2. admin > 3. editor
     const ROLE_LEVELS = {
         'super_admin': 3,
