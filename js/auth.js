@@ -8,7 +8,45 @@ const AuthModule = (function () {
     const STORAGE_KEY_USERS = "site_admin_users_list_v1";
     const DEFAULT_PASS = "123456";
 
+    // Chuỗi salt bí mật để băm mật khẩu bảo mật (SHA-256 + Salt)
+    const HASH_SALT = "DihaStory_Security_Salt_#2026";
+
     let cachedUsersList = [];
+
+    // Hàm băm mật khẩu chuẩn SHA-256 (Web Crypto API tiêu chuẩn bảo mật cao)
+    async function hashPassword(plainText) {
+        if (!plainText) return "";
+        try {
+            if (window.crypto && window.crypto.subtle) {
+                const enc = new TextEncoder();
+                const data = enc.encode(plainText + HASH_SALT);
+                const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return "sha256_" + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+        } catch (e) {
+            console.warn("Crypto API fallback:", e);
+        }
+        // Fallback hash nhẹ nếu trình duyệt không hỗ trợ Web Crypto
+        let h = 0x811c9dc5;
+        const str = plainText + HASH_SALT;
+        for (let i = 0; i < str.length; i++) {
+            h ^= str.charCodeAt(i);
+            h = (h * 0x01000193) >>> 0;
+        }
+        return "fnv1a_" + h.toString(16);
+    }
+
+    async function verifyPassword(plainInput, storedHashOrPlain) {
+        if (!storedHashOrPlain) return false;
+        // Nếu trong DB đã là dạng băm
+        if (storedHashOrPlain.startsWith("sha256_") || storedHashOrPlain.startsWith("fnv1a_")) {
+            const hashedInput = await hashPassword(plainInput);
+            return hashedInput === storedHashOrPlain;
+        }
+        // Nếu trong DB là bản plain cũ thì so sánh trực tiếp
+        return plainInput === storedHashOrPlain;
+    }
 
     function isLoggedIn() {
         return localStorage.getItem(STORAGE_KEY_AUTH) === 'true';
@@ -159,7 +197,7 @@ const AuthModule = (function () {
         }
     });
 
-    function handleLoginSubmit(event) {
+    async function handleLoginSubmit(event) {
         event.preventDefault();
         const inputUser = document.getElementById('usernameInput').value.trim().toLowerCase();
         const inputPass = document.getElementById('passwordInput').value.trim();
@@ -169,8 +207,20 @@ const AuthModule = (function () {
         const matched = users.find(u => (u.username && u.username.toLowerCase() === inputUser) && u.active !== false);
 
         if (matched) {
-            const expectedPass = matched.customPassword || (matched.username === 'admin' ? getAdminPassword() : DEFAULT_PASS);
-            if (inputPass === expectedPass) {
+            const storedPass = matched.customPassword || (matched.username === 'admin' ? getAdminPassword() : DEFAULT_PASS);
+            const isMatch = await verifyPassword(inputPass, storedPass);
+            if (isMatch) {
+                // Tự động nâng cấp mã hóa nếu mật khẩu trong DB chưa được mã hóa
+                if (!storedPass.startsWith('sha256_') && !storedPass.startsWith('fnv1a_')) {
+                    matched.customPassword = await hashPassword(inputPass);
+                    try {
+                        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+                    } catch (e) {}
+                    if (typeof FirebaseModule !== 'undefined' && FirebaseModule.isReady()) {
+                        FirebaseModule.saveUsers(users);
+                    }
+                }
+
                 localStorage.setItem(STORAGE_KEY_AUTH, 'true');
                 localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(matched));
                 alertBox.classList.add('hidden');
@@ -183,15 +233,19 @@ const AuthModule = (function () {
         }
 
         // Dự phòng cho admin gốc
-        if (inputUser === 'admin' && inputPass === getAdminPassword()) {
-            localStorage.setItem(STORAGE_KEY_AUTH, 'true');
-            if (users[0]) localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(users[0]));
-            alertBox.classList.add('hidden');
-            closeLoginModal();
-            checkAuthUI();
-            App.showView('admin');
-            App.showToast('Đăng nhập thành công vào Trang Quản Trị Studio!');
-            return;
+        if (inputUser === 'admin') {
+            const adminPass = getAdminPassword();
+            const isAdminMatch = await verifyPassword(inputPass, adminPass);
+            if (isAdminMatch) {
+                localStorage.setItem(STORAGE_KEY_AUTH, 'true');
+                if (users[0]) localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(users[0]));
+                alertBox.classList.add('hidden');
+                closeLoginModal();
+                checkAuthUI();
+                App.showView('admin');
+                App.showToast('Đăng nhập thành công vào Trang Quản Trị Studio!');
+                return;
+            }
         }
 
         alertBox.classList.remove('hidden');
@@ -239,14 +293,17 @@ const AuthModule = (function () {
         if (modal) modal.classList.add('hidden');
     }
 
-    function handleChangePasswordSubmit(event) {
+    async function handleChangePasswordSubmit(event) {
         event.preventDefault();
         const curPass = document.getElementById('currentPasswordInput').value.trim();
         const newPass = document.getElementById('newPasswordInput').value.trim();
         const confirmPass = document.getElementById('confirmNewPasswordInput').value.trim();
         const alertBox = document.getElementById('changePasswordAlert');
 
-        if (curPass !== getAdminPassword()) {
+        const currentStoredPass = getAdminPassword();
+        const isCurMatch = await verifyPassword(curPass, currentStoredPass);
+
+        if (!isCurMatch) {
             alertBox.innerText = 'Mật khẩu hiện tại không chính xác!';
             alertBox.classList.remove('hidden');
             return;
@@ -264,20 +321,22 @@ const AuthModule = (function () {
             return;
         }
 
-        localStorage.setItem(STORAGE_KEY_PASSWORD, newPass);
+        // Mã hóa mật khẩu mới trước khi lưu
+        const hashedNewPass = await hashPassword(newPass);
+        localStorage.setItem(STORAGE_KEY_PASSWORD, hashedNewPass);
 
         // Đồng bộ mật khẩu mới của admin lên Firebase Realtime Database
         const users = getUsersList();
         const adminUser = users.find(u => u.username === 'admin');
         if (adminUser) {
-            adminUser.customPassword = newPass;
+            adminUser.customPassword = hashedNewPass;
             if (typeof FirebaseModule !== 'undefined' && FirebaseModule.isReady()) {
                 FirebaseModule.saveUsers(users);
             }
         }
 
         closeChangePasswordModal();
-        App.showToast('Thay đổi mật khẩu thành công! Dữ liệu đã đồng bộ bảo mật đa thiết bị.');
+        App.showToast('Thay đổi mật khẩu thành công! Dữ liệu đã được mã hóa và bảo vệ an toàn.');
     }
 
     function renderUserManagerModalList() {
@@ -411,7 +470,7 @@ const AuthModule = (function () {
         if (modal) modal.classList.add('hidden');
     }
 
-    function handleSaveUserSubmit(event) {
+    async function handleSaveUserSubmit(event) {
         event.preventDefault();
         const id = document.getElementById('editUserId').value;
         const username = document.getElementById('editUserUsername').value.trim().toLowerCase();
@@ -433,9 +492,10 @@ const AuthModule = (function () {
                 users[idx].roleName = role === 'super_admin' ? 'Chủ sở hữu & Super Admin' : 'Nhiếp ảnh gia phụ / Editor';
                 users[idx].avatar = avatar;
                 if (pass) {
-                    users[idx].customPassword = pass;
+                    const hashedPass = await hashPassword(pass);
+                    users[idx].customPassword = hashedPass;
                     if (users[idx].username === 'admin') {
-                        localStorage.setItem(STORAGE_KEY_PASSWORD, pass);
+                        localStorage.setItem(STORAGE_KEY_PASSWORD, hashedPass);
                     }
                 }
             }
@@ -445,6 +505,7 @@ const AuthModule = (function () {
                 alert('Tên đăng nhập này đã tồn tại!');
                 return;
             }
+            const hashedPass = await hashPassword(pass || '123456');
             const newUser = {
                 id: 'usr_' + Date.now(),
                 username,
@@ -453,7 +514,7 @@ const AuthModule = (function () {
                 role,
                 roleName: role === 'super_admin' ? 'Chủ sở hữu & Super Admin' : 'Nhiếp ảnh gia phụ / Editor',
                 avatar: avatar || '',
-                customPassword: pass || '123456',
+                customPassword: hashedPass,
                 active: true,
                 createdAt: new Date().toISOString()
             };
@@ -465,7 +526,7 @@ const AuthModule = (function () {
             localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
         } catch (e) {}
 
-        // Đồng bộ thời gian thực lên Firebase
+        // Đồng bộ thời gian thực lên Firebase dưới dạng hash bảo mật
         if (typeof FirebaseModule !== 'undefined' && FirebaseModule.isReady()) {
             FirebaseModule.saveUsers(users);
         }
@@ -473,7 +534,7 @@ const AuthModule = (function () {
         closeUserEditModal();
         renderUsersPageList();
         renderUserManagerModalList();
-        App.showToast('Đã lưu thông tin người dùng và đồng bộ Firebase thành công!');
+        App.showToast('Đã lưu thông tin người dùng và mã hóa mật khẩu trên Firebase thành công!');
     }
 
     function deleteUser(userId) {
