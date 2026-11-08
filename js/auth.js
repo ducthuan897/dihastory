@@ -237,14 +237,29 @@ const AuthModule = (function () {
         const inputPass = document.getElementById('passwordInput').value.trim();
         const alertBox = document.getElementById('loginAlert');
 
-        const users = getUsersList();
+        // 1. Luôn ưu tiên lấy danh sách người dùng mới nhất trực tiếp từ Firebase Database
+        let users = getUsersList();
+        if (typeof FirebaseModule !== 'undefined' && FirebaseModule.isReady()) {
+            try {
+                const cloudUsers = await FirebaseModule.getUsersOnce();
+                if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+                    users = cloudUsers;
+                    applyLatestCloudUsers(cloudUsers);
+                }
+            } catch (err) {
+                console.warn("Chưa lấy được users tức thì từ Firebase, dùng dữ liệu đã đồng bộ:", err);
+            }
+        }
+
+        // 2. Tìm tài khoản trong database
         const matched = users.find(u => (u.username && u.username.toLowerCase() === inputUser) && u.active !== false);
 
         if (matched) {
+            // Mật khẩu bắt buộc lấy từ trường customPassword của database
             const storedPass = matched.customPassword || (matched.username === 'admin' ? getAdminPassword() : DEFAULT_PASS);
             const isMatch = await verifyPassword(inputPass, storedPass);
             if (isMatch) {
-                // Tự động nâng cấp mã hóa nếu mật khẩu trong DB chưa được mã hóa
+                // Tự động nâng cấp mã hóa nếu mật khẩu trong DB chưa được mã hóa SHA-256
                 if (!storedPass.startsWith('sha256_') && !storedPass.startsWith('fnv1a_')) {
                     matched.customPassword = await hashPassword(inputPass);
                     try {
@@ -262,22 +277,6 @@ const AuthModule = (function () {
                 checkAuthUI();
                 App.showView('admin');
                 App.showToast(`Chào mừng ${matched.fullName || matched.username} đăng nhập thành công!`);
-                return;
-            }
-        }
-
-        // Dự phòng cho admin gốc
-        if (inputUser === 'admin') {
-            const adminPass = getAdminPassword();
-            const isAdminMatch = await verifyPassword(inputPass, adminPass);
-            if (isAdminMatch) {
-                localStorage.setItem(STORAGE_KEY_AUTH, 'true');
-                if (users[0]) localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(users[0]));
-                alertBox.classList.add('hidden');
-                closeLoginModal();
-                checkAuthUI();
-                App.showView('admin');
-                App.showToast('Đăng nhập thành công vào Trang Quản Trị Studio!');
                 return;
             }
         }
