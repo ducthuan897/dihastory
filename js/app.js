@@ -1352,9 +1352,9 @@ const App = (function () {
         const img = document.getElementById('lightboxImage');
         if (!img) return;
 
-        const container = img.parentElement;
-        const containerW = container ? container.clientWidth : window.innerWidth;
-        const containerH = container ? container.clientHeight : window.innerHeight;
+        const stage = document.getElementById('lightboxStage') || img.parentElement;
+        const stageW = stage ? stage.clientWidth : window.innerWidth;
+        const stageH = stage ? stage.clientHeight : window.innerHeight;
 
         const renderedW = img.offsetWidth || 800;
         const renderedH = img.offsetHeight || 600;
@@ -1363,10 +1363,10 @@ const App = (function () {
         const scaledW = renderedW * _lbScale;
         const scaledH = renderedH * _lbScale;
 
-        // Cho phép kéo di chuyển tự do khắp 4 góc ảnh:
-        // Nếu ảnh to hơn màn hình, được kéo chạm mép trái, mép phải, trên cùng và dưới cùng
-        const maxX = Math.max(0, (scaledW - containerW) / 2 + 100);
-        const maxY = Math.max(0, (scaledH - containerH) / 2 + 100);
+        // Cho phép kéo tự do đến tận mép ảnh:
+        // Đảm bảo dù ảnh kích thước thế nào, người dùng đều có thể kéo mép trái/phải/trên/dưới vào giữa màn hình để ngắm
+        const maxX = Math.max(stageW * 0.45, (scaledW - stageW) / 2 + stageW * 0.35);
+        const maxY = Math.max(stageH * 0.45, (scaledH - stageH) / 2 + stageH * 0.35);
 
         _lbPanX = Math.max(-maxX, Math.min(maxX, _lbPanX));
         _lbPanY = Math.max(-maxY, Math.min(maxY, _lbPanY));
@@ -1378,18 +1378,22 @@ const App = (function () {
         newScale = Math.max(LB_MIN_SCALE, Math.min(LB_MAX_SCALE, newScale));
         if (newScale === _lbScale) return;
 
-        // Tọa độ tâm ảnh unscaled (ổn định tuyệt đối, không trôi lệch khi phóng to)
-        const rect = img.getBoundingClientRect();
-        const imgCx = rect.left + rect.width / 2 - _lbPanX;
-        const imgCy = rect.top + rect.height / 2 - _lbPanY;
+        const stage = document.getElementById('lightboxStage') || img.parentElement;
+        const stageRect = stage ? stage.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
 
-        // Vị trí con trỏ chuột tương đối so với tâm gốc của ảnh
-        const mouseOffsetX = clientX - imgCx;
-        const mouseOffsetY = clientY - imgCy;
+        // Tọa độ tâm ảnh unscaled (ngay trung tâm sân khấu stage)
+        const stageCenterX = stageRect.left + stageRect.width / 2;
+        const stageCenterY = stageRect.top + stageRect.height / 2;
 
-        // Tính toán vị trí pan mới chuẩn xác để điểm dưới con trỏ chuột đứng yên
-        _lbPanX = mouseOffsetX - (mouseOffsetX - _lbPanX) * (newScale / _lbScale);
-        _lbPanY = mouseOffsetY - (mouseOffsetY - _lbPanY) * (newScale / _lbScale);
+        // Vị trí con trỏ chuột so với tâm ảnh hiện tại trên màn hình
+        const mouseFromImgCenterX = clientX - (stageCenterX + _lbPanX);
+        const mouseFromImgCenterY = clientY - (stageCenterY + _lbPanY);
+
+        // Chuẩn hóa tâm zoom theo tỉ lệ mới:
+        // Điểm ảnh nằm ngay dưới con trỏ chuột sẽ giữ nguyên vị trí tuyệt đối trên màn hình
+        const scaleRatio = newScale / _lbScale;
+        _lbPanX = _lbPanX - mouseFromImgCenterX * (scaleRatio - 1);
+        _lbPanY = _lbPanY - mouseFromImgCenterY * (scaleRatio - 1);
         _lbScale = newScale;
         isLightboxZoomed = _lbScale > 1.05;
         _lbClampPan();
@@ -1434,9 +1438,12 @@ const App = (function () {
             container.addEventListener('wheel', onWheelZoom, { passive: false });
         }
 
-        // ── Mouse drag / pan ───────────────────────────────────────────────
-        img.addEventListener('mousedown', (e) => {
-            if (_lbScale <= 1) return;
+        // ── Mouse drag / pan (bắt trên cả ảnh và toàn bộ sân khấu stage) ────────
+        const onStartDrag = (e) => {
+            if (_lbScale <= 1.02) return;
+            // Chỉ nhận click chuột trái và không bấm trúng nút prev/next
+            if (e.button !== 0) return;
+            if (e.target && e.target.closest('button')) return;
             e.preventDefault();
             _lbDragging = true;
             _lbDragStartX = e.clientX;
@@ -1444,7 +1451,13 @@ const App = (function () {
             _lbPanStartX = _lbPanX;
             _lbPanStartY = _lbPanY;
             img.classList.add('lightbox-dragging');
-        });
+            const stage = document.getElementById('lightboxStage');
+            if (stage) stage.classList.add('lightbox-dragging');
+        };
+
+        img.addEventListener('mousedown', onStartDrag);
+        const stage = document.getElementById('lightboxStage');
+        if (stage) stage.addEventListener('mousedown', onStartDrag);
 
         document.addEventListener('mousemove', (e) => {
             if (!_lbDragging) return;
@@ -1463,6 +1476,8 @@ const App = (function () {
             if (!_lbDragging) return;
             _lbDragging = false;
             img.classList.remove('lightbox-dragging');
+            const stage = document.getElementById('lightboxStage');
+            if (stage) stage.classList.remove('lightbox-dragging');
             _lbApplyTransform(false);
         });
 

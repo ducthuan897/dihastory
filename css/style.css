@@ -224,12 +224,17 @@ body {
 #lightboxImage {
     user-select: none;
     -webkit-user-select: none;
+    -webkit-user-drag: none;
     touch-action: none;
     cursor: grab;
     will-change: transform;
 }
 
 #lightboxImage.lightbox-dragging {
+    cursor: grabbing !important;
+}
+
+#lightboxStage.lightbox-dragging {
     cursor: grabbing !important;
 }
 
