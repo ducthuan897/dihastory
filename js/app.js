@@ -9,6 +9,7 @@ const App = (function () {
     let currentView = 'home'; // 'home' | 'album' | 'admin'
     let currentAlbumId = 'gian-than-dat-09';
     let isClientMode = false; // true: Giao diện Link gửi khách chọn ảnh, false: Giao diện Trưng bày Trang chủ chỉ xem
+    let albumPreviousView = 'home'; // Ghi nhận trang trước đó ('home' | 'admin' | 'manage-album')
 
     // State for Home Showcase (Page 1)
     let homeLocationFilter = 'ALL';
@@ -304,14 +305,31 @@ const App = (function () {
         setTabClass(navAdmin, currentView === 'admin' || currentView === 'manage-album');
     }
 
-    function openAlbumPage(albumId, isClient = false) {
+    function openAlbumPage(albumId, isClient = false, fromView = null) {
         if (albumId) {
             currentAlbumId = albumId;
             activeCategory = 'ALL';
             searchQuery = '';
         }
         isClientMode = !!isClient;
+        if (fromView) {
+            albumPreviousView = fromView;
+        } else if (currentView === 'admin' || currentView === 'manage-album') {
+            albumPreviousView = currentView;
+        } else {
+            albumPreviousView = 'home';
+        }
         showView('album');
+    }
+
+    function handleAlbumBackAction() {
+        if (albumPreviousView === 'manage-album') {
+            AdminModule.openAlbumManagePage(currentAlbumId);
+        } else if (albumPreviousView === 'admin') {
+            showView('admin');
+        } else {
+            showView('home');
+        }
     }
 
     function handleQuickAlbumCodeAccess(event) {
@@ -711,6 +729,18 @@ const App = (function () {
         if (topShareBar) topShareBar.classList.remove('hidden');
         // Nút quay lại ở giữa hero banner được ẩn đi vì đã có nút chuẩn trên thanh top bar
         if (heroBackBtn) heroBackBtn.classList.add('hidden');
+
+        // Cập nhật nhãn nút quay lại trên top bar tùy theo trang xuất phát
+        const backBtnLabel = document.getElementById('albumTopBackBtnLabel');
+        if (backBtnLabel) {
+            if (albumPreviousView === 'manage-album') {
+                backBtnLabel.innerText = 'Quay về trang quản lý album';
+            } else if (albumPreviousView === 'admin') {
+                backBtnLabel.innerText = 'Quay về trang quản trị';
+            } else {
+                backBtnLabel.innerText = 'Quay lại Trang Chủ';
+            }
+        }
 
         // Bật/tắt chế độ bảo vệ chống sao chép, tải & chụp màn hình cho body
         if (!isClientMode) {
@@ -1996,6 +2026,7 @@ const App = (function () {
         handleClientSubmitSelections,
         copyClientSelectionSummary,
         copyCurrentAlbumLink,
+        handleAlbumBackAction,
         scrollToGallery,
         scrollToVideoHighlight,
         getIsClientMode: () => isClientMode,
