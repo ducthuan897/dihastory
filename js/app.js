@@ -1159,6 +1159,8 @@ const App = (function () {
 
         isLightboxShowingBefore = false;
         const img = document.getElementById('lightboxImage');
+        // Reset trạng thái hi-res trước khi set src mới
+        delete img.dataset.lbHiRes;
         img.src = photo.url;
         img.classList.remove('lightbox-img-zoomed');
         isLightboxZoomed = false;
@@ -1252,15 +1254,25 @@ const App = (function () {
 
     // ─── Lightbox Free Zoom / Pan ────────────────────────────────────────────────
 
-    // Nâng độ phân giải ảnh Google Drive khi zoom (tránh ảnh bị mờ)
+    // Chuyển URL Google Drive sang độ phân giải cao nhất có thể
     function _lbUpgradeImageSrc(img) {
         if (!img || !img.src) return;
-        // Google Drive thumbnail: thay sz=w1600 → sz=w3200 để ảnh nét hơn khi zoom
-        if (img.src.includes('drive.google.com/thumbnail') && img.src.includes('sz=')) {
-            const hiResSrc = img.src.replace(/sz=w\d+/, 'sz=w3200');
-            if (img.src !== hiResSrc) {
-                img.src = hiResSrc;
-            }
+        if (img.dataset.lbHiRes === '1') return; // đã nâng rồi, bỏ qua
+        let hiSrc = img.src;
+        if (hiSrc.includes('drive.google.com/thumbnail') && hiSrc.includes('sz=')) {
+            // Lấy ảnh full-size thay vì thumbnail
+            hiSrc = hiSrc.replace(/sz=w\d+/, 'sz=w4096');
+        } else if (hiSrc.includes('lh3.googleusercontent.com') && hiSrc.includes('=s')) {
+            // Lh3 format: ...=s800 → =s0 (original size)
+            hiSrc = hiSrc.replace(/=s\d+/, '=s0');
+        }
+        if (img.src !== hiSrc) {
+            img.dataset.lbHiRes = '1';
+            // Load hi-res vào Image() để preload trước, tránh nháy
+            const preload = new Image();
+            preload.referrerPolicy = 'no-referrer';
+            preload.onload = () => { img.src = hiSrc; };
+            preload.src = hiSrc;
         }
     }
 
@@ -1270,9 +1282,21 @@ const App = (function () {
         img.style.transition = animate ? 'transform 0.15s ease-out' : 'none';
         img.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px) scale(${_lbScale})`;
         img.style.cursor = _lbDragging ? 'grabbing' : (_lbScale > 1 ? 'grab' : 'default');
-        // Nâng resolution khi bắt đầu zoom ra khỏi 1x
+
         if (_lbScale > 1.05) {
+            // Bỏ giới hạn kích thước để ảnh render ở độ phân giải thực → scale sắc nét
+            img.style.maxHeight = 'none';
+            img.style.maxWidth = 'none';
+            img.style.width = 'auto';
+            img.style.height = 'auto';
+            // Nâng src lên hi-res chỉ 1 lần
             _lbUpgradeImageSrc(img);
+        } else {
+            // Khôi phục constraint mặc định
+            img.style.maxHeight = '';
+            img.style.maxWidth = '';
+            img.style.width = '';
+            img.style.height = '';
         }
     }
 
@@ -1283,6 +1307,11 @@ const App = (function () {
         if (img) {
             img.classList.remove('lightbox-img-zoomed');
             img.style.cursor = 'default';
+            img.style.maxHeight = '';
+            img.style.maxWidth = '';
+            img.style.width = '';
+            img.style.height = '';
+            delete img.dataset.lbHiRes;
         }
         _lbApplyTransform(animate !== false);
     }
