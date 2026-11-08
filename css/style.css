@@ -227,7 +227,8 @@ body {
     -webkit-user-drag: none;
     touch-action: none;
     cursor: grab;
-    will-change: transform;
+    transform-origin: center center;
+    image-rendering: auto;
 }
 
 #lightboxImage.lightbox-dragging {
