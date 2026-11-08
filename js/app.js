@@ -702,7 +702,6 @@ const App = (function () {
         const guideToolbar = document.getElementById('galleryToolbarAnchor');
         const navAlbumContextual = document.getElementById('navAlbumContextualControls');
         const reminderBtn = document.getElementById('albumTopReminderBtn');
-        const galleryBatchDownloadBtn = document.getElementById('galleryBatchDownloadBtn');
 
         if (topShareBar) topShareBar.classList.toggle('hidden', !isClientMode);
         if (shareLinkWrap) shareLinkWrap.classList.toggle('hidden', !isClientMode);
@@ -716,9 +715,6 @@ const App = (function () {
         if (navAlbumContextual) navAlbumContextual.classList.toggle('hidden', !isClientMode);
         if (reminderBtn) {
             reminderBtn.classList.toggle('hidden', !isClientMode || !(album.reminderEnabled && album.reminderText));
-        }
-        if (galleryBatchDownloadBtn) {
-            galleryBatchDownloadBtn.classList.toggle('hidden', !isClientMode);
         }
 
         const shareLinkText = document.getElementById('albumClientLinkDisplay');
