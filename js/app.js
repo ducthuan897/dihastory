@@ -1288,17 +1288,43 @@ const App = (function () {
         _lbNaturalWidth = 0;
         _lbNaturalHeight = 0;
 
+        // Xác định link ảnh RAW (gốc) và JPG (đã sửa)
+        // Quy tắc: Trong Trang Chọn Ảnh, mặc định hiển thị RAW làm ảnh gốc để khách chọn,
+        // nếu có file RAW (rawUrl, rawDriveFileId hoặc photo.url là RAW) thì dùng RAW.
+        const rawDriveId = photo.rawDriveFileId || (photo.isRaw ? photo.driveFileId : null);
+        const jpgDriveId = photo.jpgDriveFileId || (!photo.isRaw && photo.driveFileId ? photo.driveFileId : null);
+
+        let rawUrl = photo.rawUrl;
+        if (!rawUrl && rawDriveId) {
+            rawUrl = `https://lh3.googleusercontent.com/d/${rawDriveId}=s0`;
+        }
+
+        let jpgUrl = photo.jpgUrl || photo.editedUrl;
+        if (!jpgUrl && jpgDriveId) {
+            jpgUrl = `https://lh3.googleusercontent.com/d/${jpgDriveId}=s0`;
+        }
+
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        const matchedDelivered = (album && album.deliveredPhotos ? album.deliveredPhotos : []).find(d => d.originalPhotoId === photo.id);
+        if (matchedDelivered && matchedDelivered.url) {
+            jpgUrl = matchedDelivered.url;
+        }
+
         // BẮT BUỘC dùng nguồn ảnh trực tiếp từ Google User Content với độ phân giải gốc (=s0)
-        const driveId = getDriveIdFromPhoto(photo);
+        const defaultDriveId = getDriveIdFromPhoto(photo);
         let bestQualityUrl = photo.url;
-        if (driveId) {
-            bestQualityUrl = `https://lh3.googleusercontent.com/d/${driveId}=s0`;
+        if (defaultDriveId) {
+            bestQualityUrl = `https://lh3.googleusercontent.com/d/${defaultDriveId}=s0`;
         } else if (photo.url && photo.url.includes('drive.google.com/thumbnail')) {
             bestQualityUrl = photo.url.replace(/sz=w\d+/, 'sz=w4096');
         }
 
-        // Gán thẳng ảnh chất lượng cao nhất ngay từ đầu
-        img.src = bestQualityUrl;
+        // Trong Trang Chọn Ảnh của khách: Mặc định hiển thị bản ảnh RAW (Ảnh gốc) nếu có
+        if (isClientMode && (rawUrl || rawDriveId)) {
+            img.src = rawUrl || bestQualityUrl;
+        } else {
+            img.src = bestQualityUrl;
+        }
 
         img.classList.remove('lightbox-img-zoomed');
         isLightboxZoomed = false;
@@ -1307,18 +1333,24 @@ const App = (function () {
         document.getElementById('lightboxTitle').innerText = `${photo.location || ''} • ${timeStr}`;
         document.getElementById('lightboxCounter').innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
 
-        // Hiển thị nút "Xem ảnh đã chỉnh (JPG)" nếu bức ảnh này có bản chỉnh sửa
+        // Kiểm tra xem bức ảnh này có cả 2 bản (RAW và JPG) hay không
+        const hasBothVersions = !!((rawUrl || rawDriveId || photo.rawDriveFileId) && (jpgUrl || jpgDriveId || photo.jpgDriveFileId || matchedDelivered || photo.beforeUrl));
         const toggleJpgBtn = document.getElementById('lightboxToggleJpgBtn');
         const toggleJpgLabel = document.getElementById('lightboxToggleJpgBtnLabel');
-        const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
-        const hasEditedVersion = !!(photo.beforeUrl || matchedDelivered);
+        const toggleJpgIcon = document.getElementById('lightboxToggleJpgIcon');
 
         if (toggleJpgBtn) {
-            // Chỉ hiển thị ở trang chọn ảnh của khách và khi ảnh có bản chỉnh sửa
-            toggleJpgBtn.classList.toggle('hidden', !isClientMode || !hasEditedVersion);
+            // Chỉ hiển thị ở trang chọn ảnh của khách và khi có cả bản RAW và JPG
+            toggleJpgBtn.classList.toggle('hidden', !isClientMode || !hasBothVersions);
             if (toggleJpgLabel) {
-                toggleJpgLabel.innerText = isLightboxShowingBefore ? 'Quay lại ảnh gốc (RAW)' : 'Xem ảnh đã chỉnh (JPG)';
+                // Đang hiển thị RAW thì nút bấm là ẢNH ĐÃ SỬA
+                toggleJpgLabel.innerText = 'ẢNH ĐÃ SỬA';
             }
+            if (toggleJpgIcon) {
+                toggleJpgIcon.className = "fa-solid fa-wand-magic-sparkles";
+            }
+            toggleJpgBtn.className = "px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm";
+            toggleJpgBtn.title = "Bấm để chuyển sang xem ẢNH ĐÃ SỬA (JPG)";
         }
 
         const downloadBtn = document.getElementById('lightboxDownloadBtn');
@@ -1361,38 +1393,60 @@ const App = (function () {
         const photo = currentFilteredPhotos[currentLightboxIndex];
         if (!photo) return;
         const album = AdminModule.getAlbumById(currentAlbumId);
-        const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
+        const matchedDelivered = (album && album.deliveredPhotos ? album.deliveredPhotos : []).find(d => d.originalPhotoId === photo.id);
         const img = document.getElementById('lightboxImage');
         const toggleJpgLabel = document.getElementById('lightboxToggleJpgBtnLabel');
         const toggleJpgBtn = document.getElementById('lightboxToggleJpgBtn');
+        const toggleJpgIcon = document.getElementById('lightboxToggleJpgIcon');
 
         isLightboxShowingBefore = !isLightboxShowingBefore;
 
-        if (isLightboxShowingBefore) {
-            // Đang xem bản ảnh đã chỉnh sửa JPG
-            let editedUrl = matchedDelivered ? matchedDelivered.url : (photo.beforeUrl ? photo.url : photo.url);
-            img.src = editedUrl;
-            img.style.filter = 'none';
-            if (toggleJpgLabel) toggleJpgLabel.innerText = 'Quay lại ảnh gốc (RAW)';
-            if (toggleJpgBtn) {
-                toggleJpgBtn.className = "px-3.5 py-1.5 rounded-full bg-amber-500 hover:bg-amber-400 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm";
-            }
-            showToast("Đang hiển thị bản ảnh sau khi chỉnh sửa (JPG). Bạn có thể bấm nút Tải xuống để lưu ảnh này về máy!");
-        } else {
-            // Quay lại ảnh gốc RAW
+        const rawDriveId = photo.rawDriveFileId || (photo.isRaw ? photo.driveFileId : null);
+        const jpgDriveId = photo.jpgDriveFileId || (!photo.isRaw && photo.driveFileId ? photo.driveFileId : null);
+
+        let rawUrl = photo.rawUrl;
+        if (!rawUrl && rawDriveId) {
+            rawUrl = `https://lh3.googleusercontent.com/d/${rawDriveId}=s0`;
+        }
+        if (!rawUrl) {
             const driveId = getDriveIdFromPhoto(photo);
-            let rawUrl = photo.url;
-            if (driveId) {
-                rawUrl = `https://lh3.googleusercontent.com/d/${driveId}=s0`;
-            } else if (photo.url && photo.url.includes('drive.google.com/thumbnail')) {
-                rawUrl = photo.url.replace(/sz=w\d+/, 'sz=w4096');
+            if (driveId) rawUrl = `https://lh3.googleusercontent.com/d/${driveId}=s0`;
+            else rawUrl = photo.url;
+        }
+
+        let jpgUrl = photo.jpgUrl || photo.editedUrl;
+        if (!jpgUrl && jpgDriveId) {
+            jpgUrl = `https://lh3.googleusercontent.com/d/${jpgDriveId}=s0`;
+        }
+        if (!jpgUrl && matchedDelivered) {
+            jpgUrl = matchedDelivered.url;
+        }
+        if (!jpgUrl) {
+            jpgUrl = photo.url;
+        }
+
+        if (isLightboxShowingBefore) {
+            // Đang chuyển sang xem bản ẢNH ĐÃ SỬA (JPG)
+            img.src = jpgUrl;
+            img.style.filter = 'none';
+            if (toggleJpgLabel) toggleJpgLabel.innerText = 'ẢNH GỐC';
+            if (toggleJpgIcon) toggleJpgIcon.className = "fa-solid fa-camera-retro";
+            if (toggleJpgBtn) {
+                toggleJpgBtn.className = "px-3.5 py-1.5 rounded-full bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm";
+                toggleJpgBtn.title = "Bấm để quay lại xem ẢNH GỐC (RAW)";
             }
+            showToast("Đang hiển thị ẢNH ĐÃ SỬA (JPG). Bạn có thể bấm nút Tải xuống để lưu ảnh này về máy!");
+        } else {
+            // Đang chuyển sang xem ẢNH GỐC (RAW)
             img.src = rawUrl;
             img.style.filter = 'none';
-            if (toggleJpgLabel) toggleJpgLabel.innerText = 'Xem ảnh đã chỉnh (JPG)';
+            if (toggleJpgLabel) toggleJpgLabel.innerText = 'ẢNH ĐÃ SỬA';
+            if (toggleJpgIcon) toggleJpgIcon.className = "fa-solid fa-wand-magic-sparkles";
             if (toggleJpgBtn) {
-                toggleJpgBtn.className = "px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm";
+                toggleJpgBtn.className = "px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm";
+                toggleJpgBtn.title = "Bấm để chuyển sang xem ẢNH ĐÃ SỬA (JPG)";
             }
+            showToast("Đang hiển thị ẢNH GỐC (RAW).");
         }
     }
 
@@ -1818,18 +1872,27 @@ const App = (function () {
             (album.deliveredPhotos || []).find(p => p.id === photoId);
         if (!photo) return;
 
-        // Ưu tiên tải bản ảnh JPG đã chỉnh sửa nếu có
+        // Ưu tiên tải bản ảnh JPG đã chỉnh sửa nếu có (hoặc jpgDriveFileId)
+        let downloadDriveId = photo.jpgDriveFileId || null;
+        let downloadUrl = photo.jpgUrl || null;
+
         const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
         if (matchedDelivered && matchedDelivered.url) {
             photo = matchedDelivered;
+            downloadUrl = photo.url;
+        }
+
+        if (!downloadDriveId && !downloadUrl) {
+            downloadDriveId = photo.driveFileId || (photo.url && (photo.url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/) || [])[1]);
+            downloadUrl = photo.url;
         }
 
         showToast(`Đang chuẩn bị lưu ảnh ${photo.code} về máy...`);
 
         // Handle Base64 local computer images directly
-        if (photo.url && photo.url.startsWith('data:image')) {
+        if (downloadUrl && downloadUrl.startsWith('data:image')) {
             const link = document.createElement('a');
-            link.href = photo.url;
+            link.href = downloadUrl;
             link.download = `${photo.code}-DucThuanStudio.jpg`;
             document.body.appendChild(link);
             link.click();
@@ -1838,9 +1901,8 @@ const App = (function () {
         }
 
         // Handle Google Drive photos with direct download link
-        const driveIdMatch = photo.driveFileId || (photo.url && (photo.url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/) || [])[1]);
-        if (driveIdMatch) {
-            const dlUrl = `https://drive.google.com/uc?export=download&id=${driveIdMatch}`;
+        if (downloadDriveId) {
+            const dlUrl = `https://drive.google.com/uc?export=download&id=${downloadDriveId}`;
             const link = document.createElement('a');
             link.href = dlUrl;
             link.target = '_blank';

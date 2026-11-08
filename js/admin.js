@@ -2291,23 +2291,49 @@ function testRun() {
                 const folderData = await fetchGoogleDriveFolderFiles(folderId);
                 const folderFiles = folderData.files || [];
 
+                // Tách và ghép cặp ảnh RAW và ảnh JPG đã chỉnh sửa (cùng tên code)
+                // Các định dạng RAW thông dụng: ARW, CR2, CR3, NEF, DNG, RAF, RAW, RW2, ORF, PEF
+                const rawRegex = /\.(arw|cr2|cr3|nef|dng|raf|raw|rw2|orf|pef)$/i;
+                const jpgRegex = /\.(jpe?g|png|webp|heic)$/i;
+
+                // Gom nhóm các file theo tên baseCode (không chứa phần mở rộng)
+                const fileGroups = new Map();
                 for (let j = 0; j < folderFiles.length; j++) {
                     const f = folderFiles[j];
-                    counter++;
                     const cleanCode = (f.name || '').replace(/\.[^/.]+$/, "").toUpperCase();
+                    if (!fileGroups.has(cleanCode)) {
+                        fileGroups.set(cleanCode, { code: cleanCode, rawFile: null, jpgFile: null, otherFile: null });
+                    }
+                    const grp = fileGroups.get(cleanCode);
+                    if (rawRegex.test(f.name || '')) {
+                        grp.rawFile = f;
+                    } else if (jpgRegex.test(f.name || '')) {
+                        grp.jpgFile = f;
+                    } else {
+                        grp.otherFile = f;
+                    }
+                }
+
+                for (const [codeKey, grp] of fileGroups.entries()) {
+                    const primaryFile = grp.jpgFile || grp.rawFile || grp.otherFile;
+                    if (!primaryFile) continue;
+                    counter++;
+
+                    // EXIF metadata lấy từ JPG (thường chứa đủ thẻ EXIF chuẩn) hoặc từ RAW
+                    const metaFile = grp.jpgFile || grp.rawFile || primaryFile;
 
                     // 1. Resolve Location strictly from EXIF GPS / reverse geocoding / photo filename metadata
-                    let photoLoc = f.location || "";
-                    let photoCity = f.city || "";
-                    if (!photoLoc && f.lat != null && f.lon != null) {
-                        const geo = await reverseGeocodeCoords(f.lat, f.lon);
+                    let photoLoc = metaFile.location || "";
+                    let photoCity = metaFile.city || "";
+                    if (!photoLoc && metaFile.lat != null && metaFile.lon != null) {
+                        const geo = await reverseGeocodeCoords(metaFile.lat, metaFile.lon);
                         if (geo) {
                             photoLoc = geo.location;
                             photoCity = geo.city;
                         }
                     }
-                    if (!photoLoc && f.name) {
-                        const nameLoc = extractLocationFromText(f.name);
+                    if (!photoLoc && metaFile.name) {
+                        const nameLoc = extractLocationFromText(metaFile.name);
                         if (nameLoc) {
                             photoLoc = nameLoc.location;
                             photoCity = nameLoc.city;
@@ -2324,20 +2350,34 @@ function testRun() {
 
                     // 2. Resolve Capture Date/Time strictly from EXIF DateTimeOriginal / photo filename
                     let capturedAt =
-                        normalizeDateToIsoMinute(f.capturedAt) ||
-                        extractDateFromText(f.name) ||
+                        normalizeDateToIsoMinute(metaFile.capturedAt) ||
+                        extractDateFromText(metaFile.name) ||
                         (folderData && folderData.folderDate ? normalizeDateToIsoMinute(folderData.folderDate) : null) ||
                         (fallbackDate ? `${fallbackDate}T09:00` : "");
 
+                    const cleanCode = codeKey && codeKey.length <= 22 ? codeKey : `DRV_${1000 + counter}`;
+
+                    const rawDriveId = grp.rawFile ? grp.rawFile.id : null;
+                    const jpgDriveId = grp.jpgFile ? grp.jpgFile.id : null;
+                    // Ảnh đại diện trong danh sách (grid/card): dùng JPG để hiển thị nhanh và đẹp
+                    const displayFileId = jpgDriveId || rawDriveId || primaryFile.id;
+
                     photos.push({
-                        id: `drv_${f.id}_${Date.now()}_${counter}`,
-                        driveFileId: f.id,
-                        code: cleanCode && cleanCode.length <= 22 ? cleanCode : `DRV_${1000 + counter}`,
+                        id: `drv_${displayFileId}_${Date.now()}_${counter}`,
+                        driveFileId: displayFileId,
+                        code: cleanCode,
                         location: photoLoc,
                         city: photoCity,
+                        lat: metaFile.lat,
+                        lon: metaFile.lon,
                         capturedAt: capturedAt || "",
-                        title: f.name || `Ảnh Google Drive #${counter}`,
-                        url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`
+                        title: primaryFile.name || `Ảnh Google Drive #${counter}`,
+                        url: `https://drive.google.com/thumbnail?id=${displayFileId}&sz=w1600`,
+                        // Lưu liên kết cả 2 bản RAW và JPG
+                        rawDriveFileId: rawDriveId,
+                        rawUrl: rawDriveId ? `https://drive.google.com/thumbnail?id=${rawDriveId}&sz=w1600` : null,
+                        jpgDriveFileId: jpgDriveId,
+                        jpgUrl: jpgDriveId ? `https://drive.google.com/thumbnail?id=${jpgDriveId}&sz=w1600` : null
                     });
                 }
                 continue;

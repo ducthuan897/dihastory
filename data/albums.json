@@ -102,6 +102,10 @@
                 "capturedAt": "2026-07-24T16:28",
                 "title": "DSC00346.jpg",
                 "url": "https://drive.google.com/thumbnail?id=1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7&sz=w1600",
+                "rawDriveFileId": "16FOGtUFZXdYa4E4XjeX2hi0zRDdnYM4k",
+                "rawUrl": "https://drive.google.com/thumbnail?id=16FOGtUFZXdYa4E4XjeX2hi0zRDdnYM4k&sz=w1600",
+                "jpgDriveFileId": "1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7",
+                "jpgUrl": "https://drive.google.com/thumbnail?id=1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7&sz=w1600",
                 "starred": false
             },
             {
@@ -114,7 +118,11 @@
                 "lon": 106.654371,
                 "capturedAt": "2026-10-19T21:35",
                 "title": "DSC01193.jpg",
-                "url": "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=w1600"
+                "url": "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=w1600",
+                "rawDriveFileId": "1Awl2SPLQsIxmW2Qcx8NubVvFLmVkrl3h",
+                "rawUrl": "https://drive.google.com/thumbnail?id=1Awl2SPLQsIxmW2Qcx8NubVvFLmVkrl3h&sz=w1600",
+                "jpgDriveFileId": "1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U",
+                "jpgUrl": "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=w1600"
             },
             {
                 "id": "drv_1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd_1794052824913_3",
@@ -126,7 +134,11 @@
                 "lon": 106.654377,
                 "capturedAt": "2026-10-19T21:23",
                 "title": "DSC01184.jpg",
-                "url": "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd&sz=w1600"
+                "url": "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd&sz=w1600",
+                "rawDriveFileId": "1fLXZmMp0X4HvZlOj8ZI8tEoHBWBHDSaX",
+                "rawUrl": "https://drive.google.com/thumbnail?id=1fLXZmMp0X4HvZlOj8ZI8tEoHBWBHDSaX&sz=w1600",
+                "jpgDriveFileId": "1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd",
+                "jpgUrl": "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd&sz=w1600"
             }
         ],
         "multiSelectorEnabled": false,
