@@ -703,14 +703,17 @@ const App = (function () {
         const navAlbumContextual = document.getElementById('navAlbumContextualControls');
         const reminderBtn = document.getElementById('albumTopReminderBtn');
 
-        if (topShareBar) topShareBar.classList.toggle('hidden', !isClientMode);
+        // Luôn hiển thị thanh top bar màu đen có nút "Quay lại Trang Chủ" ở cả 2 trang
+        if (topShareBar) topShareBar.classList.remove('hidden');
+        // Nút quay lại ở giữa hero banner được ẩn đi vì đã có nút chuẩn trên thanh top bar
+        if (heroBackBtn) heroBackBtn.classList.add('hidden');
+
         if (shareLinkWrap) shareLinkWrap.classList.toggle('hidden', !isClientMode);
         if (heroDownloadBtn) heroDownloadBtn.classList.toggle('hidden', !isClientMode);
         if (heroSubmitBtn) heroSubmitBtn.classList.toggle('hidden', !isClientMode);
         if (heroViewGalleryLabel) {
             heroViewGalleryLabel.innerText = isClientMode ? 'Xem Ảnh & Chọn Ảnh Lưu Về' : 'Khám Phá Bộ Ảnh';
         }
-        if (heroBackBtn) heroBackBtn.classList.toggle('hidden', isClientMode);
         if (guideToolbar) guideToolbar.classList.toggle('hidden', !isClientMode);
         if (navAlbumContextual) navAlbumContextual.classList.toggle('hidden', !isClientMode);
         if (reminderBtn) {
