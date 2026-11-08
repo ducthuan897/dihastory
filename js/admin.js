@@ -2772,7 +2772,7 @@ function testRun() {
                                     <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-80"></i>
                                 </button>
                                 <div id="openAlbumDropdown_${album.id}"
-                                    class="hidden absolute right-0 sm:left-0 mt-1.5 w-64 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-2 z-30 text-xs animate-in fade-in zoom-in-95 duration-100">
+                                    class="hidden absolute right-0 sm:left-0 mt-1.5 w-64 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                                     <button type="button"
                                         onclick="App.openAlbumPage('${album.id}', false); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
                                         class="w-full text-left px-3.5 py-2.5 hover:bg-zinc-100 flex items-center gap-2.5 text-zinc-800 transition">

@@ -37,7 +37,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS File -->
-    <link rel="stylesheet" href="css/style.css?v=20261108_7">
+    <link rel="stylesheet" href="css/style.css?v=20261108_8">
 </head>
 
 <body class="bg-zinc-50 text-zinc-900 font-sans min-h-screen flex flex-col antialiased">
@@ -560,6 +560,43 @@
                         </div>
 
                         <div class="flex items-center gap-2.5">
+                            <!-- Nút Mở Trang Album (2 tùy chọn: 1. Trang chỉ xem | 2. Trang chọn ảnh của khách) -->
+                            <div class="relative inline-block text-left" id="openAlbumMenuWrap_manage">
+                                <button type="button"
+                                    onclick="event.stopPropagation(); AdminModule.toggleOpenAlbumDropdown('manage')"
+                                    class="px-4 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-xs text-xs font-semibold flex items-center gap-1.5 transition">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>Mở trang album</span>
+                                    <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-80"></i>
+                                </button>
+                                <div id="openAlbumDropdown_manage"
+                                    class="hidden absolute right-0 mt-2 w-64 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                                    <button type="button"
+                                        onclick="App.openAlbumPage(AdminModule.getActiveAdminAlbum()?.id, false); AdminModule.toggleOpenAlbumDropdown('manage', false);"
+                                        class="w-full text-left px-3.5 py-2.5 hover:bg-zinc-100 flex items-center gap-2.5 text-zinc-800 transition">
+                                        <div class="w-7 h-7 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center shrink-0">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </div>
+                                        <div>
+                                            <span class="block font-bold text-zinc-900">1. Trang chỉ xem</span>
+                                            <span class="text-[10px] text-zinc-500 block">Giao diện xem bộ ảnh công khai như Trang chủ</span>
+                                        </div>
+                                    </button>
+                                    <div class="border-t border-zinc-100 my-1"></div>
+                                    <button type="button"
+                                        onclick="App.openAlbumPage(AdminModule.getActiveAdminAlbum()?.id, true); AdminModule.toggleOpenAlbumDropdown('manage', false);"
+                                        class="w-full text-left px-3.5 py-2.5 hover:bg-rose-50 flex items-center gap-2.5 text-rose-700 transition">
+                                        <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                                            <i class="fa-solid fa-heart"></i>
+                                        </div>
+                                        <div>
+                                            <span class="block font-bold text-rose-700">2. Trang chọn ảnh của khách</span>
+                                            <span class="text-[10px] text-rose-500/80 block">Giao diện link gửi khách thả tim chọn ảnh</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
                             <button type="button" onclick="AdminModule.openCustomAlbumModal('settings')"
                                 class="px-4 py-2 rounded-full bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-200 shadow-2xs text-xs font-semibold flex items-center gap-2 transition">
                                 <i class="fa-solid fa-sliders text-zinc-600"></i>
@@ -2063,9 +2100,9 @@
 
     <!-- JAVASCRIPT MODULES INCLUDES -->
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261108_7"></script>
-    <script src="js/admin.js?v=20261108_7"></script>
-    <script src="js/app.js?v=20261108_7"></script>
+    <script src="js/auth.js?v=20261108_8"></script>
+    <script src="js/admin.js?v=20261108_8"></script>
+    <script src="js/app.js?v=20261108_8"></script>
 </body>
 
 </html>
