@@ -63,7 +63,7 @@ const App = (function () {
         }
         try {
             const base = getAppBasePath();
-            const url = `${base}/pages/${pageName}.html?v=20261108_30`;
+            const url = `${base}/pages/${pageName}.html?v=${Date.now()}`;
             const resp = await fetch(url);
             if (resp && resp.ok) {
                 const html = await resp.text();
