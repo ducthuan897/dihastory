@@ -474,11 +474,7 @@ const AuthModule = (function () {
                         <i class="fa-solid fa-user-pen text-xs"></i>
                         <span>Chỉnh sửa</span>
                     </button>
-                    ` : `
-                    <span class="px-2.5 py-1 text-[11px] text-zinc-400 italic">
-                        <i class="fa-solid fa-lock text-[10px] mr-1"></i>Không có quyền sửa
-                    </span>
-                    `}
+                    ` : ''}
 
                     ${isAllowedToDelete ? `
                     <button type="button" onclick="AuthModule.deleteUser('${u.id}')"
