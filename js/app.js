@@ -1307,20 +1307,18 @@ const App = (function () {
         document.getElementById('lightboxTitle').innerText = `${photo.location || ''} • ${timeStr}`;
         document.getElementById('lightboxCounter').innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
 
-        // Check if Before/After comparison is available for this photo
-        const compareBtn = document.getElementById('lightboxCompareBtn');
-        const compareLabel = document.getElementById('lightboxCompareBtnLabel');
+        // Hiển thị nút "Xem ảnh đã chỉnh (JPG)" nếu bức ảnh này có bản chỉnh sửa
+        const toggleJpgBtn = document.getElementById('lightboxToggleJpgBtn');
+        const toggleJpgLabel = document.getElementById('lightboxToggleJpgBtnLabel');
         const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
-        const hasComparison = !!(photo.beforeUrl || matchedDelivered);
-        if (compareBtn) {
-            compareBtn.classList.toggle('hidden', !hasComparison);
-            if (compareLabel) compareLabel.innerText = 'So sánh Trước / Sau';
-        }
+        const hasEditedVersion = !!(photo.beforeUrl || matchedDelivered);
 
-        // Nút "Đặt làm ảnh bìa" ẩn hoàn toàn ở Trang chỉ xem (chỉ hiện khi Admin đăng nhập hoặc ở trang quản lý)
-        const coverBtn = document.getElementById('lightboxSetCoverBtn');
-        if (coverBtn) {
-            coverBtn.classList.toggle('hidden', !isClientMode && !AuthModule.isLoggedIn());
+        if (toggleJpgBtn) {
+            // Chỉ hiển thị ở trang chọn ảnh của khách và khi ảnh có bản chỉnh sửa
+            toggleJpgBtn.classList.toggle('hidden', !isClientMode || !hasEditedVersion);
+            if (toggleJpgLabel) {
+                toggleJpgLabel.innerText = isLightboxShowingBefore ? 'Quay lại ảnh gốc (RAW)' : 'Xem ảnh đã chỉnh (JPG)';
+            }
         }
 
         const downloadBtn = document.getElementById('lightboxDownloadBtn');
@@ -1359,24 +1357,42 @@ const App = (function () {
         }
     }
 
-    function toggleLightboxBeforeAfter() {
+    function toggleLightboxJpgEdited() {
         const photo = currentFilteredPhotos[currentLightboxIndex];
         if (!photo) return;
         const album = AdminModule.getAlbumById(currentAlbumId);
         const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
         const img = document.getElementById('lightboxImage');
-        const compareLabel = document.getElementById('lightboxCompareBtnLabel');
+        const toggleJpgLabel = document.getElementById('lightboxToggleJpgBtnLabel');
+        const toggleJpgBtn = document.getElementById('lightboxToggleJpgBtn');
 
         isLightboxShowingBefore = !isLightboxShowingBefore;
-        if (photo.beforeUrl) {
-            img.src = isLightboxShowingBefore ? photo.beforeUrl : photo.url;
-            img.style.filter = isLightboxShowingBefore ? 'saturate(0.75) contrast(0.92)' : 'none';
-        } else if (matchedDelivered) {
-            img.src = isLightboxShowingBefore ? photo.url : matchedDelivered.url;
-            img.style.filter = isLightboxShowingBefore ? 'saturate(0.75) contrast(0.92)' : 'none';
-        }
-        if (compareLabel) {
-            compareLabel.innerText = isLightboxShowingBefore ? 'Đang xem: Ảnh Gốc (Trước)' : 'Đang xem: Ảnh Đã Chỉnh (Sau)';
+
+        if (isLightboxShowingBefore) {
+            // Đang xem bản ảnh đã chỉnh sửa JPG
+            let editedUrl = matchedDelivered ? matchedDelivered.url : (photo.beforeUrl ? photo.url : photo.url);
+            img.src = editedUrl;
+            img.style.filter = 'none';
+            if (toggleJpgLabel) toggleJpgLabel.innerText = 'Quay lại ảnh gốc (RAW)';
+            if (toggleJpgBtn) {
+                toggleJpgBtn.className = "px-3.5 py-1.5 rounded-full bg-amber-500 hover:bg-amber-400 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm";
+            }
+            showToast("Đang hiển thị bản ảnh sau khi chỉnh sửa (JPG). Bạn có thể bấm nút Tải xuống để lưu ảnh này về máy!");
+        } else {
+            // Quay lại ảnh gốc RAW
+            const driveId = getDriveIdFromPhoto(photo);
+            let rawUrl = photo.url;
+            if (driveId) {
+                rawUrl = `https://lh3.googleusercontent.com/d/${driveId}=s0`;
+            } else if (photo.url && photo.url.includes('drive.google.com/thumbnail')) {
+                rawUrl = photo.url.replace(/sz=w\d+/, 'sz=w4096');
+            }
+            img.src = rawUrl;
+            img.style.filter = 'none';
+            if (toggleJpgLabel) toggleJpgLabel.innerText = 'Xem ảnh đã chỉnh (JPG)';
+            if (toggleJpgBtn) {
+                toggleJpgBtn.className = "px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm";
+            }
         }
     }
 
@@ -1797,10 +1813,16 @@ const App = (function () {
             return;
         }
         const album = AdminModule.getAlbumById(currentAlbumId);
-        const photo =
+        let photo =
             album.photos.find(p => p.id === photoId) ||
             (album.deliveredPhotos || []).find(p => p.id === photoId);
         if (!photo) return;
+
+        // Ưu tiên tải bản ảnh JPG đã chỉnh sửa nếu có
+        const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
+        if (matchedDelivered && matchedDelivered.url) {
+            photo = matchedDelivered;
+        }
 
         showToast(`Đang chuẩn bị lưu ảnh ${photo.code} về máy...`);
 
@@ -2080,8 +2102,7 @@ const App = (function () {
         openLightbox,
         openLightboxWithPhotos,
         closeLightbox,
-        toggleLightboxBeforeAfter,
-        setLightboxCurrentAsCover,
+        toggleLightboxJpgEdited,
         nextLightboxPhoto,
         prevLightboxPhoto,
         toggleLightboxZoom,
