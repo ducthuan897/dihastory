@@ -1,5 +1,68 @@
 [
     {
+        "id": "a7c",
+        "title": "A7C",
+        "clientName": "Nguyễn Đức Thuận",
+        "date": "2026-10-19",
+        "city": "Thủ Dầu Một",
+        "location": "Nhà thờ Phú Cường, Thủ Dầu Một",
+        "photographer": "Diha Story",
+        "selectionLimit": 15,
+        "pinCode": "",
+        "isPublic": true,
+        "tags": [],
+        "sourceType": "drive",
+        "driveLinks": [
+            "https://drive.google.com/drive/folders/1qn8ym9BE2ojfXv1NZRQNXkbqnG9bp_mB?usp=sharing"
+        ],
+        "reminderEnabled": false,
+        "reminderText": "Chào Nguyễn Đức Thuận! Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé.",
+        "deadlineEnabled": false,
+        "deadlineAt": "2026-11-15T23:59",
+        "completeLockEnabled": true,
+        "isSelectionLockedBySubmit": false,
+        "youtubeId": "",
+        "coverUrl": "https://drive.google.com/thumbnail?id=1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw&sz=w1600",
+        "description": "Album A7C của khách hàng Nguyễn Đức Thuận.",
+        "photos": [
+            {
+                "id": "drv_1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP_1794118103050_1",
+                "driveFileId": "1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP",
+                "code": "DSC01150",
+                "location": "Nhà thờ Phú Cường, Thủ Dầu Một",
+                "city": "Thủ Dầu Một",
+                "lat": 10.980005,
+                "lon": 106.654375,
+                "capturedAt": "2026-10-19T20:48",
+                "title": "DSC01150.jpg",
+                "url": "https://drive.google.com/thumbnail?id=1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP&sz=w1600",
+                "starred": false
+            },
+            {
+                "id": "drv_1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw_1794118103050_2",
+                "driveFileId": "1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw",
+                "code": "DSC01182",
+                "location": "Nhà thờ Phú Cường, Thủ Dầu Một",
+                "city": "Thủ Dầu Một",
+                "lat": 10.980004,
+                "lon": 106.654371,
+                "capturedAt": "2026-10-19T21:22",
+                "title": "DSC01182.jpg",
+                "url": "https://drive.google.com/thumbnail?id=1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw&sz=w1600"
+            },
+            {
+                "id": "drv_1sAmshkhLZz6G9P3zqZm2mJiY9Eoz6iyV_1794119508989_3",
+                "driveFileId": "1sAmshkhLZz6G9P3zqZm2mJiY9Eoz6iyV",
+                "code": "DSC00889",
+                "location": "Hồ Chí Minh",
+                "city": "Hồ Chí Minh",
+                "capturedAt": "2026-09-03T13:22",
+                "title": "DSC00889.jpg",
+                "url": "https://drive.google.com/thumbnail?id=1sAmshkhLZz6G9P3zqZm2mJiY9Eoz6iyV&sz=w1600"
+            }
+        ]
+    },
+    {
         "id": "gian-than-dat-09",
         "title": "Gian thần Đạt 09",
         "clientName": "Nguyễn Thành Đạt",
@@ -18,7 +81,7 @@
         "driveLinks": [
             "https://drive.google.com/drive/folders/1GJ1XAfPhF5wYF9BwqZUL1f96IdLm9t09?usp=drive_link"
         ],
-        "reminderEnabled": true,
+        "reminderEnabled": false,
         "reminderText": "Chào Nguyễn Thành Đạt! Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé.",
         "deadlineEnabled": false,
         "deadlineAt": "2026-11-15T23:59",
@@ -39,7 +102,7 @@
                 "capturedAt": "2026-07-24T16:28",
                 "title": "DSC00346.jpg",
                 "url": "https://drive.google.com/thumbnail?id=1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7&sz=w1600",
-                "starred": true
+                "starred": false
             },
             {
                 "id": "drv_1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U_1794052824913_2",
@@ -65,6 +128,8 @@
                 "title": "DSC01184.jpg",
                 "url": "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd&sz=w1600"
             }
-        ]
+        ],
+        "multiSelectorEnabled": false,
+        "watermarkEnabled": false
     }
 ]
