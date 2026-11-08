@@ -4461,6 +4461,8 @@ function testRun() {
         quickChangeAlbumDate,
         applyLatestCloudAlbums,
         mergeCloudAlbums: applyLatestCloudAlbums,
+        extractGoogleDriveFileId,
+        extractGoogleDriveFolderId,
         exportAlbumsJsonFile
     };
 })();

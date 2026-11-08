@@ -1152,6 +1152,18 @@ const App = (function () {
         document.body.style.overflow = '';
     }
 
+    // Hàm trích xuất fileId của Google Drive từ mọi định dạng link ảnh
+    function getDriveIdFromPhoto(photo) {
+        if (!photo) return null;
+        if (photo.driveFileId) return photo.driveFileId;
+        const url = photo.url || '';
+        const match =
+            url.match(/\/file\/d\/([a-zA-Z0-9_-]{15,})/) ||
+            url.match(/\/d\/([a-zA-Z0-9_-]{15,})/) ||
+            url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
+        return match ? match[1] : null;
+    }
+
     function updateLightboxContent() {
         const photo = currentFilteredPhotos[currentLightboxIndex];
         if (!photo) return;
@@ -1168,16 +1180,16 @@ const App = (function () {
         _lbNaturalWidth = 0;
         _lbNaturalHeight = 0;
 
-        // Lấy trực tiếp URL ảnh gốc độ phân giải cao nhất (Original =s0 từ Google Drive)
+        // BẮT BUỘC dùng nguồn ảnh trực tiếp từ Google User Content với độ phân giải gốc (=s0)
+        const driveId = getDriveIdFromPhoto(photo);
         let bestQualityUrl = photo.url;
-        const driveFileId = photo.driveFileId || AdminModule.extractGoogleDriveFileId(photo.url);
-        if (driveFileId) {
-            bestQualityUrl = `https://lh3.googleusercontent.com/d/${driveFileId}=s0`;
+        if (driveId) {
+            bestQualityUrl = `https://lh3.googleusercontent.com/d/${driveId}=s0`;
         } else if (photo.url && photo.url.includes('drive.google.com/thumbnail')) {
             bestQualityUrl = photo.url.replace(/sz=w\d+/, 'sz=w4096');
         }
 
-        // Gán thẳng ảnh chất lượng cao nhất ngay khi mở để zoom luôn trên ảnh gốc nét 100%, không bị đổi giữa chừng gây giật
+        // Gán thẳng ảnh chất lượng cao nhất ngay từ đầu
         img.src = bestQualityUrl;
 
         img.classList.remove('lightbox-img-zoomed');
