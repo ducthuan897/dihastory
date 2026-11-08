@@ -1783,10 +1783,20 @@
                     <i class="fa-solid fa-play"></i>
                     <span class="hidden sm:inline">Slideshow</span>
                 </button>
-                <button type="button" onclick="App.toggleLightboxZoom()"
+                <button id="lightboxZoomOutBtn" type="button" onclick="App.zoomOutLightbox()"
                     class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
-                    title="Phóng to / Thu nhỏ">
+                    title="Thu nhỏ (-)">
+                    <i class="fa-solid fa-magnifying-glass-minus"></i>
+                </button>
+                <button id="lightboxZoomInBtn" type="button" onclick="App.zoomInLightbox()"
+                    class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+                    title="Phóng to (+)">
                     <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </button>
+                <button id="lightboxZoomResetBtn" type="button" onclick="App.resetLightboxZoom()"
+                    class="hidden px-2.5 h-9 rounded-full bg-white/15 hover:bg-white/25 text-xs font-mono font-medium items-center justify-center transition"
+                    title="Khôi phục kích thước 1x">
+                    <span id="lightboxZoomLevelLabel">100%</span>
                 </button>
                 <button type="button" onclick="App.downloadLightboxCurrentPhoto()"
                     class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
@@ -1809,8 +1819,7 @@
             </button>
 
             <img id="lightboxImage" src="" alt="Lightbox Preview" referrerpolicy="no-referrer"
-                onclick="App.toggleLightboxZoom()"
-                class="max-h-[75vh] max-w-full object-contain rounded shadow-2xl transition-transform duration-300 cursor-zoom-in">
+                class="max-h-[75vh] max-w-full object-contain rounded shadow-2xl">
 
             <button type="button" onclick="App.nextLightboxPhoto()"
                 class="absolute right-3 sm:right-6 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-white hover:text-black text-white border border-white/20 flex items-center justify-center transition">

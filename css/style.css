@@ -220,10 +220,22 @@ body {
     border: 0;
 }
 
-/* Lightbox Zoom State */
+/* Lightbox Zoom & Free Pan/Zoom */
+#lightboxImage {
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    cursor: grab;
+    will-change: transform;
+}
+
+#lightboxImage.lightbox-dragging {
+    cursor: grabbing !important;
+}
+
 .lightbox-img-zoomed {
-    transform: scale(1.65);
-    cursor: zoom-out !important;
+    /* fallback or indicator */
+    cursor: grab !important;
 }
 
 /* Utility & Scrollbar */
