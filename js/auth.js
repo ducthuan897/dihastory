@@ -3,6 +3,7 @@
  */
 const AuthModule = (function () {
     const STORAGE_KEY_AUTH = "site_admin_logged_in";
+    const STORAGE_KEY_CURRENT_USER = "site_admin_current_user";
     const STORAGE_KEY_PASSWORD = "site_admin_custom_password";
     const STORAGE_KEY_USERS = "site_admin_users_list_v1";
     const DEFAULT_PASS = "123456";
@@ -11,6 +12,15 @@ const AuthModule = (function () {
 
     function isLoggedIn() {
         return localStorage.getItem(STORAGE_KEY_AUTH) === 'true';
+    }
+
+    function getCurrentUser() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        const users = getUsersList();
+        return users[0] || null;
     }
 
     function getAdminPassword() {
@@ -72,6 +82,21 @@ const AuthModule = (function () {
         if (isLoggedIn()) {
             if (navLoginBtn) navLoginBtn.classList.add('hidden');
             if (navAdminControls) navAdminControls.classList.remove('hidden');
+
+            // Cập nhật tên và avatar của tài khoản đang đăng nhập
+            const u = getCurrentUser();
+            if (u) {
+                const navAvatarImg = document.querySelector('#adminProfileMenuBtn img');
+                const cardAvatarImg = document.querySelector('#profileHeaderActionCard img');
+                const cardName = document.querySelector('#profileHeaderActionCard .font-bold');
+
+                const defaultAvatar = "https://lh3.googleusercontent.com/d/1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP=s120";
+                const avatarSrc = u.avatar || defaultAvatar;
+
+                if (navAvatarImg) navAvatarImg.src = avatarSrc;
+                if (cardAvatarImg) cardAvatarImg.src = avatarSrc;
+                if (cardName) cardName.innerText = u.fullName || u.username;
+            }
         } else {
             if (navLoginBtn) navLoginBtn.classList.remove('hidden');
             if (navAdminControls) navAdminControls.classList.add('hidden');
@@ -136,24 +161,45 @@ const AuthModule = (function () {
 
     function handleLoginSubmit(event) {
         event.preventDefault();
-        const user = document.getElementById('usernameInput').value.trim();
-        const pass = document.getElementById('passwordInput').value.trim();
+        const inputUser = document.getElementById('usernameInput').value.trim().toLowerCase();
+        const inputPass = document.getElementById('passwordInput').value.trim();
         const alertBox = document.getElementById('loginAlert');
 
-        if (user === 'admin' && pass === getAdminPassword()) {
+        const users = getUsersList();
+        const matched = users.find(u => (u.username && u.username.toLowerCase() === inputUser) && u.active !== false);
+
+        if (matched) {
+            const expectedPass = matched.customPassword || (matched.username === 'admin' ? getAdminPassword() : DEFAULT_PASS);
+            if (inputPass === expectedPass) {
+                localStorage.setItem(STORAGE_KEY_AUTH, 'true');
+                localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(matched));
+                alertBox.classList.add('hidden');
+                closeLoginModal();
+                checkAuthUI();
+                App.showView('admin');
+                App.showToast(`Chào mừng ${matched.fullName || matched.username} đăng nhập thành công!`);
+                return;
+            }
+        }
+
+        // Dự phòng cho admin gốc
+        if (inputUser === 'admin' && inputPass === getAdminPassword()) {
             localStorage.setItem(STORAGE_KEY_AUTH, 'true');
+            if (users[0]) localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(users[0]));
             alertBox.classList.add('hidden');
             closeLoginModal();
             checkAuthUI();
             App.showView('admin');
             App.showToast('Đăng nhập thành công vào Trang Quản Trị Studio!');
-        } else {
-            alertBox.classList.remove('hidden');
+            return;
         }
+
+        alertBox.classList.remove('hidden');
     }
 
     function logout() {
         localStorage.removeItem(STORAGE_KEY_AUTH);
+        localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
         checkAuthUI();
         App.showView('home');
         App.showToast('Đã đăng xuất tài khoản Quản trị.');
@@ -491,6 +537,7 @@ const AuthModule = (function () {
         closeUserEditModal,
         handleSaveUserSubmit,
         deleteUser,
+        getCurrentUser,
         applyLatestCloudUsers,
         getUsersList
     };
