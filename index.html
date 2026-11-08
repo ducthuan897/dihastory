@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đức Thuận Studio</title>
+    <title>DihaStory</title>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -52,8 +52,8 @@
                         <i class="fa-solid fa-camera-retro text-base"></i>
                     </div>
                     <div>
-                        <span class="font-bold text-base sm:text-lg tracking-tight text-zinc-900 block leading-none">ĐỨC
-                            THUẬN STUDIO</span>
+                        <span
+                            class="font-bold text-base sm:text-lg tracking-tight text-zinc-900 block leading-none">DIHASTORY</span>
                     </div>
                 </div>
 
@@ -147,7 +147,7 @@
                     </h1>
 
                     <p class="text-zinc-300 text-sm sm:text-base max-w-2xl mx-auto">
-                        Những câu chuyện và khoảnh khắc đáng nhớ được ghi lại qua ống kính của Đức Thuận Studio.
+                        Những câu chuyện và khoảnh khắc đáng nhớ được ghi lại qua ống kính của DIHA STORY.
                     </p>
                 </div>
             </section>
@@ -688,7 +688,8 @@
                             <!-- Group 1: Cập nhật album + Tìm khuôn mặt -->
                             <div
                                 class="inline-flex items-center rounded-full border border-zinc-200 bg-white px-1 py-0.5 shadow-2xs">
-                                <button id="managePageSyncBtn" type="button" onclick="AdminModule.syncUpdateAlbumDrive()"
+                                <button id="managePageSyncBtn" type="button"
+                                    onclick="AdminModule.syncUpdateAlbumDrive()"
                                     class="px-3 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-800 text-xs font-medium flex items-center gap-1.5 transition"
                                     title="Đồng bộ cập nhật ngay ảnh và vị trí/ngày chụp từ Google Drive">
                                     <i id="managePageSyncBtnIcon" class="fa-solid fa-rotate text-zinc-600"></i>
@@ -1797,14 +1798,14 @@
         </div>
 
         <!-- Center Image & Prev/Next Arrows -->
-        <div id="lightboxStage" class="relative flex-1 flex items-center justify-center overflow-hidden px-4 sm:px-16 select-none">
+        <div id="lightboxStage"
+            class="relative flex-1 flex items-center justify-center overflow-hidden px-4 sm:px-16 select-none">
             <button type="button" onclick="App.prevLightboxPhoto()"
                 class="absolute left-3 sm:left-6 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-white hover:text-black text-white border border-white/20 flex items-center justify-center transition">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
 
-            <img id="lightboxImage" src="" alt="Lightbox Preview" referrerpolicy="no-referrer"
-                draggable="false"
+            <img id="lightboxImage" src="" alt="Lightbox Preview" referrerpolicy="no-referrer" draggable="false"
                 class="max-h-[75vh] max-w-full object-contain rounded shadow-2xl pointer-events-auto">
 
             <button type="button" onclick="App.nextLightboxPhoto()"
