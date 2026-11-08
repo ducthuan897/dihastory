@@ -107,9 +107,7 @@ const AuthModule = (function () {
         const currentView = (typeof App !== 'undefined' && typeof App.getCurrentView === 'function')
             ? App.getCurrentView()
             : '';
-        if (currentView !== 'admin' && currentView !== 'manage-album') {
-            App.showView('admin');
-        }
+        App.showView('admin');
         closeProfileDropdown();
     }
 
@@ -290,9 +288,5 @@ const AuthModule = (function () {
         closeUserManagerModal,
         applyLatestCloudUsers,
         getUsersList
-    };
-        handleChangePasswordSubmit,
-        openUserManagerModal,
-        closeUserManagerModal
     };
 })();
