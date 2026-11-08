@@ -1250,6 +1250,12 @@ const App = (function () {
             if (compareLabel) compareLabel.innerText = 'So sánh Trước / Sau';
         }
 
+        // Nút "Đặt làm ảnh bìa" ẩn hoàn toàn ở Trang chỉ xem (chỉ hiện khi Admin đăng nhập hoặc ở trang quản lý)
+        const coverBtn = document.getElementById('lightboxSetCoverBtn');
+        if (coverBtn) {
+            coverBtn.classList.toggle('hidden', !isClientMode && !AuthModule.isLoggedIn());
+        }
+
         const downloadBtn = document.getElementById('lightboxDownloadBtn');
         if (downloadBtn) {
             downloadBtn.classList.toggle('hidden', !isClientMode);
