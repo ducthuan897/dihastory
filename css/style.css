@@ -248,6 +248,49 @@ body {
     display: none !important;
 }
 
+/* ==========================================================================
+   VIEW-ONLY PROTECTION MODE (Chặn tải ảnh, kéo ảnh, chụp màn hình & in ấn)
+   ========================================================================== */
+body.view-only-protected {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+}
+
+body.view-only-protected img {
+    -webkit-user-drag: none !important;
+    user-drag: none !important;
+    pointer-events: auto;
+}
+
+/* Chặn chụp bằng in ấn (Print / Save PDF) */
+@media print {
+    body.view-only-protected {
+        display: none !important;
+    }
+}
+
+/* Màn chắn bảo vệ chống chụp màn hình / Snipping Tool */
+#viewOnlyAntiCaptureShield {
+    position: fixed;
+    inset: 0;
+    background-color: #000000;
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: opacity 0.15s ease;
+}
+
+#viewOnlyAntiCaptureShield.active {
+    display: flex !important;
+}
+
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }

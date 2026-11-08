@@ -37,7 +37,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS File -->
-    <link rel="stylesheet" href="css/style.css?v=20261108_5">
+    <link rel="stylesheet" href="css/style.css?v=20261108_6">
 </head>
 
 <body class="bg-zinc-50 text-zinc-900 font-sans min-h-screen flex flex-col antialiased">
@@ -1718,7 +1718,7 @@
                     <i class="fa-solid fa-play"></i>
                     <span class="hidden sm:inline">Slideshow</span>
                 </button>
-                <button type="button" onclick="App.downloadLightboxCurrentPhoto()"
+                <button id="lightboxDownloadBtn" type="button" onclick="App.downloadLightboxCurrentPhoto()"
                     class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
                     title="Lưu ảnh này về máy">
                     <i class="fa-solid fa-download"></i>
@@ -2052,11 +2052,20 @@
         <span id="toastMessage">Đã thực hiện thao tác thành công!</span>
     </div>
 
+    <!-- ANTI-CAPTURE / SCREENSHOT SHIELD (CHẾ ĐỘ CHỈ XEM) -->
+    <div id="viewOnlyAntiCaptureShield" class="hidden">
+        <div class="text-center p-6 space-y-2">
+            <i class="fa-solid fa-shield-halved text-4xl text-rose-500 mb-2 block"></i>
+            <p class="text-lg font-bold text-white">Chế độ xem được bảo vệ bản quyền</p>
+            <p class="text-xs text-zinc-400 max-w-sm mx-auto">Vui lòng quay lại cửa sổ trình duyệt để tiếp tục chiêm ngưỡng ảnh.</p>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT MODULES INCLUDES -->
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261108_5"></script>
-    <script src="js/admin.js?v=20261108_5"></script>
-    <script src="js/app.js?v=20261108_5"></script>
+    <script src="js/auth.js?v=20261108_6"></script>
+    <script src="js/admin.js?v=20261108_6"></script>
+    <script src="js/app.js?v=20261108_6"></script>
 </body>
 
 </html>

@@ -189,6 +189,10 @@ const App = (function () {
         const mainHeader = document.getElementById('mainTopHeaderBar');
         const navAlbumContextual = document.getElementById('navAlbumContextualControls');
 
+        if (viewName !== 'album' || isClientMode) {
+            document.body.classList.remove('view-only-protected');
+        }
+
         if (viewName === 'manage-album') {
             if (!AuthModule.isLoggedIn()) {
                 AuthModule.openLoginModal();
@@ -708,6 +712,13 @@ const App = (function () {
         // Nút quay lại ở giữa hero banner được ẩn đi vì đã có nút chuẩn trên thanh top bar
         if (heroBackBtn) heroBackBtn.classList.add('hidden');
 
+        // Bật/tắt chế độ bảo vệ chống sao chép, tải & chụp màn hình cho body
+        if (!isClientMode) {
+            document.body.classList.add('view-only-protected');
+        } else {
+            document.body.classList.remove('view-only-protected');
+        }
+
         if (shareLinkWrap) shareLinkWrap.classList.toggle('hidden', !isClientMode);
         if (heroDownloadBtn) heroDownloadBtn.classList.toggle('hidden', !isClientMode);
         if (heroSubmitBtn) heroSubmitBtn.classList.toggle('hidden', !isClientMode);
@@ -1207,6 +1218,11 @@ const App = (function () {
             if (compareLabel) compareLabel.innerText = 'So sánh Trước / Sau';
         }
 
+        const downloadBtn = document.getElementById('lightboxDownloadBtn');
+        if (downloadBtn) {
+            downloadBtn.classList.toggle('hidden', !isClientMode);
+        }
+
         const proofingControls = document.getElementById('lightboxProofingControls');
         if (proofingControls) {
             proofingControls.classList.toggle('hidden', !isClientMode);
@@ -1590,12 +1606,36 @@ const App = (function () {
     }
 
     function downloadLightboxCurrentPhoto() {
+        if (!isClientMode) {
+            showToast("Chế độ chỉ xem không cho phép tải ảnh!", "error");
+            return;
+        }
         const photo = currentFilteredPhotos[currentLightboxIndex];
         if (photo) downloadSinglePhoto(photo.id);
     }
 
     function setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
+            // Bảo vệ bản quyền ở chế độ Chỉ Xem: chặn chụp màn hình, lưu trang, in ấn, view source
+            if (currentView === 'album' && !isClientMode) {
+                // Chặn PrintScreen
+                if (e.key === 'PrintScreen' || e.keyCode === 44) {
+                    e.preventDefault();
+                    triggerAntiCaptureShield("Chức năng chụp màn hình đã bị vô hiệu hoá trên trang này!");
+                    return;
+                }
+                // Chặn Ctrl+S (Lưu trang), Ctrl+P (In ấn), Ctrl+U (Xem nguồn), Ctrl+Shift+I (F12 DevTools)
+                if ((e.ctrlKey || e.metaKey) && ['s', 'p', 'u', 'S', 'P', 'U'].includes(e.key)) {
+                    e.preventDefault();
+                    showToast("Chế độ chỉ xem không cho phép lưu hoặc in trang!", "error");
+                    return;
+                }
+                if (e.key === 'F12' || ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key))) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+
             if (currentLightboxIndex < 0) return;
             const noteModal = document.getElementById('photoNoteModal');
             if (noteModal && !noteModal.classList.contains('hidden')) return;
@@ -1604,9 +1644,51 @@ const App = (function () {
             else if (e.key === 'ArrowLeft') prevLightboxPhoto();
             else if (e.key === 'Escape') closeLightbox();
         });
+
+        // Chặn menu chuột phải ở chế độ Chỉ Xem
+        document.addEventListener('contextmenu', (e) => {
+            if (currentView === 'album' && !isClientMode) {
+                e.preventDefault();
+                showToast("Hình ảnh được bảo vệ bản quyền - Vui lòng không lưu ảnh!", "error");
+            }
+        });
+
+        // Chặn kéo ảnh (drag) ra ngoài để lưu
+        document.addEventListener('dragstart', (e) => {
+            if (currentView === 'album' && !isClientMode) {
+                e.preventDefault();
+            }
+        });
+
+        // Chặn phím chụp màn hình bằng cách theo dõi sự kiện nhả phím PrintScreen
+        window.addEventListener('keyup', (e) => {
+            if (currentView === 'album' && !isClientMode) {
+                if (e.key === 'PrintScreen' || e.keyCode === 44) {
+                    triggerAntiCaptureShield("Chức năng chụp màn hình đã bị vô hiệu hoá trên trang này!");
+                }
+            }
+        });
+    }
+
+    let antiCaptureTimeout = null;
+    function triggerAntiCaptureShield(msg) {
+        const shield = document.getElementById('viewOnlyAntiCaptureShield');
+        if (!shield) return;
+        shield.classList.add('active');
+        shield.classList.remove('hidden');
+        if (msg) showToast(msg, "error");
+        if (antiCaptureTimeout) clearTimeout(antiCaptureTimeout);
+        antiCaptureTimeout = setTimeout(() => {
+            shield.classList.remove('active');
+            shield.classList.add('hidden');
+        }, 1500);
     }
 
     async function downloadSinglePhoto(photoId) {
+        if (!isClientMode) {
+            showToast("Chế độ chỉ xem không cho phép tải ảnh!", "error");
+            return;
+        }
         const album = AdminModule.getAlbumById(currentAlbumId);
         const photo =
             album.photos.find(p => p.id === photoId) ||
@@ -1658,6 +1740,10 @@ const App = (function () {
     }
 
     function openDownloadModal() {
+        if (!isClientMode) {
+            showToast("Chế độ chỉ xem không cho phép tải ảnh!", "error");
+            return;
+        }
         const album = AdminModule.getAlbumById(currentAlbumId);
         const selections = AdminModule.getSelections(album.id);
         const selectedCount = album.photos.filter(p => selections[p.id] && selections[p.id].selected).length;

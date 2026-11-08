@@ -25,3 +25,10 @@ Các quy tắc bắt buộc phải luôn tuân thủ trong toàn bộ quá trìn
 
 6. **Chức năng "Sửa / Đặt ảnh bìa" là một trang web quản lý chi tiết Album riêng biệt theo giao diện Shotpik**:
    - Khi nhấn vào "Sửa / Đặt ảnh bìa", hệ thống mở trang quản lý chi tiết của Album đó (không hiển thị toàn bộ trong một popup chung như cũ) với bố cục chuẩn Shotpik: nút `< Quay về trang quản lý`, banner ảnh bìa ngang có nút `Thay đổi ảnh bìa` và tiêu đề Album, dòng thông tin khách hàng / ngày cập nhật / trạng thái `Khách đang xem được`, nút `Tùy chỉnh album` và `Gửi album`, thanh thống kê bộ lọc (Tổng ảnh, Đánh dấu sao, Đã thả tim, Có ghi chú), các nút hành động (`Cập nhật album`, `Tìm khuôn mặt`, `Khoá album`, `Tải xuống`, `Tải PDF ghi chú`, `Các tính năng khác`), thanh tab phân mục, bộ chọn `Sắp xếp` và lưới ảnh toàn trang bên dưới.
+
+7. **Trang Chỉ Xem Album được bảo vệ bản quyền (Chỉ Xem, Không Tải, Chặn Chụp Màn Hình & Lưu Ảnh)**:
+   - Ở chế độ Trang Chỉ Xem (`isClientMode = false`), hệ thống chỉ cho phép khách duyệt và chiêm ngưỡng ảnh.
+   - Tuyệt đối ẩn hoặc chặn toàn bộ nút tải ảnh về máy (cả trên giao diện chính lẫn trong Lightbox).
+   - Vô hiệu hoá chuột phải (`contextmenu`), chặn phím tắt chụp màn hình / lưu trang / in / copy (`PrintScreen`, `Ctrl+S`, `Ctrl+P`, `Ctrl+Shift+I`, `Ctrl+U`, `F12`, `Win+Shift+S`).
+   - Tự động làm mờ nội dung hoặc chèn màn chắn bảo vệ khi người dùng chuyển tab, mất tiêu điểm hoặc khi phát hiện phím chụp màn hình.
+   - Chặn kéo thả ảnh (`dragstart`) và chặn bôi đen/chọn ảnh (`user-select: none`).
