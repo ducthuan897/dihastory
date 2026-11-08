@@ -350,15 +350,6 @@
                     </div>
                     <div class="flex items-center gap-3 shrink-0">
                         <span>Đã chọn: <strong id="toolbarSelectedCounter" class="text-white">0/10</strong> ảnh</span>
-                        <button type="button" onclick="App.openDownloadModal()"
-                            class="text-emerald-400 hover:text-emerald-300 font-semibold underline">
-                            Tải ảnh đã chọn
-                        </button>
-                        <span>•</span>
-                        <button type="button" onclick="App.openSubmitSelectionModal()"
-                            class="text-amber-400 hover:text-amber-300 font-semibold underline">
-                            Hoàn tất chọn ảnh &rarr;
-                        </button>
                     </div>
                 </div>
             </div>
@@ -634,13 +625,11 @@
                                     onclick="AdminModule.quickChangeAlbumDate()"
                                     title="Bấm để chỉnh sửa Ngày chụp"></strong>
                             </span>
-                            <button type="button" onclick="AdminModule.toggleLockAlbumFromManagePage()"
-                                id="managePageViewStatusBadge"
-                                class="inline-flex items-center gap-1.5 text-emerald-600 font-medium hover:underline"
-                                title="Bấm để chuyển đổi trạng thái Khoá / Mở khoá chọn ảnh">
+                            <span id="managePageViewStatusBadge"
+                                class="inline-flex items-center gap-1.5 text-emerald-600 font-medium">
                                 <i class="fa-regular fa-circle-check"></i>
                                 <span>Khách đang xem được</span>
-                            </button>
+                            </span>
                         </div>
 
                         <div class="flex items-center gap-2.5">
