@@ -62,6 +62,7 @@ const AuthModule = (function () {
             localStorage.setItem(STORAGE_KEY_PASSWORD, adminUser.customPassword);
         }
         renderUserManagerModalList();
+        renderUsersPageList();
     }
 
     function checkAuthUI() {
@@ -258,6 +259,204 @@ const AuthModule = (function () {
         `).join('');
     }
 
+    function renderUsersPageList() {
+        const users = getUsersList();
+        const totalEl = document.getElementById('usersPageTotalCount');
+        const superEl = document.getElementById('usersPageSuperAdminCount');
+        const editorEl = document.getElementById('usersPageEditorCount');
+        const container = document.getElementById('usersPageListContainer');
+
+        if (totalEl) totalEl.innerText = users.length;
+        if (superEl) superEl.innerText = users.filter(u => u.role === 'super_admin').length;
+        if (editorEl) editorEl.innerText = users.filter(u => u.role !== 'super_admin').length;
+
+        if (!container) return;
+
+        container.innerHTML = users.map(u => `
+            <div class="p-4 sm:p-5 rounded-2xl border border-zinc-200 bg-white hover:border-zinc-300 transition shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <div class="relative shrink-0">
+                        <div class="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-400 text-white flex items-center justify-center font-bold text-base shadow-sm ring-1 ring-zinc-200">
+                            ${u.avatar ? `<img src="${u.avatar}" alt="${u.fullName}" class="w-full h-full object-cover">` : (u.fullName || u.username).slice(0, 2).toUpperCase()}
+                        </div>
+                        <span class="absolute bottom-0 right-0 w-3.5 h-3.5 ${u.active ? 'bg-emerald-500' : 'bg-zinc-400'} border-2 border-white rounded-full"></span>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-zinc-900 text-base leading-tight truncate">${u.fullName}</span>
+                            <span class="text-xs text-zinc-400">@${u.username}</span>
+                        </div>
+                        <div class="text-xs text-zinc-500 mt-0.5 truncate flex items-center gap-2">
+                            <span><i class="fa-regular fa-envelope text-[11px] mr-1"></i>${u.email || 'user@dihastory.vn'}</span>
+                            <span>•</span>
+                            <span class="font-medium text-zinc-600">${u.roleName || (u.role === 'super_admin' ? 'Chủ sở hữu & Super Admin' : 'Editor')}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5 shrink-0 self-end md:self-auto">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${
+                        u.role === 'super_admin' ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    }">
+                        <i class="${u.role === 'super_admin' ? 'fa-solid fa-shield-halved' : 'fa-solid fa-wand-magic-sparkles'} mr-1 text-[11px]"></i>
+                        ${u.role === 'super_admin' ? 'Super Admin' : 'Editor'}
+                    </span>
+
+                    <button type="button" onclick="AuthModule.openEditUserModal('${u.id}')"
+                        class="px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-pen text-xs"></i>
+                        <span>Chỉnh sửa</span>
+                    </button>
+
+                    ${u.username !== 'admin' ? `
+                    <button type="button" onclick="AuthModule.deleteUser('${u.id}')"
+                        class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                        <span>Xóa</span>
+                    </button>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function openAddUserModal() {
+        const modal = document.getElementById('userEditModal');
+        const title = document.getElementById('userEditModalTitle');
+        if (title) title.innerText = 'Thêm Người Dùng Mới';
+        document.getElementById('editUserId').value = '';
+        document.getElementById('editUserUsername').value = '';
+        document.getElementById('editUserUsername').removeAttribute('readonly');
+        document.getElementById('editUserFullName').value = '';
+        document.getElementById('editUserEmail').value = '';
+        document.getElementById('editUserRole').value = 'editor';
+        document.getElementById('editUserAvatar').value = '';
+        document.getElementById('editUserPassword').value = '';
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function openEditUserModal(userId) {
+        const users = getUsersList();
+        const user = users.find(u => u.id === userId);
+        if (!user) return;
+
+        const modal = document.getElementById('userEditModal');
+        const title = document.getElementById('userEditModalTitle');
+        if (title) title.innerText = `Chỉnh Sửa: ${user.fullName}`;
+
+        document.getElementById('editUserId').value = user.id;
+        document.getElementById('editUserUsername').value = user.username;
+        if (user.username === 'admin') {
+            document.getElementById('editUserUsername').setAttribute('readonly', 'true');
+        } else {
+            document.getElementById('editUserUsername').removeAttribute('readonly');
+        }
+        document.getElementById('editUserFullName').value = user.fullName || '';
+        document.getElementById('editUserEmail').value = user.email || '';
+        document.getElementById('editUserRole').value = user.role || 'editor';
+        document.getElementById('editUserAvatar').value = user.avatar || '';
+        document.getElementById('editUserPassword').value = '';
+
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeUserEditModal() {
+        const modal = document.getElementById('userEditModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function handleSaveUserSubmit(event) {
+        event.preventDefault();
+        const id = document.getElementById('editUserId').value;
+        const username = document.getElementById('editUserUsername').value.trim().toLowerCase();
+        const fullName = document.getElementById('editUserFullName').value.trim();
+        const email = document.getElementById('editUserEmail').value.trim();
+        const role = document.getElementById('editUserRole').value;
+        const avatar = document.getElementById('editUserAvatar').value.trim();
+        const pass = document.getElementById('editUserPassword').value.trim();
+
+        let users = [...getUsersList()];
+
+        if (id) {
+            // Edit existing user
+            const idx = users.findIndex(u => u.id === id);
+            if (idx >= 0) {
+                users[idx].fullName = fullName;
+                users[idx].email = email;
+                users[idx].role = role;
+                users[idx].roleName = role === 'super_admin' ? 'Chủ sở hữu & Super Admin' : 'Nhiếp ảnh gia phụ / Editor';
+                users[idx].avatar = avatar;
+                if (pass) {
+                    users[idx].customPassword = pass;
+                    if (users[idx].username === 'admin') {
+                        localStorage.setItem(STORAGE_KEY_PASSWORD, pass);
+                    }
+                }
+            }
+        } else {
+            // Add new user
+            if (users.some(u => u.username === username)) {
+                alert('Tên đăng nhập này đã tồn tại!');
+                return;
+            }
+            const newUser = {
+                id: 'usr_' + Date.now(),
+                username,
+                fullName,
+                email: email || `${username}@dihastory.vn`,
+                role,
+                roleName: role === 'super_admin' ? 'Chủ sở hữu & Super Admin' : 'Nhiếp ảnh gia phụ / Editor',
+                avatar: avatar || '',
+                customPassword: pass || '123456',
+                active: true,
+                createdAt: new Date().toISOString()
+            };
+            users.push(newUser);
+        }
+
+        cachedUsersList = users;
+        try {
+            localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+        } catch (e) {}
+
+        // Đồng bộ thời gian thực lên Firebase
+        if (typeof FirebaseModule !== 'undefined' && FirebaseModule.isReady()) {
+            FirebaseModule.saveUsers(users);
+        }
+
+        closeUserEditModal();
+        renderUsersPageList();
+        renderUserManagerModalList();
+        App.showToast('Đã lưu thông tin người dùng và đồng bộ Firebase thành công!');
+    }
+
+    function deleteUser(userId) {
+        let users = getUsersList();
+        const target = users.find(u => u.id === userId);
+        if (!target) return;
+        if (target.username === 'admin') {
+            alert('Không thể xóa tài khoản Quản trị viên chính!');
+            return;
+        }
+        if (!confirm(`Bạn có chắc muốn xóa tài khoản "${target.fullName} (${target.username})"?`)) {
+            return;
+        }
+
+        users = users.filter(u => u.id !== userId);
+        cachedUsersList = users;
+        try {
+            localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+        } catch (e) {}
+
+        if (typeof FirebaseModule !== 'undefined' && FirebaseModule.isReady()) {
+            FirebaseModule.saveUsers(users);
+        }
+
+        renderUsersPageList();
+        renderUserManagerModalList();
+        App.showToast('Đã xóa người dùng thành công!');
+    }
+
     function openUserManagerModal() {
         closeProfileDropdown();
         renderUserManagerModalList();
@@ -286,6 +485,12 @@ const AuthModule = (function () {
         handleChangePasswordSubmit,
         openUserManagerModal,
         closeUserManagerModal,
+        renderUsersPageList,
+        openAddUserModal,
+        openEditUserModal,
+        closeUserEditModal,
+        handleSaveUserSubmit,
+        deleteUser,
         applyLatestCloudUsers,
         getUsersList
     };

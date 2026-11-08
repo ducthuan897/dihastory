@@ -135,9 +135,14 @@ const App = (function () {
             isClientMode = false;
         }
 
-        // Ưu tiên cao nhất cho view=admin hoặc view=manage-album
+        // Ưu tiên cao nhất cho view=admin, view=users hoặc view=manage-album
         if (viewParam === 'admin') {
             showView('admin', skipPush);
+            return;
+        }
+
+        if (viewParam === 'users') {
+            showView('users', skipPush);
             return;
         }
 
@@ -241,6 +246,7 @@ const App = (function () {
         const publicView = document.getElementById('publicView');
         const adminView = document.getElementById('adminView');
         const manageView = document.getElementById('albumManageView');
+        const usersView = document.getElementById('usersManagementView');
         const mainHeader = document.getElementById('mainTopHeaderBar');
         const navAlbumContextual = document.getElementById('navAlbumContextualControls');
 
@@ -248,7 +254,30 @@ const App = (function () {
             document.body.classList.remove('view-only-protected');
         }
 
-        if (viewName === 'manage-album') {
+        if (viewName === 'users') {
+            if (!AuthModule.isLoggedIn()) {
+                AuthModule.openLoginModal();
+                return;
+            }
+            currentView = 'users';
+            if (homeView) homeView.classList.add('hidden');
+            if (publicView) publicView.classList.add('hidden');
+            if (adminView) adminView.classList.add('hidden');
+            if (manageView) manageView.classList.add('hidden');
+            if (usersView) usersView.classList.remove('hidden');
+            if (mainHeader) mainHeader.classList.remove('hidden');
+            if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
+
+            if (!skipHistoryPush) {
+                const base = getAppBasePath();
+                const cleanBase = base ? `${base}/` : '/';
+                const url = `${cleanBase}?view=users`;
+                window.history.pushState({ view: 'users' }, '', url);
+            }
+            if (typeof AuthModule !== 'undefined' && typeof AuthModule.renderUsersPageList === 'function') {
+                AuthModule.renderUsersPageList();
+            }
+        } else if (viewName === 'manage-album') {
             if (!AuthModule.isLoggedIn()) {
                 AuthModule.openLoginModal();
                 return;
@@ -258,6 +287,7 @@ const App = (function () {
             if (publicView) publicView.classList.add('hidden');
             if (adminView) adminView.classList.add('hidden');
             if (manageView) manageView.classList.remove('hidden');
+            if (usersView) usersView.classList.add('hidden');
             if (mainHeader) mainHeader.classList.remove('hidden');
             if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
 
@@ -281,6 +311,7 @@ const App = (function () {
             if (publicView) publicView.classList.add('hidden');
             if (adminView) adminView.classList.remove('hidden');
             if (manageView) manageView.classList.add('hidden');
+            if (usersView) usersView.classList.add('hidden');
             if (mainHeader) mainHeader.classList.remove('hidden');
             if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
 
@@ -297,6 +328,7 @@ const App = (function () {
             if (publicView) publicView.classList.remove('hidden');
             if (adminView) adminView.classList.add('hidden');
             if (manageView) manageView.classList.add('hidden');
+            if (usersView) usersView.classList.add('hidden');
             if (mainHeader) mainHeader.classList.remove('hidden');
             if (navAlbumContextual) {
                 if (isClientMode) {
@@ -323,6 +355,7 @@ const App = (function () {
             if (publicView) publicView.classList.add('hidden');
             if (adminView) adminView.classList.add('hidden');
             if (manageView) manageView.classList.add('hidden');
+            if (usersView) usersView.classList.add('hidden');
             if (mainHeader) mainHeader.classList.remove('hidden');
             if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
 
@@ -357,7 +390,7 @@ const App = (function () {
 
         setTabClass(navHome, currentView === 'home');
         setTabClass(navAlbum, currentView === 'album');
-        setTabClass(navAdmin, currentView === 'admin' || currentView === 'manage-album');
+        setTabClass(navAdmin, currentView === 'admin' || currentView === 'manage-album' || currentView === 'users');
     }
 
     function openAlbumPage(albumId, isClient = false, fromView = null) {

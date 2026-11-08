@@ -167,7 +167,7 @@
                                 </button>
 
                                 <!-- Quản lý người dùng -->
-                                <button type="button" onclick="AuthModule.openUserManagerModal()"
+                                <button type="button" onclick="App.showView('users'); AuthModule.closeProfileDropdown()"
                                     class="w-full px-3 py-2.5 rounded-2xl hover:bg-zinc-50 text-left transition flex items-center gap-3.5 group">
                                     <div class="w-9 h-9 rounded-full bg-zinc-100 group-hover:bg-blue-50 text-zinc-800 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition">
                                         <i class="fa-solid fa-users-gear text-xs"></i>
@@ -503,6 +503,12 @@
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+                    <button type="button" onclick="App.showView('users')"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"
+                        title="Quản lý danh sách tài khoản & phân quyền">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span>Quản Lý Người Dùng</span>
+                    </button>
                     <button type="button" onclick="AdminModule.openDriveApiKeyModal()"
                         class="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"
                         title="Cấu hình Google Drive Apps Script / API Key">
@@ -544,6 +550,98 @@
 
                 <div id="adminAlbumsListContainer" class="space-y-3">
                     <!-- Rendered dynamically by AdminModule -->
+                </div>
+            </section>
+        </main>
+
+        <!-- =================================================================
+             TRANG 5: QUẢN LÝ NGƯỜI DÙNG & PHÂN QUYỀN (USER MANAGEMENT PAGE)
+             Đồng bộ tức thì với Firebase Realtime Database
+             ================================================================= -->
+        <main id="usersManagementView" class="hidden w-full px-4 sm:px-6 lg:px-10 xl:px-12 py-8 space-y-8">
+            <!-- Header Banner -->
+            <div class="bg-zinc-900 text-white p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="App.showView('admin')"
+                            class="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-arrow-left"></i> Quay lại Quản trị Album
+                        </button>
+                    </div>
+                    <h1 class="text-2xl font-bold mt-2 flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-xl bg-blue-600/30 text-blue-400 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-users-gear"></i>
+                        </span>
+                        <span>Quản Lý Người Dùng & Phân Quyền</span>
+                    </h1>
+                    <p class="text-xs text-zinc-400 mt-1">
+                        Quản lý danh sách thành viên, phân cấp vai trò (Super Admin / Editor) và đồng bộ bảo mật đa thiết bị qua Firebase.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+                    <button type="button" onclick="AuthModule.openAddUserModal()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md">
+                        <i class="fa-solid fa-user-plus"></i> Thêm Người Dùng
+                    </button>
+                    <button type="button" onclick="AuthModule.openChangePasswordModal()"
+                        class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-key text-amber-400"></i> Đổi Mật Khẩu Admin
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats & Role Overview -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Tổng Thành Viên</div>
+                        <div id="usersPageTotalCount" class="text-2xl font-bold text-zinc-900 mt-0.5">2</div>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Super Admin</div>
+                        <div id="usersPageSuperAdminCount" class="text-2xl font-bold text-zinc-900 mt-0.5">1</div>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Nhiếp Ảnh Phụ / Editor</div>
+                        <div id="usersPageEditorCount" class="text-2xl font-bold text-zinc-900 mt-0.5">1</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users List Section -->
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100">
+                    <div>
+                        <h2 class="text-base font-bold text-zinc-900 flex items-center gap-2">
+                            <i class="fa-solid fa-address-book text-blue-600"></i>
+                            <span>Danh Sách Tài Khoản Thành Viên</span>
+                        </h2>
+                        <p class="text-xs text-zinc-500 mt-0.5">Toàn bộ dữ liệu được đồng bộ an toàn thời gian thực giữa các thiết bị.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="usersPageFirebaseBadge" class="text-[11px] px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-semibold flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Firebase Realtime Sync
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Dynamic User Table / Cards Container -->
+                <div id="usersPageListContainer" class="space-y-3">
+                    <!-- Rendered dynamically by AuthModule.renderUsersPageList() -->
                 </div>
             </section>
         </main>
@@ -2215,7 +2313,7 @@
         </div>
     </div>
 
-    <!-- 8. USER MANAGEMENT MODAL -->
+    <!-- 8. USER MANAGEMENT MODAL (QUICK POPUP) -->
     <div id="userManagerModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
         <div class="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm" onclick="AuthModule.closeUserManagerModal()"></div>
         <div class="flex min-h-full items-center justify-center p-4">
@@ -2239,12 +2337,101 @@
                     <!-- Rendered dynamically by AuthModule.renderUserManagerModalList() -->
                 </div>
 
-                <div class="flex justify-end gap-2">
+                <div class="flex items-center justify-between gap-2">
+                    <button type="button" onclick="AuthModule.closeUserManagerModal(); App.showView('users')"
+                        class="px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>Mở toàn trang quản lý</span>
+                    </button>
                     <button type="button" onclick="AuthModule.closeUserManagerModal()"
                         class="px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition">
                         Đóng
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. ADD/EDIT USER MODAL -->
+    <div id="userEditModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm" onclick="AuthModule.closeUserEditModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-7 z-10">
+                <button type="button" onclick="AuthModule.closeUserEditModal()"
+                    class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-11 h-11 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-lg shadow-sm border border-blue-100">
+                        <i class="fa-solid fa-user-pen"></i>
+                    </div>
+                    <div>
+                        <h3 id="userEditModalTitle" class="text-lg font-bold text-zinc-900 leading-tight">Thêm Người Dùng Mới</h3>
+                        <p class="text-xs text-zinc-500">Tạo tài khoản và phân quyền quản trị Studio</p>
+                    </div>
+                </div>
+
+                <form onsubmit="AuthModule.handleSaveUserSubmit(event)" class="space-y-4">
+                    <input type="hidden" id="editUserId">
+
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Tên đăng nhập (Username)</label>
+                        <input type="text" id="editUserUsername" required
+                            placeholder="VD: troly, photographer2..."
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-blue-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Họ và Tên</label>
+                        <input type="text" id="editUserFullName" required
+                            placeholder="VD: Trợ lý Studio, Nguyễn Văn A..."
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-blue-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Email</label>
+                        <input type="email" id="editUserEmail"
+                            placeholder="user@dihastory.vn"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-blue-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Vai trò & Phân quyền</label>
+                        <select id="editUserRole"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-blue-600 bg-white">
+                            <option value="editor">Nhiếp ảnh gia phụ / Editor (Chỉnh sửa & quản lý album)</option>
+                            <option value="super_admin">Chủ sở hữu & Super Admin (Toàn quyền)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Link Ảnh Đại Diện (Avatar)</label>
+                        <input type="url" id="editUserAvatar"
+                            placeholder="https://..."
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-blue-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Mật khẩu tài khoản</label>
+                        <input type="password" id="editUserPassword" minlength="6"
+                            placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)..."
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-blue-600">
+                        <p class="text-[11px] text-zinc-400 mt-1">Để trống nếu không muốn đổi mật khẩu khi đang chỉnh sửa thành viên.</p>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2.5 pt-2">
+                        <button type="button" onclick="AuthModule.closeUserEditModal()"
+                            class="px-4 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-semibold transition">
+                            Hủy
+                        </button>
+                        <button type="submit"
+                            class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>Lưu Thông Tin</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -2272,9 +2459,9 @@
     <script src="js/firebase-db.js?v=20261108_25"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261108_26"></script>
-    <script src="js/admin.js?v=20261108_26"></script>
-    <script src="js/app.js?v=20261108_26"></script>
+    <script src="js/auth.js?v=20261108_27"></script>
+    <script src="js/admin.js?v=20261108_27"></script>
+    <script src="js/app.js?v=20261108_27"></script>
 </body>
 
 </html>
