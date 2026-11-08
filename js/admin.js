@@ -38,7 +38,8 @@ const AdminModule = (function () {
         const key = getGoogleDriveApiKey();
         const badges = [
             document.getElementById('driveApiKeyBadge'),
-            document.getElementById('adminHeaderDriveBadge')
+            document.getElementById('adminHeaderDriveBadge'),
+            document.getElementById('adminMenuDriveBadge')
         ];
         badges.forEach(badge => {
             if (!badge) return;
