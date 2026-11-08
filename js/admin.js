@@ -3630,6 +3630,12 @@ function testRun() {
                     album.photos.push(fp);
                     addedCount++;
                 } else {
+                    // Cập nhật thông tin và liên kết RAW / JPG mới nhất từ Google Drive
+                    if (fp.rawDriveFileId) existing.rawDriveFileId = fp.rawDriveFileId;
+                    if (fp.rawUrl) existing.rawUrl = fp.rawUrl;
+                    if (fp.jpgDriveFileId) existing.jpgDriveFileId = fp.jpgDriveFileId;
+                    if (fp.jpgUrl) existing.jpgUrl = fp.jpgUrl;
+                    if (fp.driveFileId && !existing.driveFileId) existing.driveFileId = fp.driveFileId;
                     if (fp.location && existing.location !== fp.location) {
                         existing.location = fp.location;
                         updatedCount++;
@@ -3840,7 +3846,22 @@ function testRun() {
                 App.showToast("Không đọc được ảnh từ thư mục Google Drive này! Hãy kiểm tra quyền chia sẻ Công khai.", "error");
                 return;
             }
-            folderPhotos.forEach(fp => album.photos.push(fp));
+            folderPhotos.forEach(fp => {
+                const existing = album.photos.find(
+                    p => (fp.driveFileId && p.driveFileId === fp.driveFileId) || p.url === fp.url || (p.code && p.code === fp.code)
+                );
+                if (!existing) {
+                    album.photos.push(fp);
+                } else {
+                    if (fp.rawDriveFileId) existing.rawDriveFileId = fp.rawDriveFileId;
+                    if (fp.rawUrl) existing.rawUrl = fp.rawUrl;
+                    if (fp.jpgDriveFileId) existing.jpgDriveFileId = fp.jpgDriveFileId;
+                    if (fp.jpgUrl) existing.jpgUrl = fp.jpgUrl;
+                    if (fp.location) existing.location = fp.location;
+                    if (fp.city) existing.city = fp.city;
+                    if (fp.capturedAt) existing.capturedAt = fp.capturedAt;
+                }
+            });
             if (!album.coverUrl && album.photos.length > 0) {
                 album.coverUrl = album.photos[0].url;
             }
