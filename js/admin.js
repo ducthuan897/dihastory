@@ -71,7 +71,7 @@ const AdminModule = (function () {
     }
 
     const APPS_SCRIPT_SOURCE = `/**
- * GOOGLE APPS SCRIPT CHO ĐỨC THUẬN STUDIO (DUTUSTORY)
+ * GOOGLE APPS SCRIPT CHO DIHA STORY (DUTUSTORY)
  * 1. Tự động đọc ảnh Google Drive, trích xuất EXIF DateTimeOriginal & toạ độ GPS.
  * 2. ĐỒNG BỘ DỮ LIỆU ALBUM ĐA THIẾT BỊ (Cloud Database lưu trữ vào Google Drive miễn phí).
  */
@@ -679,7 +679,7 @@ function testRun() {
             date: "2026-10-19",
             city: "Thủ Dầu Một",
             location: "Nhà thờ Phú Cường, Thủ Dầu Một",
-            photographer: "Đức Thuận Studio",
+            photographer: "Diha Story",
             selectionLimit: 15,
             pinCode: "",
             isPublic: true,
@@ -2593,7 +2593,7 @@ function testRun() {
             date,
             city,
             location: albumLocation,
-            photographer: "Đức Thuận Studio",
+            photographer: "Diha Story",
             selectionLimit,
             pinCode: "",
             isPublic,

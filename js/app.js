@@ -983,7 +983,7 @@ const App = (function () {
         return `
             <div class="photo-card ${cardStateClass}" onclick="App.openLightbox(${lightboxIdx})">
                 <img src="${photo.url}" alt="${photo.code}" referrerpolicy="no-referrer" loading="lazy">
-                ${showWatermark ? `<div class="pointer-events-none absolute inset-0 flex items-center justify-center"><span class="text-white/35 font-serif-display text-sm sm:text-base font-bold tracking-widest uppercase -rotate-12 border border-white/25 px-3 py-1 rounded select-none">ĐỨC THUẬN STUDIO</span></div>` : ''}
+                ${showWatermark ? `<div class="pointer-events-none absolute inset-0 flex items-center justify-center"><span class="text-white/35 font-serif-display text-sm sm:text-base font-bold tracking-widest uppercase -rotate-12 border border-white/25 px-3 py-1 rounded select-none">DIHA STORY</span></div>` : ''}
                 <div class="photo-card-overlay">
                     <div class="flex items-center justify-between">
                         <span class="bg-black/65 backdrop-blur-md text-white text-[11px] font-mono px-2.5 py-1 rounded-full tracking-wide flex items-center gap-1">
