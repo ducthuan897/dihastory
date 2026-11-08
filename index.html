@@ -37,7 +37,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS File -->
-    <link rel="stylesheet" href="css/style.css?v=20261108_6">
+    <link rel="stylesheet" href="css/style.css?v=20261108_7">
 </head>
 
 <body class="bg-zinc-50 text-zinc-900 font-sans min-h-screen flex flex-col antialiased">
@@ -255,12 +255,12 @@
 
                     <div class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
                         <button id="heroClientDownloadBtn" type="button" onclick="App.openDownloadModal()"
-                            class="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm transition shadow-lg flex items-center gap-2">
+                            class="hidden bg-rose-600 hover:bg-rose-700 text-white font-semibold px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm transition shadow-lg flex items-center gap-2">
                             <i class="fa-solid fa-cloud-arrow-down"></i>
                             <span>Lưu Ảnh Về Máy</span>
                         </button>
                         <button id="heroClientSubmitBtn" type="button" onclick="App.openSubmitSelectionModal()"
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm transition shadow-lg flex items-center gap-2">
+                            class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm transition shadow-lg flex items-center gap-2">
                             <i class="fa-regular fa-circle-check"></i>
                             <span>Hoàn Tất Chọn Ảnh</span>
                         </button>
@@ -1719,7 +1719,7 @@
                     <span class="hidden sm:inline">Slideshow</span>
                 </button>
                 <button id="lightboxDownloadBtn" type="button" onclick="App.downloadLightboxCurrentPhoto()"
-                    class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+                    class="hidden w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
                     title="Lưu ảnh này về máy">
                     <i class="fa-solid fa-download"></i>
                 </button>
@@ -2063,9 +2063,9 @@
 
     <!-- JAVASCRIPT MODULES INCLUDES -->
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261108_6"></script>
-    <script src="js/admin.js?v=20261108_6"></script>
-    <script src="js/app.js?v=20261108_6"></script>
+    <script src="js/auth.js?v=20261108_7"></script>
+    <script src="js/admin.js?v=20261108_7"></script>
+    <script src="js/app.js?v=20261108_7"></script>
 </body>
 
 </html>
