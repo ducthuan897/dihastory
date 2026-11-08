@@ -54,6 +54,55 @@ const App = (function () {
     let sessionSelectorNameMap = {};
     let activeNotePhotoId = null;
 
+    // Bộ nhớ đệm lưu HTML các trang content (Modular Multi-Pages Cache)
+    const pageHtmlCache = {};
+
+    async function loadPageContent(pageName) {
+        if (pageHtmlCache[pageName]) {
+            return pageHtmlCache[pageName];
+        }
+        try {
+            const base = getAppBasePath();
+            const url = `${base}/pages/${pageName}.html?v=20261108_30`;
+            const resp = await fetch(url);
+            if (resp && resp.ok) {
+                const html = await resp.text();
+                pageHtmlCache[pageName] = html;
+                return html;
+            }
+        } catch (e) {
+            console.error(`Không thể tải trang con pages/${pageName}.html:`, e);
+        }
+        return '';
+    }
+
+    async function ensurePageMounted(pageName) {
+        const outlet = document.getElementById('mainContentOutlet');
+        if (!outlet) return;
+
+        const targetMap = {
+            'home': 'homeView',
+            'album': 'publicView',
+            'admin': 'adminView',
+            'users': 'usersManagementView',
+            'manage-album': 'albumManageView'
+        };
+
+        const targetId = targetMap[pageName];
+        if (targetId && document.getElementById(targetId)) {
+            return; // Đã nạp vào DOM
+        }
+
+        const html = await loadPageContent(pageName);
+        if (html) {
+            const temp = document.createElement('div');
+            temp.innerHTML = html.trim();
+            while (temp.firstChild) {
+                outlet.appendChild(temp.firstChild);
+            }
+        }
+    }
+
     function init() {
         AuthModule.checkAuthUI();
         setupKeyboardShortcuts();
@@ -241,7 +290,13 @@ const App = (function () {
         return currentView;
     }
 
-    function showView(viewName, skipHistoryPush = false) {
+    async function showView(viewName, skipHistoryPush = false) {
+        // Tự động nạp động file trang content con nếu chưa có trong DOM
+        const targetPage = (viewName === 'manage-album' || viewName === 'users' || viewName === 'admin' || viewName === 'album')
+            ? viewName
+            : 'home';
+        await ensurePageMounted(targetPage);
+
         const homeView = document.getElementById('homeView');
         const publicView = document.getElementById('publicView');
         const adminView = document.getElementById('adminView');

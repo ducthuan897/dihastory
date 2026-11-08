@@ -1,0 +1,88 @@
+<!-- TRANG 5: QUẢN LÝ NGƯỜI DÙNG & PHÂN QUYỀN (USER MANAGEMENT PAGE) -->
+<main id="usersManagementView" class="hidden w-full px-4 sm:px-6 lg:px-10 xl:px-12 py-8 space-y-8">
+    <!-- Header Banner -->
+    <div class="bg-zinc-900 text-white p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="App.showView('admin')"
+                    class="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại Quản trị Album
+                </button>
+            </div>
+            <h1 class="text-2xl font-bold mt-2 flex items-center gap-3">
+                <span class="w-10 h-10 rounded-xl bg-blue-600/30 text-blue-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-users-gear"></i>
+                </span>
+                <span>Quản Lý Người Dùng & Phân Quyền</span>
+            </h1>
+            <p class="text-xs text-zinc-400 mt-1">
+                Quản lý danh sách thành viên, phân cấp vai trò (Super Admin / Editor) và đồng bộ bảo mật đa thiết bị qua Firebase.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button type="button" onclick="AuthModule.openAddUserModal()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md">
+                <i class="fa-solid fa-user-plus"></i> Thêm Người Dùng
+            </button>
+            <button type="button" onclick="AuthModule.openChangePasswordModal()"
+                class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-key text-amber-400"></i> Đổi Mật Khẩu Admin
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats & Role Overview -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div>
+                <div class="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Tổng Thành Viên</div>
+                <div id="usersPageTotalCount" class="text-2xl font-bold text-zinc-900 mt-0.5">2</div>
+            </div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+                <div class="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Super Admin</div>
+                <div id="usersPageSuperAdminCount" class="text-2xl font-bold text-zinc-900 mt-0.5">1</div>
+            </div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <div>
+                <div class="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Nhiếp Ảnh Phụ / Editor</div>
+                <div id="usersPageEditorCount" class="text-2xl font-bold text-zinc-900 mt-0.5">1</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users List Section -->
+    <section class="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100">
+            <div>
+                <h2 class="text-base font-bold text-zinc-900 flex items-center gap-2">
+                    <i class="fa-solid fa-address-book text-blue-600"></i>
+                    <span>Danh Sách Tài Khoản Thành Viên</span>
+                </h2>
+                <p class="text-xs text-zinc-500 mt-0.5">Toàn bộ dữ liệu được đồng bộ an toàn thời gian thực giữa các thiết bị.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="usersPageFirebaseBadge" class="text-[11px] px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-semibold flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Firebase Realtime Sync
+                </span>
+            </div>
+        </div>
+
+        <!-- Dynamic User Table / Cards Container -->
+        <div id="usersPageListContainer" class="space-y-3">
+            <!-- Rendered dynamically by AuthModule.renderUsersPageList() -->
+        </div>
+    </section>
+</main>
