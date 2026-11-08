@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </linearGradient>
+    <linearGradient id="lensGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded Square Body -->
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#bgGrad)" stroke="#27272a" stroke-width="1.5"/>
+  
+  <!-- Camera Top Bar / Flash Dot -->
+  <rect x="22" y="11" width="20" height="4" rx="2" fill="#71717a"/>
+  <circle cx="49" cy="19" r="2.5" fill="#ef4444"/>
+  
+  <!-- Camera Body -->
+  <rect x="12" y="18" width="40" height="30" rx="8" fill="#27272a"/>
+  
+  <!-- Outer Lens Ring -->
+  <circle cx="32" cy="33" r="11" fill="#18181b" stroke="#52525b" stroke-width="2"/>
+  
+  <!-- Inner Lens Glass with Aperture Shimmer -->
+  <circle cx="32" cy="33" r="7.5" fill="url(#lensGrad)"/>
+  <circle cx="29.5" cy="30.5" r="2.2" fill="#ffffff" opacity="0.75"/>
+</svg>
