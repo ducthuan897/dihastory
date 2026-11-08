@@ -8,8 +8,40 @@ const AuthModule = (function () {
     const STORAGE_KEY_USERS = "site_admin_users_list_v1";
     const DEFAULT_PASS = "123456";
 
-    // Chuỗi salt bí mật để băm mật khẩu bảo mật (SHA-256 + Salt)
-    const HASH_SALT = "DihaStory_Security_Salt_#2026";
+    // Thứ tự phân quyền theo cấp bậc: 1. super_admin > 2. admin > 3. editor
+    const ROLE_LEVELS = {
+        'super_admin': 3,
+        'admin': 2,
+        'editor': 1
+    };
+
+    const ROLE_LABELS = {
+        'super_admin': 'Super Admin',
+        'admin': 'Admin',
+        'editor': 'Editor'
+    };
+
+    const ROLE_FULL_NAMES = {
+        'super_admin': 'Chủ sở hữu & Super Admin',
+        'admin': 'Quản trị viên Studio',
+        'editor': 'Nhiếp ảnh gia phụ / Editor'
+    };
+
+    function getRoleLevel(role) {
+        return ROLE_LEVELS[role] || 1;
+    }
+
+    function canModifyUser(currentUser, targetUser) {
+        if (!currentUser) return false;
+        // Được phép sửa thông tin của chính mình
+        if (currentUser.id === targetUser.id || currentUser.username === targetUser.username) {
+            return true;
+        }
+        const curLevel = getRoleLevel(currentUser.role);
+        const targetLevel = getRoleLevel(targetUser.role);
+        // Cấp trên có thể sửa/xóa cấp dưới nghiêm ngặt (curLevel > targetLevel)
+        return curLevel > targetLevel;
+    }
 
     let cachedUsersList = [];
 
@@ -343,8 +375,14 @@ const AuthModule = (function () {
         const container = document.getElementById('userManagerUsersListContainer');
         if (!container) return;
         const users = getUsersList();
+        const roleColors = {
+            'super_admin': 'bg-purple-100 text-purple-800 border-purple-200',
+            'admin': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+            'editor': 'bg-emerald-100 text-emerald-800 border-emerald-200'
+        };
+
         container.innerHTML = users.map(u => `
-            <div class="p-3.5 rounded-2xl border ${u.role === 'super_admin' ? 'border-blue-200 bg-blue-50/50' : 'border-zinc-200 bg-white'} flex items-center justify-between gap-3">
+            <div class="p-3.5 rounded-2xl border ${u.role === 'super_admin' ? 'border-purple-200 bg-purple-50/40' : (u.role === 'admin' ? 'border-indigo-200 bg-indigo-50/40' : 'border-zinc-200 bg-white')} flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
                     <div class="relative">
                         <div class="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-400 text-white flex items-center justify-center font-bold text-sm">
@@ -354,11 +392,11 @@ const AuthModule = (function () {
                     </div>
                     <div class="min-w-0">
                         <div class="font-bold text-zinc-900 text-sm truncate">${u.fullName} (${u.username})</div>
-                        <div class="text-[11px] text-zinc-500 truncate">${u.email || 'user@dihastory.vn'} • ${u.roleName || u.role}</div>
+                        <div class="text-[11px] text-zinc-500 truncate">${u.email || 'user@dihastory.vn'} • ${ROLE_FULL_NAMES[u.role] || u.role}</div>
                     </div>
                 </div>
-                <span class="px-2.5 py-1 rounded-full ${u.role === 'super_admin' ? 'bg-blue-100 text-blue-800' : 'bg-zinc-100 text-zinc-700'} text-[11px] font-bold shrink-0">
-                    ${u.role === 'super_admin' ? 'Super Admin' : 'Editor'}
+                <span class="px-2.5 py-1 rounded-full border ${roleColors[u.role] || 'bg-zinc-100 text-zinc-700'} text-[11px] font-bold shrink-0">
+                    ${ROLE_LABELS[u.role] || 'Editor'}
                 </span>
             </div>
         `).join('');
@@ -366,18 +404,35 @@ const AuthModule = (function () {
 
     function renderUsersPageList() {
         const users = getUsersList();
+        const currentUser = getCurrentUser();
+        const curLevel = currentUser ? getRoleLevel(currentUser.role) : 1;
+
         const totalEl = document.getElementById('usersPageTotalCount');
         const superEl = document.getElementById('usersPageSuperAdminCount');
+        const adminEl = document.getElementById('usersPageAdminCount');
         const editorEl = document.getElementById('usersPageEditorCount');
         const container = document.getElementById('usersPageListContainer');
 
         if (totalEl) totalEl.innerText = users.length;
         if (superEl) superEl.innerText = users.filter(u => u.role === 'super_admin').length;
-        if (editorEl) editorEl.innerText = users.filter(u => u.role !== 'super_admin').length;
+        if (adminEl) adminEl.innerText = users.filter(u => u.role === 'admin').length;
+        if (editorEl) editorEl.innerText = users.filter(u => u.role === 'editor').length;
 
         if (!container) return;
 
-        container.innerHTML = users.map(u => `
+        const roleBadges = {
+            'super_admin': '<span class="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200"><i class="fa-solid fa-crown mr-1 text-[11px]"></i>Super Admin</span>',
+            'admin': '<span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200"><i class="fa-solid fa-shield-halved mr-1 text-[11px]"></i>Admin</span>',
+            'editor': '<span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><i class="fa-solid fa-wand-magic-sparkles mr-1 text-[11px]"></i>Editor</span>'
+        };
+
+        container.innerHTML = users.map(u => {
+            const isMe = currentUser && (currentUser.id === u.id || currentUser.username === u.username);
+            const targetLevel = getRoleLevel(u.role);
+            const isAllowedToEdit = isMe || (curLevel > targetLevel);
+            const isAllowedToDelete = !isMe && (curLevel > targetLevel) && (u.username !== 'admin');
+
+            return `
             <div class="p-4 sm:p-5 rounded-2xl border border-zinc-200 bg-white hover:border-zinc-300 transition shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5 min-w-0">
                     <div class="relative shrink-0">
@@ -390,30 +445,32 @@ const AuthModule = (function () {
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-zinc-900 text-base leading-tight truncate">${u.fullName}</span>
                             <span class="text-xs text-zinc-400">@${u.username}</span>
+                            ${isMe ? '<span class="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">Bạn</span>' : ''}
                         </div>
                         <div class="text-xs text-zinc-500 mt-0.5 truncate flex items-center gap-2">
                             <span><i class="fa-regular fa-envelope text-[11px] mr-1"></i>${u.email || 'user@dihastory.vn'}</span>
                             <span>•</span>
-                            <span class="font-medium text-zinc-600">${u.roleName || (u.role === 'super_admin' ? 'Chủ sở hữu & Super Admin' : 'Editor')}</span>
+                            <span class="font-medium text-zinc-600">${ROLE_FULL_NAMES[u.role] || u.role}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2.5 shrink-0 self-end md:self-auto">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold ${
-                        u.role === 'super_admin' ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                    }">
-                        <i class="${u.role === 'super_admin' ? 'fa-solid fa-shield-halved' : 'fa-solid fa-wand-magic-sparkles'} mr-1 text-[11px]"></i>
-                        ${u.role === 'super_admin' ? 'Super Admin' : 'Editor'}
-                    </span>
+                    ${roleBadges[u.role] || roleBadges['editor']}
 
+                    ${isAllowedToEdit ? `
                     <button type="button" onclick="AuthModule.openEditUserModal('${u.id}')"
                         class="px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-semibold transition flex items-center gap-1.5">
                         <i class="fa-solid fa-user-pen text-xs"></i>
                         <span>Chỉnh sửa</span>
                     </button>
+                    ` : `
+                    <span class="px-2.5 py-1 text-[11px] text-zinc-400 italic">
+                        <i class="fa-solid fa-lock text-[10px] mr-1"></i>Không có quyền sửa
+                    </span>
+                    `}
 
-                    ${u.username !== 'admin' ? `
+                    ${isAllowedToDelete ? `
                     <button type="button" onclick="AuthModule.deleteUser('${u.id}')"
                         class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition flex items-center gap-1.5">
                         <i class="fa-solid fa-trash-can text-xs"></i>
@@ -422,10 +479,19 @@ const AuthModule = (function () {
                     ` : ''}
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     function openAddUserModal() {
+        const currentUser = getCurrentUser();
+        const curLevel = currentUser ? getRoleLevel(currentUser.role) : 1;
+
+        if (curLevel < 2) {
+            alert('Bạn là Editor, không có quyền thêm thành viên mới vào hệ thống!');
+            return;
+        }
+
         const modal = document.getElementById('userEditModal');
         const title = document.getElementById('userEditModalTitle');
         if (title) title.innerText = 'Thêm Người Dùng Mới';
@@ -434,33 +500,74 @@ const AuthModule = (function () {
         document.getElementById('editUserUsername').removeAttribute('readonly');
         document.getElementById('editUserFullName').value = '';
         document.getElementById('editUserEmail').value = '';
-        document.getElementById('editUserRole').value = 'editor';
         document.getElementById('editUserAvatar').value = '';
         document.getElementById('editUserPassword').value = '';
+
+        // Tùy chọn vai trò chỉ cho phép cấp dưới
+        const roleSelect = document.getElementById('editUserRole');
+        if (roleSelect) {
+            roleSelect.innerHTML = `
+                <option value="editor">3. Editor (Nhiếp ảnh gia phụ / Chỉnh sửa album)</option>
+                ${curLevel >= 3 ? '<option value="admin">2. Admin (Quản trị viên Studio)</option>' : ''}
+            `;
+            roleSelect.value = 'editor';
+            roleSelect.removeAttribute('disabled');
+        }
+
         if (modal) modal.classList.remove('hidden');
     }
 
     function openEditUserModal(userId) {
         const users = getUsersList();
-        const user = users.find(u => u.id === userId);
-        if (!user) return;
+        const targetUser = users.find(u => u.id === userId);
+        if (!targetUser) return;
+
+        const currentUser = getCurrentUser();
+        if (!canModifyUser(currentUser, targetUser)) {
+            alert('Bạn không có quyền chỉnh sửa tài khoản có cấp bậc bằng hoặc cao hơn bạn!');
+            return;
+        }
 
         const modal = document.getElementById('userEditModal');
         const title = document.getElementById('userEditModalTitle');
-        if (title) title.innerText = `Chỉnh Sửa: ${user.fullName}`;
+        const isSelf = currentUser && (currentUser.id === targetUser.id || currentUser.username === targetUser.username);
 
-        document.getElementById('editUserId').value = user.id;
-        document.getElementById('editUserUsername').value = user.username;
-        if (user.username === 'admin') {
+        if (title) title.innerText = isSelf ? `Chỉnh sửa thông tin cá nhân (${targetUser.fullName})` : `Chỉnh Sửa: ${targetUser.fullName}`;
+
+        document.getElementById('editUserId').value = targetUser.id;
+        document.getElementById('editUserUsername').value = targetUser.username;
+        if (targetUser.username === 'admin' || isSelf) {
             document.getElementById('editUserUsername').setAttribute('readonly', 'true');
         } else {
             document.getElementById('editUserUsername').removeAttribute('readonly');
         }
-        document.getElementById('editUserFullName').value = user.fullName || '';
-        document.getElementById('editUserEmail').value = user.email || '';
-        document.getElementById('editUserRole').value = user.role || 'editor';
-        document.getElementById('editUserAvatar').value = user.avatar || '';
+        document.getElementById('editUserFullName').value = targetUser.fullName || '';
+        document.getElementById('editUserEmail').value = targetUser.email || '';
+        document.getElementById('editUserAvatar').value = targetUser.avatar || '';
         document.getElementById('editUserPassword').value = '';
+
+        // Phân quyền cho dropdown vai trò
+        const roleSelect = document.getElementById('editUserRole');
+        const curLevel = currentUser ? getRoleLevel(currentUser.role) : 1;
+
+        if (roleSelect) {
+            if (isSelf) {
+                // Tự sửa chính mình: không được tự ý đổi quyền của mình
+                roleSelect.innerHTML = `<option value="${targetUser.role}" selected>${ROLE_LABELS[targetUser.role]}</option>`;
+                roleSelect.setAttribute('disabled', 'true');
+            } else if (curLevel === 3) {
+                // Super Admin: có thể set Editor hoặc Admin
+                roleSelect.innerHTML = `
+                    <option value="editor" ${targetUser.role === 'editor' ? 'selected' : ''}>3. Editor (Nhiếp ảnh gia phụ)</option>
+                    <option value="admin" ${targetUser.role === 'admin' ? 'selected' : ''}>2. Admin (Quản trị viên Studio)</option>
+                `;
+                roleSelect.removeAttribute('disabled');
+            } else {
+                // Admin cấp 2 chỉ có thể sửa Editor cấp 1
+                roleSelect.innerHTML = `<option value="editor" selected>3. Editor (Nhiếp ảnh gia phụ)</option>`;
+                roleSelect.setAttribute('disabled', 'true');
+            }
+        }
 
         if (modal) modal.classList.remove('hidden');
     }
@@ -486,10 +593,21 @@ const AuthModule = (function () {
             // Edit existing user
             const idx = users.findIndex(u => u.id === id);
             if (idx >= 0) {
+                const targetUser = users[idx];
+                const currentUser = getCurrentUser();
+                if (!canModifyUser(currentUser, targetUser)) {
+                    alert('Bạn không có quyền chỉnh sửa tài khoản có cấp bậc bằng hoặc cao hơn bạn!');
+                    return;
+                }
+
                 users[idx].fullName = fullName;
                 users[idx].email = email;
-                users[idx].role = role;
-                users[idx].roleName = role === 'super_admin' ? 'Chủ sở hữu & Super Admin' : 'Nhiếp ảnh gia phụ / Editor';
+                // Nếu tự sửa chính mình thì giữ nguyên role, cấp trên mới có quyền đổi role cấp dưới
+                const isSelf = currentUser && (currentUser.id === targetUser.id || currentUser.username === targetUser.username);
+                if (!isSelf && curLevel > getRoleLevel(role)) {
+                    users[idx].role = role;
+                    users[idx].roleName = ROLE_FULL_NAMES[role] || role;
+                }
                 users[idx].avatar = avatar;
                 if (pass) {
                     const hashedPass = await hashPassword(pass);
@@ -500,19 +618,27 @@ const AuthModule = (function () {
                 }
             }
         } else {
-            // Add new user
+            // Add new user (Chỉ Super Admin & Admin mới có quyền thêm)
+            const currentUser = getCurrentUser();
+            const curLevel = currentUser ? getRoleLevel(currentUser.role) : 1;
+            if (curLevel < 2) {
+                alert('Editor không có quyền thêm tài khoản mới!');
+                return;
+            }
             if (users.some(u => u.username === username)) {
                 alert('Tên đăng nhập này đã tồn tại!');
                 return;
             }
+            // Không được tạo tài khoản có quyền cao hơn hoặc bằng mình
+            const assignedRole = (curLevel > getRoleLevel(role)) ? role : 'editor';
             const hashedPass = await hashPassword(pass || '123456');
             const newUser = {
                 id: 'usr_' + Date.now(),
                 username,
                 fullName,
                 email: email || `${username}@dihastory.vn`,
-                role,
-                roleName: role === 'super_admin' ? 'Chủ sở hữu & Super Admin' : 'Nhiếp ảnh gia phụ / Editor',
+                role: assignedRole,
+                roleName: ROLE_FULL_NAMES[assignedRole] || assignedRole,
                 avatar: avatar || '',
                 customPassword: hashedPass,
                 active: true,
@@ -545,6 +671,18 @@ const AuthModule = (function () {
             alert('Không thể xóa tài khoản Quản trị viên chính!');
             return;
         }
+
+        const currentUser = getCurrentUser();
+        if (!currentUser) return;
+        const curLevel = getRoleLevel(currentUser.role);
+        const targetLevel = getRoleLevel(target.role);
+
+        // Chỉ cấp trên mới có quyền xóa cấp dưới (không được tự xóa chính mình hoặc xóa người bằng/hơn cấp)
+        if (curLevel <= targetLevel || currentUser.id === target.id) {
+            alert('Bạn không có quyền xóa tài khoản có cấp bậc bằng hoặc cao hơn bạn!');
+            return;
+        }
+
         if (!confirm(`Bạn có chắc muốn xóa tài khoản "${target.fullName} (${target.username})"?`)) {
             return;
         }
