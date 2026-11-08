@@ -232,6 +232,10 @@ const App = (function () {
         return currentAlbumId;
     }
 
+    function getCurrentView() {
+        return currentView;
+    }
+
     function showView(viewName, skipHistoryPush = false) {
         const homeView = document.getElementById('homeView');
         const publicView = document.getElementById('publicView');
@@ -331,6 +335,9 @@ const App = (function () {
         }
 
         updateActiveNavButtons();
+        if (typeof AuthModule !== 'undefined' && typeof AuthModule.updateProfileDropdownUI === 'function') {
+            AuthModule.updateProfileDropdownUI();
+        }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -2108,6 +2115,7 @@ const App = (function () {
         handleAlbumBackAction,
         scrollToGallery,
         scrollToVideoHighlight,
+        getCurrentView,
         getIsClientMode: () => isClientMode,
         setIsClientMode: (val) => { isClientMode = !!val; },
         showToast

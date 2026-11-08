@@ -28,10 +28,46 @@ const AuthModule = (function () {
         }
     }
 
+    function updateProfileDropdownUI() {
+        const subtext = document.getElementById('profileOpenAdminSubtext');
+        const chevron = document.getElementById('profileOpenAdminChevron');
+        const card = document.getElementById('profileHeaderActionCard');
+        const currentView = (typeof App !== 'undefined' && typeof App.getCurrentView === 'function')
+            ? App.getCurrentView()
+            : '';
+
+        const isInAdmin = (currentView === 'admin' || currentView === 'manage-album');
+
+        if (subtext) {
+            subtext.classList.toggle('hidden', isInAdmin);
+        }
+        if (chevron) {
+            chevron.classList.toggle('hidden', isInAdmin);
+        }
+        if (card) {
+            if (isInAdmin) {
+                card.classList.remove('cursor-pointer', 'hover:bg-zinc-50');
+            } else {
+                card.classList.add('cursor-pointer', 'hover:bg-zinc-50');
+            }
+        }
+    }
+
+    function handleHeaderCardClick() {
+        const currentView = (typeof App !== 'undefined' && typeof App.getCurrentView === 'function')
+            ? App.getCurrentView()
+            : '';
+        if (currentView !== 'admin' && currentView !== 'manage-album') {
+            App.showView('admin');
+        }
+        closeProfileDropdown();
+    }
+
     function toggleProfileDropdown(event) {
         if (event) event.stopPropagation();
         const dd = document.getElementById('adminProfileDropdown');
         if (dd) {
+            updateProfileDropdownUI();
             dd.classList.toggle('hidden');
         }
     }
@@ -154,6 +190,8 @@ const AuthModule = (function () {
         checkAuthUI,
         toggleProfileDropdown,
         closeProfileDropdown,
+        handleHeaderCardClick,
+        updateProfileDropdownUI,
         handleLoginSubmit,
         logout,
         openLoginModal,
