@@ -110,6 +110,7 @@ const AuthModule = (function () {
             {
                 id: "usr_thuan",
                 username: "admin",
+                customPassword: "sha256_e04b1c139d165f32519cafcc8b6f544dcf8e66a0cecbef905ef38631722d7b86",
                 fullName: "Nguyễn Đức Thuận",
                 email: "admin@dihastory.vn",
                 role: "super_admin",
@@ -120,6 +121,7 @@ const AuthModule = (function () {
             {
                 id: "usr_troly",
                 username: "troly",
+                customPassword: "sha256_e04b1c139d165f32519cafcc8b6f544dcf8e66a0cecbef905ef38631722d7b86",
                 fullName: "Trợ lý Studio",
                 email: "assistant@dihastory.vn",
                 role: "editor",
