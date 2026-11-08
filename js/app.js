@@ -1162,28 +1162,17 @@ const App = (function () {
         // Reset transform & scale khi chuyển ảnh
         resetLightboxZoom(false);
 
-        // Lấy URL gốc chất lượng cao nhất (Original =s0 từ Google Drive) cho Lightbox
-        let hiResUrl = photo.url;
+        // Lấy trực tiếp URL ảnh gốc độ phân giải cao nhất (Original =s0 từ Google Drive)
+        let bestQualityUrl = photo.url;
         const driveFileId = photo.driveFileId || AdminModule.extractGoogleDriveFileId(photo.url);
         if (driveFileId) {
-            hiResUrl = `https://lh3.googleusercontent.com/d/${driveFileId}=s0`;
+            bestQualityUrl = `https://lh3.googleusercontent.com/d/${driveFileId}=s0`;
         } else if (photo.url && photo.url.includes('drive.google.com/thumbnail')) {
-            hiResUrl = photo.url.replace(/sz=w\d+/, 'sz=w4096');
+            bestQualityUrl = photo.url.replace(/sz=w\d+/, 'sz=w4096');
         }
 
-        // Tải trước ảnh gốc chất lượng cao; khi load xong thay src mượt mà không làm đổi layout
-        img.src = photo.url;
-        if (hiResUrl !== photo.url) {
-            const hiLoader = new Image();
-            hiLoader.referrerPolicy = 'no-referrer';
-            hiLoader.onload = () => {
-                // Chỉ đổi sang ảnh nét khi người dùng vẫn đang xem ảnh này
-                if (currentFilteredPhotos[currentLightboxIndex]?.id === photo.id) {
-                    img.src = hiResUrl;
-                }
-            };
-            hiLoader.src = hiResUrl;
-        }
+        // Gán thẳng ảnh chất lượng cao nhất ngay khi mở để zoom luôn trên ảnh gốc nét 100%, không bị đổi giữa chừng gây giật
+        img.src = bestQualityUrl;
 
         img.classList.remove('lightbox-img-zoomed');
         isLightboxZoomed = false;
