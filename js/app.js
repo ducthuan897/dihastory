@@ -527,7 +527,9 @@ const App = (function () {
             ? oldestTime.split('T')[0].split('-').reverse().join('.')
             : (album.date ? album.date.split('-').reverse().join('.') : '');
 
-        const tagsHtml = (album.tags || []).slice(0, 3).map(t => `<span class="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">#${t}</span>`).join('');
+        const photoCount = Array.isArray(album.photos) ? album.photos.length : 0;
+        const tagsList = Array.isArray(album.tags) ? album.tags : (typeof album.tags === 'string' && album.tags.trim() ? album.tags.split(/\s+/) : []);
+        const tagsHtml = tagsList.slice(0, 3).map(t => `<span class="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">#${t}</span>`).join('');
         return `
             <article
                 onclick="App.openAlbumPage('${album.id}', false)"
@@ -544,7 +546,7 @@ const App = (function () {
 
                     <div class="absolute top-3 right-3">
                         <span class="bg-white/90 backdrop-blur-md text-zinc-900 text-[11px] font-bold px-2.5 py-1 rounded-full">
-                            <i class="fa-regular fa-images mr-1"></i>${album.photos.length} ảnh
+                            <i class="fa-regular fa-images mr-1"></i>${photoCount} ảnh
                         </span>
                     </div>
 
