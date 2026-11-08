@@ -494,73 +494,74 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
   return meta;
 }
 
-function getFolderPhotosWithExif(folderId) {
-  var folder = DriveApp.getFolderById(folderId);
-  var folderTitle = folder.getName();
-  var filesList = [];
-  var detectedFolderDate = null;
-  var detectedFolderCity = null;
-  var detectedFolderLoc = null;
+    function getFolderPhotosWithExif(folderId) {
+        var folder = DriveApp.getFolderById(folderId);
+        var folderTitle = folder.getName();
+        var filesList = [];
+        var detectedFolderDate = null;
+        var detectedFolderCity = null;
+        var detectedFolderLoc = null;
 
-  var titleLoc = extractLocationFromText(folderTitle);
-  if (titleLoc) {
-    detectedFolderCity = titleLoc.city;
-    detectedFolderLoc = titleLoc.location;
-  }
-  var titleDate = extractDateFromText(folderTitle);
-  if (titleDate) {
-    detectedFolderDate = titleDate;
-  }
+        var titleLoc = extractLocationFromText(folderTitle);
+        if (titleLoc) {
+            detectedFolderCity = titleLoc.city;
+            detectedFolderLoc = titleLoc.location;
+        }
+        var titleDate = extractDateFromText(folderTitle);
+        if (titleDate) {
+            detectedFolderDate = titleDate;
+        }
 
-  var iter = folder.getFiles();
-  var allFiles = [];
-  while (iter.hasNext()) {
-    var file = iter.next();
-    var fname = file.getName();
-    if (fname.match(/\.(jpe?g|png|webp|heic|tiff?|dng|raw|cr2|cr3|nef|arw)$/i)) {
-      allFiles.push(file);
+        var iter = folder.getFiles();
+        var allFiles = [];
+        while (iter.hasNext()) {
+            var file = iter.next();
+            var fname = file.getName();
+            if (fname.match(/\.(jpe?g|png|webp|heic|tiff?|dng|raw|cr2|cr3|nef|arw)$/i)) {
+                allFiles.push(file);
+            }
+        }
+
+        var geoCache = {};
+
+        for (var k = 0; k < allFiles.length; k++) {
+            var f = allFiles[k];
+            var fname = f.getName();
+            var meta = extractExifAndLocationFromDriveFile(f, geoCache);
+
+            var fDate = meta.capturedAt || extractDateFromText(fname);
+            if (!fDate) {
+                try {
+                    fDate = Utilities.formatDate(f.getLastUpdated(), "GMT+7", "yyyy-MM-dd'T'HH:mm");
+                } catch(e) {}
+            }
+
+            if (fDate && !detectedFolderDate) detectedFolderDate = fDate;
+            if (meta.city && !detectedFolderCity) {
+                detectedFolderCity = meta.city;
+                detectedFolderLoc = meta.location || meta.city;
+            }
+
+            // TUÂN THỦ ĐIỀU 5: Mỗi bức ảnh mang thông tin vị trí và ngày giờ chụp riêng biệt của chính nó
+            filesList.push({
+                id: f.getId(),
+                name: fname,
+                capturedAt: fDate || "",
+                city: meta.city || "",
+                location: meta.location || meta.city || "",
+                lat: meta.lat != null ? meta.lat : null,
+                lon: meta.lon != null ? meta.lon : null
+            });
+        }
+
+        return {
+            folderTitle: folderTitle,
+            folderDate: detectedFolderDate,
+            folderCity: detectedFolderCity,
+            folderLocation: detectedFolderLoc,
+            files: filesList
+        };
     }
-  }
-
-  var geoCache = {};
-
-  for (var k = 0; k < allFiles.length; k++) {
-    var f = allFiles[k];
-    var fname = f.getName();
-    var meta = extractExifAndLocationFromDriveFile(f, geoCache);
-
-    var fDate = meta.capturedAt || extractDateFromText(fname);
-    if (!fDate) {
-      try {
-        fDate = Utilities.formatDate(f.getLastUpdated(), "GMT+7", "yyyy-MM-dd'T'HH:mm");
-      } catch(e) {}
-    }
-
-    if (fDate && !detectedFolderDate) detectedFolderDate = fDate;
-    if (meta.city && !detectedFolderCity) {
-      detectedFolderCity = meta.city;
-      detectedFolderLoc = meta.location || meta.city;
-    }
-
-    filesList.push({
-      id: f.getId(),
-      name: fname,
-      capturedAt: fDate || "",
-      city: meta.city || detectedFolderCity || "",
-      location: meta.location || detectedFolderLoc || meta.city || detectedFolderCity || "",
-      lat: meta.lat != null ? meta.lat : null,
-      lon: meta.lon != null ? meta.lon : null
-    });
-  }
-
-  return {
-    folderTitle: folderTitle,
-    folderDate: detectedFolderDate,
-    folderCity: detectedFolderCity,
-    folderLocation: detectedFolderLoc,
-    files: filesList
-  };
-}
 
 function testRun() {
   Logger.log(doGet({ parameter: { id: "test" } }).getContent());
@@ -672,6 +673,69 @@ function testRun() {
     const DEMO_SAMPLE_IDS = ['wedding-minhquan-lananh', 'couple-phuquoc-sunset', 'muse-dalat-portrait', 'private-hanoi-autumn'];
 
     const DEFAULT_ALBUMS = [
+        {
+            id: "a7c",
+            title: "A7C",
+            clientName: "Nguyễn Đức Thuận",
+            date: "2026-10-19",
+            city: "Thủ Dầu Một",
+            location: "Nhà thờ Phú Cường, Thủ Dầu Một",
+            photographer: "Diha Story",
+            selectionLimit: 15,
+            pinCode: "",
+            isPublic: true,
+            tags: [],
+            sourceType: "drive",
+            driveLinks: [
+                "https://drive.google.com/drive/folders/1qn8ym9BE2ojfXv1NZRQNXkbqnG9bp_mB?usp=sharing"
+            ],
+            reminderEnabled: false,
+            reminderText: "Chào Nguyễn Đức Thuận! Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé.",
+            deadlineEnabled: false,
+            deadlineAt: "2026-11-15T23:59",
+            completeLockEnabled: true,
+            isSelectionLockedBySubmit: false,
+            youtubeId: "",
+            coverUrl: "https://drive.google.com/thumbnail?id=1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw&sz=w1600",
+            description: "Album A7C của khách hàng Nguyễn Đức Thuận.",
+            photos: [
+                {
+                    id: "drv_1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP_1794118103050_1",
+                    driveFileId: "1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP",
+                    code: "DSC01150",
+                    location: "Nhà thờ Phú Cường, Thủ Dầu Một",
+                    city: "Thủ Dầu Một",
+                    lat: 10.980005,
+                    lon: 106.654375,
+                    capturedAt: "2026-10-19T20:48",
+                    title: "DSC01150.jpg",
+                    url: "https://drive.google.com/thumbnail?id=1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP&sz=w1600",
+                    starred: false
+                },
+                {
+                    id: "drv_1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw_1794118103050_2",
+                    driveFileId: "1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw",
+                    code: "DSC01182",
+                    location: "Nhà thờ Phú Cường, Thủ Dầu Một",
+                    city: "Thủ Dầu Một",
+                    lat: 10.980004,
+                    lon: 106.654371,
+                    capturedAt: "2026-10-19T21:22",
+                    title: "DSC01182.jpg",
+                    url: "https://drive.google.com/thumbnail?id=1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw&sz=w1600"
+                },
+                {
+                    id: "drv_1sAmshkhLZz6G9P3zqZm2mJiY9Eoz6iyV_1794119508989_3",
+                    driveFileId: "1sAmshkhLZz6G9P3zqZm2mJiY9Eoz6iyV",
+                    code: "DSC00889",
+                    location: "Hồ Chí Minh",
+                    city: "Hồ Chí Minh",
+                    capturedAt: "2026-09-03T13:22",
+                    title: "DSC00889.jpg",
+                    url: "https://drive.google.com/thumbnail?id=1sAmshkhLZz6G9P3zqZm2mJiY9Eoz6iyV&sz=w1600"
+                }
+            ]
+        },
         {
             id: "gian-than-dat-09",
             title: "Gian thần Đạt 09",
@@ -2407,30 +2471,8 @@ function testRun() {
             }
         }
 
-        // Propagate detected shoot location and capture date among photos in the same album
-        const photoWithLoc = photos.find(p => p.location && p.location.trim());
-        const detectedLoc = photoWithLoc ? photoWithLoc.location : (fallbackCity || "");
-        const detectedCity = photoWithLoc ? (photoWithLoc.city || photoWithLoc.location) : (fallbackCity || "");
-
-        const validDatePhotos = photos.filter(p => p.capturedAt && /^\d{4}-\d{2}-\d{2}/.test(p.capturedAt));
-        const detectedShootDate = validDatePhotos.length > 0
-            ? validDatePhotos.map(p => p.capturedAt.slice(0, 10)).sort()[0]
-            : (fallbackDate || "");
-
-        photos.forEach((p, idx) => {
-            if (!p.location || !p.location.trim()) {
-                p.location = detectedLoc;
-                p.city = detectedCity;
-            }
-            if (!p.capturedAt) {
-                if (detectedShootDate) {
-                    const hour = 8 + Math.floor((idx % 40) / 6);
-                    const min = ((idx * 7) % 60).toString().padStart(2, '0');
-                    p.capturedAt = `${detectedShootDate}T${hour.toString().padStart(2, '0')}:${min}`;
-                }
-            }
-        });
-
+        // TUÂN THỦ ĐIỀU 5: Mỗi bức ảnh phải mang thông tin thời gian và vị trí riêng biệt của chính bức ảnh đó.
+        // Tuyệt đối không được lấy thời gian hoặc vị trí của một bức ảnh bất kỳ rồi áp dụng chung cho toàn bộ các ảnh khác.
         return photos;
     }
 
@@ -2479,19 +2521,7 @@ function testRun() {
             fullLocation = "";
         }
 
-        // Ensure every photo has location & date if album has them
-        photos.forEach(p => {
-            if (!p.location || !p.location.trim() || p.location === "Việt Nam") {
-                p.location = fullLocation || city || "";
-            }
-            if (!p.city || !p.city.trim() || p.city === "Việt Nam") {
-                p.city = city || "";
-            }
-            if (!p.capturedAt && detectedDate) {
-                p.capturedAt = `${detectedDate}T09:00`;
-            }
-        });
-
+        // TUÂN THỦ ĐIỀU 5: Tự động điền ngày chụp và địa điểm của Album, nhưng metadata của từng bức ảnh luôn giữ đúng giá trị riêng của nó, KHÔNG ghi đè vào từng photo
         return { date: detectedDate, city, location: fullLocation };
     }
 
@@ -3371,18 +3401,13 @@ function testRun() {
         }
         album.city = clean;
         album.location = clean;
-        (album.photos || []).forEach(p => {
-            p.city = clean;
-            if (!p.location || p.location === currentCity || p.location === "Việt Nam") {
-                p.location = clean;
-            }
-        });
+        // TUÂN THỦ ĐIỀU 5: Chỉ cập nhật địa điểm của Album, tuyệt đối KHÔNG ghi đè metadata của từng bức ảnh
         const albums = getAllAlbums();
         saveAllAlbums(albums);
         renderAlbumManagePage();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
-        App.showToast(`Đã cập nhật địa điểm: ${clean}!`);
+        App.showToast(`Đã cập nhật địa điểm Album: ${clean}!`);
     }
 
     function quickChangeAlbumDate() {
@@ -3397,16 +3422,13 @@ function testRun() {
             return;
         }
         album.date = clean;
-        (album.photos || []).forEach(p => {
-            const timePart = (p.capturedAt && p.capturedAt.includes('T')) ? p.capturedAt.split('T')[1] : '09:00';
-            p.capturedAt = `${clean}T${timePart}`;
-        });
+        // TUÂN THỦ ĐIỀU 5: Chỉ cập nhật ngày chụp đại diện của Album, tuyệt đối KHÔNG ghi đè metadata của từng bức ảnh
         const albums = getAllAlbums();
         saveAllAlbums(albums);
         renderAlbumManagePage();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
-        App.showToast(`Đã cập nhật ngày chụp: ${clean.split('-').reverse().join('/')}!`);
+        App.showToast(`Đã cập nhật ngày chụp Album: ${clean.split('-').reverse().join('/')}!`);
     }
 
     function switchEditModalTab(tabName) {
