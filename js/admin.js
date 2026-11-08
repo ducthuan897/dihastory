@@ -891,6 +891,12 @@ function testRun() {
     }
 
     async function syncAlbumsToCloud(albums) {
+        // 1. Đồng bộ tức thời tới Firebase Realtime Database
+        if (typeof FirebaseModule !== 'undefined' && FirebaseModule.isReady()) {
+            FirebaseModule.saveAlbums(albums);
+        }
+
+        // 2. Dự phòng thêm vào Google Apps Script nếu có cấu hình
         const cloudUrl = getGoogleDriveApiKey();
         if (cloudUrl && cloudUrl.startsWith('https://script.google.com/')) {
             try {
@@ -909,7 +915,19 @@ function testRun() {
     }
 
     async function fetchCloudOrStaticAlbums() {
-        // 1. Luôn ưu tiên lấy bản mới nhất từ Google Apps Script Cloud Database
+        // 1. Ưu tiên hàng đầu: Lấy từ Firebase Realtime Database
+        if (typeof FirebaseModule !== 'undefined' && FirebaseModule.isReady()) {
+            try {
+                const fbAlbums = await FirebaseModule.getAlbumsOnce();
+                if (Array.isArray(fbAlbums) && fbAlbums.length > 0) {
+                    return applyLatestCloudAlbums(fbAlbums);
+                }
+            } catch (e) {
+                console.warn("Firebase fetchCloud error:", e);
+            }
+        }
+
+        // 2. Lấy từ Google Apps Script Cloud Database
         const cloudUrl = getGoogleDriveApiKey();
         if (cloudUrl && cloudUrl.startsWith('https://script.google.com/')) {
             try {
@@ -1012,6 +1030,30 @@ function testRun() {
         const map = getSelectionsMap();
         map[id] = selections;
         localStorage.setItem(STORAGE_KEY_SELECTIONS_MAP, JSON.stringify(map));
+
+        // Đồng bộ thời gian thực lên Firebase Realtime Database
+        if (typeof FirebaseModule !== 'undefined' && FirebaseModule.isReady()) {
+            FirebaseModule.saveAlbumSelections(id, selections);
+        }
+    }
+
+    function applyLatestCloudSelections(cloudSelections) {
+        if (!cloudSelections || typeof cloudSelections !== 'object') return;
+        const localMap = getSelectionsMap();
+        let changed = false;
+        Object.keys(cloudSelections).forEach(albumId => {
+            localMap[albumId] = cloudSelections[albumId];
+            changed = true;
+        });
+        if (changed) {
+            localStorage.setItem(STORAGE_KEY_SELECTIONS_MAP, JSON.stringify(localMap));
+            if (typeof renderAlbumManagePage === 'function' && App.getCurrentView() === 'manage-album') {
+                renderAlbumManagePage();
+            }
+            if (typeof App.updateSelectionUI === 'function' && App.getCurrentAlbumId()) {
+                App.updateSelectionUI();
+            }
+        }
     }
 
     function getSubmissionsMap() {
@@ -4524,6 +4566,7 @@ function testRun() {
         quickChangeAlbumLocation,
         quickChangeAlbumDate,
         applyLatestCloudAlbums,
+        applyLatestCloudSelections,
         mergeCloudAlbums: applyLatestCloudAlbums,
         extractGoogleDriveFileId,
         extractGoogleDriveFolderId,

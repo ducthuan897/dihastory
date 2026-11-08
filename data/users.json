@@ -1,0 +1,28 @@
+[
+  {
+    "id": "usr_thuan",
+    "username": "admin",
+    "password": "",
+    "customPassword": "",
+    "fullName": "Nguyễn Đức Thuận",
+    "email": "admin@dihastory.vn",
+    "role": "super_admin",
+    "roleName": "Chủ sở hữu & Super Admin",
+    "avatar": "https://lh3.googleusercontent.com/d/1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP=s120",
+    "active": true,
+    "createdAt": "2026-11-08T19:00:00"
+  },
+  {
+    "id": "usr_troly",
+    "username": "troly",
+    "password": "",
+    "customPassword": "",
+    "fullName": "Trợ lý Studio",
+    "email": "assistant@dihastory.vn",
+    "role": "editor",
+    "roleName": "Nhiếp ảnh gia phụ / Editor",
+    "avatar": "",
+    "active": true,
+    "createdAt": "2026-11-08T19:00:00"
+  }
+]

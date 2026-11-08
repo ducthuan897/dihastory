@@ -2234,40 +2234,8 @@
                     </div>
                 </div>
 
-                <div class="space-y-3 mb-6">
-                    <!-- User 1: Nguyễn Đức Thuận (Super Admin) -->
-                    <div class="p-3.5 rounded-2xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="relative">
-                                <div class="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-400">
-                                    <img src="https://lh3.googleusercontent.com/d/1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP=s120"
-                                         alt="Nguyễn Đức Thuận"
-                                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80';"
-                                         class="w-full h-full object-cover">
-                                </div>
-                                <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="font-bold text-zinc-900 text-sm truncate">Nguyễn Đức Thuận</div>
-                                <div class="text-[11px] text-zinc-500 truncate">admin@dihastory.vn • Chủ sở hữu Studio</div>
-                            </div>
-                        </div>
-                        <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold shrink-0">Super Admin</span>
-                    </div>
-
-                    <!-- User 2: Assistant Photographer -->
-                    <div class="p-3.5 rounded-2xl border border-zinc-200 bg-white flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-10 h-10 rounded-full bg-zinc-100 text-zinc-600 flex items-center justify-center font-bold text-sm">
-                                TH
-                            </div>
-                            <div class="min-w-0">
-                                <div class="font-bold text-zinc-900 text-sm truncate">Nhiếp ảnh gia phụ</div>
-                                <div class="text-[11px] text-zinc-500 truncate">assistant@dihastory.vn • Đăng tải & chọn ảnh</div>
-                            </div>
-                        </div>
-                        <span class="px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-700 text-[11px] font-semibold shrink-0">Editor</span>
-                    </div>
+                <div id="userManagerUsersListContainer" class="space-y-3 mb-6">
+                    <!-- Rendered dynamically by AuthModule.renderUserManagerModalList() -->
                 </div>
 
                 <div class="flex justify-end gap-2">
@@ -2300,10 +2268,15 @@
     </div>
 
     <!-- JAVASCRIPT MODULES INCLUDES -->
+    <!-- Firebase App & Realtime Database SDKs (Compat v9 for seamless script integration) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-db.js?v=20261108_24"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261108_23"></script>
-    <script src="js/admin.js?v=20261108_23"></script>
-    <script src="js/app.js?v=20261108_23"></script>
+    <script src="js/auth.js?v=20261108_24"></script>
+    <script src="js/admin.js?v=20261108_24"></script>
+    <script src="js/app.js?v=20261108_24"></script>
 </body>
 
 </html>
