@@ -1130,6 +1130,8 @@ const App = (function () {
         updateLightboxContent();
         // Reset zoom after image is set
         resetLightboxZoom(false);
+        _lbNaturalWidth = 0;
+        _lbNaturalHeight = 0;
     }
 
     function openLightboxWithPhotos(photosList, index, albumId) {
@@ -1143,6 +1145,8 @@ const App = (function () {
     function closeLightbox() {
         stopSlideshow();
         resetLightboxZoom(false);
+        _lbNaturalWidth = 0;
+        _lbNaturalHeight = 0;
         currentLightboxIndex = -1;
         document.getElementById('lightboxModal').classList.add('hidden');
         document.body.style.overflow = '';
@@ -1161,6 +1165,8 @@ const App = (function () {
         const img = document.getElementById('lightboxImage');
         // Reset transform & scale khi chuyển ảnh
         resetLightboxZoom(false);
+        _lbNaturalWidth = 0;
+        _lbNaturalHeight = 0;
 
         // Lấy trực tiếp URL ảnh gốc độ phân giải cao nhất (Original =s0 từ Google Drive)
         let bestQualityUrl = photo.url;
@@ -1252,6 +1258,8 @@ const App = (function () {
     function nextLightboxPhoto() {
         if (!currentFilteredPhotos.length) return;
         resetLightboxZoom(false);
+        _lbNaturalWidth = 0;
+        _lbNaturalHeight = 0;
         currentLightboxIndex = (currentLightboxIndex + 1) % currentFilteredPhotos.length;
         updateLightboxContent();
     }
@@ -1259,29 +1267,50 @@ const App = (function () {
     function prevLightboxPhoto() {
         if (!currentFilteredPhotos.length) return;
         resetLightboxZoom(false);
+        _lbNaturalWidth = 0;
+        _lbNaturalHeight = 0;
         currentLightboxIndex = (currentLightboxIndex - 1 + currentFilteredPhotos.length) % currentFilteredPhotos.length;
         updateLightboxContent();
     }
 
-    // ─── Lightbox Free Zoom / Pan ────────────────────────────────────────────────
+    // ─── Lightbox Free Zoom / Pan (Hardware Accelerated 60FPS) ───────────────────
+    let _lbRafId = null;
+    let _lbTargetScale = 1;
+    let _lbTargetPanX = 0;
+    let _lbTargetPanY = 0;
 
-    function _lbApplyTransform(animate) {
+    function _lbRenderTransform() {
         const img = document.getElementById('lightboxImage');
         if (!img) return;
-        img.style.transition = animate ? 'transform 0.12s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none';
         img.style.transform = `translate3d(${_lbPanX}px, ${_lbPanY}px, 0) scale(${_lbScale})`;
         img.style.cursor = _lbDragging ? 'grabbing' : (_lbScale > 1 ? 'grab' : 'default');
     }
 
+    function _lbApplyTransform(animate) {
+        if (!animate) {
+            _lbRenderTransform();
+            return;
+        }
+        // Smooth lerp / transition on double-click or button clicks
+        const img = document.getElementById('lightboxImage');
+        if (!img) return;
+        img.style.transition = 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)';
+        _lbRenderTransform();
+        setTimeout(() => {
+            if (img) img.style.transition = 'none';
+        }, 220);
+    }
+
     function resetLightboxZoom(animate) {
         _lbScale = 1; _lbPanX = 0; _lbPanY = 0;
+        _lbTargetScale = 1; _lbTargetPanX = 0; _lbTargetPanY = 0;
         isLightboxZoomed = false;
         const img = document.getElementById('lightboxImage');
         if (img) {
             img.classList.remove('lightbox-img-zoomed');
             img.style.cursor = 'default';
         }
-        _lbApplyTransform(animate !== false);
+        _lbApplyTransform(animate);
     }
 
     function zoomInLightbox() {
@@ -1315,22 +1344,36 @@ const App = (function () {
         }
     }
 
+    let _lbNaturalWidth = 0;
+    let _lbNaturalHeight = 0;
+
     function _lbClampPan() {
-        const img = document.getElementById('lightboxImage');
-        if (!img || _lbScale <= 1) { _lbPanX = 0; _lbPanY = 0; return; }
-        const rect = img.getBoundingClientRect();
-        const nw = rect.width / _lbScale;
-        const nh = rect.height / _lbScale;
-        const maxX = (nw * (_lbScale - 1)) / 2;
-        const maxY = (nh * (_lbScale - 1)) / 2;
+        if (_lbScale <= 1) { _lbPanX = 0; _lbPanY = 0; return; }
+        if (!_lbNaturalWidth || !_lbNaturalHeight) {
+            const img = document.getElementById('lightboxImage');
+            if (img) {
+                _lbNaturalWidth = img.offsetWidth || 800;
+                _lbNaturalHeight = img.offsetHeight || 600;
+            }
+        }
+        const maxX = (_lbNaturalWidth * (_lbScale - 1)) / 2;
+        const maxY = (_lbNaturalHeight * (_lbScale - 1)) / 2;
         _lbPanX = Math.max(-maxX, Math.min(maxX, _lbPanX));
         _lbPanY = Math.max(-maxY, Math.min(maxY, _lbPanY));
     }
 
-    function _lbZoomToward(clientX, clientY, newScale, skipAnim) {
+    function _lbZoomToward(clientX, clientY, newScale, animate) {
         const img = document.getElementById('lightboxImage');
         if (!img) return;
         newScale = Math.max(LB_MIN_SCALE, Math.min(LB_MAX_SCALE, newScale));
+        if (newScale === _lbScale) return;
+
+        // Lưu kích thước cơ sở unscaled 1 lần
+        if (!_lbNaturalWidth || !_lbNaturalHeight) {
+            _lbNaturalWidth = img.offsetWidth;
+            _lbNaturalHeight = img.offsetHeight;
+        }
+
         const rect = img.getBoundingClientRect();
         const imgCx = rect.left + rect.width / 2;
         const imgCy = rect.top + rect.height / 2;
@@ -1342,36 +1385,39 @@ const App = (function () {
         _lbScale = newScale;
         isLightboxZoomed = _lbScale > 1.05;
         _lbClampPan();
-        _lbApplyTransform(!skipAnim);
+
+        if (animate) {
+            _lbApplyTransform(true);
+        } else {
+            // Khi cuộn chuột: render qua requestAnimationFrame ngay trong frame tiếp theo
+            if (!_lbRafId) {
+                _lbRafId = requestAnimationFrame(() => {
+                    _lbRenderTransform();
+                    _lbRafId = null;
+                });
+            }
+        }
     }
 
     function setupLightboxZoom() {
         const img = document.getElementById('lightboxImage');
         if (!img) return;
 
-        // ── Mouse wheel (cuộn chuột để zoom) ──────────────────────────────
-        img.addEventListener('wheel', (e) => {
+        // ── Mouse wheel (cuộn chuột để zoom mượt tức thì) ──────────────────────────
+        const onWheelZoom = (e) => {
+            if (currentLightboxIndex < 0) return;
             e.preventDefault();
             e.stopPropagation();
-            // Tỷ lệ zoom mượt mà, bước nhỏ liên tục từ bé đến lớn
-            const step = Math.min(Math.max(Math.abs(e.deltaY), 20), 100);
-            const zoomFactor = 1 + (step * 0.0015);
-            const factor = e.deltaY < 0 ? zoomFactor : (1 / zoomFactor);
+            // Hệ số zoom cố định, vừa phải mỗi nấc cuộn để mắt bắt kịp mượt mà
+            const factor = e.deltaY < 0 ? 1.15 : (1 / 1.15);
             _lbZoomToward(e.clientX, e.clientY, _lbScale * factor, false);
-        }, { passive: false });
+        };
 
-        // Bắt wheel trên cả vùng container nền đen xung quanh ảnh để cuộn chuột là zoom mượt ngay
+        img.addEventListener('wheel', onWheelZoom, { passive: false });
+
         const container = img.parentElement;
         if (container) {
-            container.addEventListener('wheel', (e) => {
-                if (currentLightboxIndex < 0) return;
-                e.preventDefault();
-                e.stopPropagation();
-                const step = Math.min(Math.max(Math.abs(e.deltaY), 20), 100);
-                const zoomFactor = 1 + (step * 0.0015);
-                const factor = e.deltaY < 0 ? zoomFactor : (1 / zoomFactor);
-                _lbZoomToward(e.clientX, e.clientY, _lbScale * factor, false);
-            }, { passive: false });
+            container.addEventListener('wheel', onWheelZoom, { passive: false });
         }
 
         // ── Mouse drag / pan ───────────────────────────────────────────────
