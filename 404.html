@@ -21,7 +21,7 @@
                 // Save clean path into sessionStorage so app.js can restore clean URL in address bar
                 sessionStorage.setItem("spa_clean_path", sub);
                 var searchParam = search ? ("&" + search.substring(1)) : "";
-                var target = repo + "/?album=" + encodeURIComponent(sub) + searchParam + (hash ? hash : "");
+                var target = repo + "/?album_path=" + encodeURIComponent(sub) + searchParam + (hash ? hash : "");
                 window.location.replace(target);
             } else {
                 window.location.replace(repo + "/" + search + hash);

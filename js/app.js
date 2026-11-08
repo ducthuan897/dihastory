@@ -103,11 +103,22 @@ const App = (function () {
         }, 15000);
     }
 
+    function parsePathRouting(rawPath) {
+        if (!rawPath) return { albumSlug: null, photoCode: null };
+        const parts = decodeURIComponent(rawPath).split('/').filter(Boolean);
+        if (!parts.length) return { albumSlug: null, photoCode: null };
+        const albumSlug = parts[0];
+        const photoCode = parts.length > 1 ? parts.slice(1).join('/') : null;
+        return { albumSlug, photoCode };
+    }
+
     function handleUrlRouting(skipPush) {
         const params = new URLSearchParams(window.location.search);
         let albumParam = params.get('album');
+        let albumPathParam = params.get('album_path');
         const viewParam = params.get('view');
         const modeParam = params.get('mode');
+        let photoCodeParam = params.get('photo');
 
         // Phân biệt chế độ xem: Khách chọn ảnh (client) vs Trưng bày công khai (showcase)
         if (modeParam === 'client' || params.get('client') === '1' || params.get('select') === '1') {
@@ -117,44 +128,65 @@ const App = (function () {
         }
 
         // 1. Check if redirected from GitHub Pages 404.html
-        const savedCleanPath = sessionStorage.getItem('spa_clean_path');
+        let savedCleanPath = sessionStorage.getItem('spa_clean_path') || albumPathParam;
         if (savedCleanPath) {
             sessionStorage.removeItem('spa_clean_path');
-            const found = AdminModule.getAlbumById(savedCleanPath);
-            if (found && found.id === savedCleanPath) {
-                currentAlbumId = found.id;
-                showView('album', true);
-                let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-                const cleanUrl = isClientMode ? `${base}/${savedCleanPath}?mode=client` : `${base}/${savedCleanPath}`;
-                window.history.replaceState({ view: 'album', albumId: currentAlbumId, isClientMode }, '', cleanUrl);
-                return;
-            } else {
-                // If opening on a new device, sync from cloud/data and load
-                AdminModule.fetchCloudOrStaticAlbums().then(() => {
-                    const retry = AdminModule.getAlbumById(savedCleanPath);
-                    if (retry && retry.id === savedCleanPath) {
-                        currentAlbumId = retry.id;
-                        showView('album', true);
-                        let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-                        const cleanUrl = isClientMode ? `${base}/${savedCleanPath}?mode=client` : `${base}/${savedCleanPath}`;
-                        window.history.replaceState({ view: 'album', albumId: currentAlbumId, isClientMode }, '', cleanUrl);
+            const { albumSlug, photoCode } = parsePathRouting(savedCleanPath);
+            if (photoCode) photoCodeParam = photoCode;
+
+            const executeRestore = (targetSlug) => {
+                const found = AdminModule.getAlbumById(targetSlug);
+                if (found) {
+                    currentAlbumId = found.id;
+                    showView('album', true);
+                    let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+                    if (window.location.hostname.includes('github.io')) {
+                        base = '/dutustory';
                     }
-                });
-            }
+                    if (photoCodeParam) {
+                        const targetPhotoIdx = found.photos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
+                        if (targetPhotoIdx >= 0) {
+                            setTimeout(() => openLightbox(targetPhotoIdx), 150);
+                        }
+                    }
+                    const cleanUrl = isClientMode
+                        ? (photoCodeParam ? `${base}/${targetSlug}/${encodeURIComponent(photoCodeParam)}?mode=client` : `${base}/${targetSlug}?mode=client`)
+                        : (photoCodeParam ? `${base}/${targetSlug}/${encodeURIComponent(photoCodeParam)}` : `${base}/${targetSlug}`);
+                    window.history.replaceState({ view: 'album', albumId: currentAlbumId, isClientMode, photoCode: photoCodeParam }, '', cleanUrl);
+                    return true;
+                }
+                return false;
+            };
+
+            if (executeRestore(albumSlug)) return;
+
+            // If opening on a new device, sync from cloud/data and load
+            AdminModule.fetchCloudOrStaticAlbums().then(() => {
+                executeRestore(albumSlug);
+            });
+            return;
         }
 
-        // 2. Check if clean URL path /dutustory/<album-slug> or hash was visited
+        // 2. Check if clean URL path /dutustory/<album-slug>/<photo-code> or hash was visited
         if (!albumParam && !viewParam) {
             const rawPath = window.location.pathname.replace(/^\/dutustory\/?/i, '').replace(/^\/+|\/+$/g, '');
             if (rawPath && !rawPath.includes('.') && rawPath !== 'index.html') {
-                const found = AdminModule.getAlbumById(decodeURIComponent(rawPath));
-                if (found) albumParam = found.id;
+                const { albumSlug, photoCode } = parsePathRouting(rawPath);
+                const found = AdminModule.getAlbumById(albumSlug);
+                if (found) {
+                    albumParam = found.id;
+                    if (photoCode) photoCodeParam = photoCode;
+                }
             }
             if (!albumParam && window.location.hash) {
                 const cleanHash = window.location.hash.replace(/^#\/?/, '').trim();
                 if (cleanHash && !cleanHash.startsWith('view=')) {
-                    const found = AdminModule.getAlbumById(decodeURIComponent(cleanHash));
-                    if (found) albumParam = found.id;
+                    const { albumSlug, photoCode } = parsePathRouting(cleanHash);
+                    const found = AdminModule.getAlbumById(albumSlug);
+                    if (found) {
+                        albumParam = found.id;
+                        if (photoCode) photoCodeParam = photoCode;
+                    }
                 }
             }
         }
@@ -171,6 +203,12 @@ const App = (function () {
                 currentAlbumId = found.id;
             }
             showView('album', skipPush);
+            if (photoCodeParam && found) {
+                const targetPhotoIdx = found.photos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
+                if (targetPhotoIdx >= 0) {
+                    setTimeout(() => openLightbox(targetPhotoIdx), 150);
+                }
+            }
         } else if (viewParam === 'admin') {
             showView('admin', skipPush);
         } else {
@@ -1173,6 +1211,34 @@ const App = (function () {
         resetLightboxZoom(false);
         _lbNaturalWidth = 0;
         _lbNaturalHeight = 0;
+
+        // Cập nhật URL đường dẫn hiển thị mã ảnh / tên ảnh khi đang mở xem ảnh
+        syncLightboxUrl();
+    }
+
+    function syncLightboxUrl() {
+        const photo = currentFilteredPhotos[currentLightboxIndex];
+        if (!photo) return;
+        let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+        if (window.location.hostname.includes('github.io')) {
+            base = '/dutustory';
+        }
+        const photoCode = encodeURIComponent(photo.code || photo.id);
+        const url = isClientMode
+            ? `${base}/${encodeURIComponent(currentAlbumId)}/${photoCode}?mode=client`
+            : `${base}/${encodeURIComponent(currentAlbumId)}/${photoCode}`;
+        window.history.replaceState({ view: 'album', albumId: currentAlbumId, isClientMode, photoCode }, '', url);
+    }
+
+    function syncAlbumCloseUrl() {
+        let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+        if (window.location.hostname.includes('github.io')) {
+            base = '/dutustory';
+        }
+        const url = isClientMode
+            ? `${base}/${encodeURIComponent(currentAlbumId)}?mode=client`
+            : `${base}/${encodeURIComponent(currentAlbumId)}`;
+        window.history.replaceState({ view: 'album', albumId: currentAlbumId, isClientMode }, '', url);
     }
 
     function openLightboxWithPhotos(photosList, index, albumId) {
@@ -1191,6 +1257,7 @@ const App = (function () {
         currentLightboxIndex = -1;
         document.getElementById('lightboxModal').classList.add('hidden');
         document.body.style.overflow = '';
+        syncAlbumCloseUrl();
     }
 
     // Hàm trích xuất fileId của Google Drive từ mọi định dạng link ảnh
@@ -1326,6 +1393,7 @@ const App = (function () {
         _lbNaturalHeight = 0;
         currentLightboxIndex = (currentLightboxIndex + 1) % currentFilteredPhotos.length;
         updateLightboxContent();
+        syncLightboxUrl();
     }
 
     function prevLightboxPhoto() {
@@ -1335,6 +1403,7 @@ const App = (function () {
         _lbNaturalHeight = 0;
         currentLightboxIndex = (currentLightboxIndex - 1 + currentFilteredPhotos.length) % currentFilteredPhotos.length;
         updateLightboxContent();
+        syncLightboxUrl();
     }
 
     // ─── Lightbox Free Zoom / Pan (Hardware Accelerated 60FPS) ───────────────────
