@@ -493,6 +493,72 @@ const AuthModule = (function () {
         }).join('');
     }
 
+    function updateAvatarPreviewInModal(avatarUrl, displayName) {
+        const previewWrap = document.getElementById('editUserAvatarPreviewWrap');
+        const img = document.getElementById('editUserAvatarImg');
+        const text = document.getElementById('editUserAvatarText');
+        if (!previewWrap || !img || !text) return;
+
+        if (avatarUrl) {
+            img.src = avatarUrl;
+            img.classList.remove('hidden');
+            text.classList.add('hidden');
+        } else {
+            img.src = '';
+            img.classList.add('hidden');
+            text.classList.remove('hidden');
+            text.innerText = (displayName || 'UN').slice(0, 2).toUpperCase();
+        }
+    }
+
+    function handleAvatarFileSelect(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            alert('Vui lòng chọn file hình ảnh (JPG, PNG, WEBP...)');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const rawDataUrl = e.target.result;
+            // Nén ảnh avatar nhỏ gọn (tối đa 250x250) để lưu database nhẹ và nhanh
+            const tempImg = new Image();
+            tempImg.onload = function () {
+                const canvas = document.createElement('canvas');
+                const MAX_SIZE = 240;
+                let width = tempImg.width;
+                let height = tempImg.height;
+
+                if (width > height) {
+                    if (width > MAX_SIZE) {
+                        height = Math.round((height * MAX_SIZE) / width);
+                        width = MAX_SIZE;
+                    }
+                } else {
+                    if (height > MAX_SIZE) {
+                        width = Math.round((width * MAX_SIZE) / height);
+                        height = MAX_SIZE;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(tempImg, 0, 0, width, height);
+
+                const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                const avatarInput = document.getElementById('editUserAvatar');
+                if (avatarInput) avatarInput.value = optimizedDataUrl;
+
+                updateAvatarPreviewInModal(optimizedDataUrl, '');
+            };
+            tempImg.src = rawDataUrl;
+        };
+        reader.readAsDataURL(file);
+    }
+
     function openAddUserModal() {
         const currentUser = getCurrentUser();
         const curLevel = currentUser ? getRoleLevel(currentUser.role) : 1;
@@ -511,6 +577,7 @@ const AuthModule = (function () {
         document.getElementById('editUserFullName').value = '';
         document.getElementById('editUserEmail').value = '';
         document.getElementById('editUserAvatar').value = '';
+        updateAvatarPreviewInModal('', '');
         document.getElementById('editUserPassword').value = '';
 
         // Tùy chọn vai trò phân quyền
@@ -562,6 +629,7 @@ const AuthModule = (function () {
         document.getElementById('editUserFullName').value = targetUser.fullName || '';
         document.getElementById('editUserEmail').value = targetUser.email || '';
         document.getElementById('editUserAvatar').value = targetUser.avatar || '';
+        updateAvatarPreviewInModal(targetUser.avatar, targetUser.fullName || targetUser.username);
         document.getElementById('editUserPassword').value = '';
 
         // Phân quyền cho dropdown vai trò
@@ -634,6 +702,10 @@ const AuthModule = (function () {
                     if (users[idx].username === 'admin') {
                         localStorage.setItem(STORAGE_KEY_PASSWORD, hashedPass);
                     }
+                }
+                if (isSelf) {
+                    localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(users[idx]));
+                    updateProfileDropdownUI();
                 }
             }
         } else {
@@ -764,6 +836,7 @@ const AuthModule = (function () {
         deleteUser,
         getCurrentUser,
         applyLatestCloudUsers,
-        getUsersList
+        getUsersList,
+        handleAvatarFileSelect
     };
 })();

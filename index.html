@@ -1649,10 +1649,30 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Link Ảnh Đại Diện (Avatar)</label>
-                        <input type="url" id="editUserAvatar"
-                            placeholder="https://..."
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-blue-600">
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Ảnh Đại Diện (Avatar)</label>
+                        <input type="hidden" id="editUserAvatar" value="">
+                        
+                        <div class="flex items-center gap-3.5 p-3 rounded-2xl border border-zinc-200 bg-zinc-50/60">
+                            <!-- Preview Avatar -->
+                            <div class="relative shrink-0">
+                                <div id="editUserAvatarPreviewWrap" class="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-bold text-lg shadow-inner ring-2 ring-white">
+                                    <span id="editUserAvatarText">UN</span>
+                                    <img id="editUserAvatarImg" src="" alt="Avatar" class="w-full h-full object-cover hidden">
+                                </div>
+                            </div>
+
+                            <!-- Upload Button & File Input -->
+                            <div class="space-y-1.5 flex-1 min-w-0">
+                                <label for="editUserAvatarFileInput"
+                                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-200 text-xs font-semibold cursor-pointer shadow-xs transition">
+                                    <i class="fa-solid fa-arrow-up-from-bracket text-blue-600"></i>
+                                    <span>Tải ảnh từ máy tính</span>
+                                </label>
+                                <input type="file" id="editUserAvatarFileInput" accept="image/*" class="sr-only"
+                                    onchange="AuthModule.handleAvatarFileSelect(event)">
+                                <p class="text-[11px] text-zinc-400 truncate">Hỗ trợ JPG, PNG, WEBP (tự động tối ưu)</p>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
@@ -1702,9 +1722,9 @@
     <script src="js/firebase-db.js?v=20261108_25"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261108_35"></script>
-    <script src="js/admin.js?v=20261108_35"></script>
-    <script src="js/app.js?v=20261108_35"></script>
+    <script src="js/auth.js?v=20261108_36"></script>
+    <script src="js/admin.js?v=20261108_36"></script>
+    <script src="js/app.js?v=20261108_36"></script>
 </body>
 
 </html>
