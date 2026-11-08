@@ -92,12 +92,6 @@
                             <i class="fa-solid fa-heart text-rose-600"></i>
                             <span>Đã chọn: <strong id="navSelectedCounter">0/10</strong></span>
                         </button>
-
-                        <button type="button" onclick="App.openSubmitSelectionModal()"
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                            <i class="fa-regular fa-circle-check text-xs"></i>
-                            <span id="navSubmitBtnLabel">Hoàn tất chọn ảnh</span>
-                        </button>
                     </div>
 
                     <!-- Guest Photographer Login State -->
@@ -196,16 +190,6 @@
                         <i class="fa-regular fa-clock text-emerald-400 animate-pulse"></i>
                         <span>Hạn chọn ảnh còn: <strong id="albumCountdownTimerText"
                                 class="font-mono text-white">--</strong></span>
-                    </div>
-
-                    <div id="albumClientShareLinkWrap" class="flex items-center gap-2 min-w-0">
-                        <span class="text-zinc-400 hidden sm:inline">Link riêng của Album:</span>
-                        <code id="albumClientLinkDisplay"
-                            class="font-mono text-[11px] bg-zinc-800 text-amber-300 px-2.5 py-0.5 rounded border border-zinc-700 truncate max-w-[220px] sm:max-w-sm"></code>
-                        <button type="button" onclick="App.copyCurrentAlbumLink()"
-                            class="bg-white/15 hover:bg-white/25 text-white px-2.5 py-1 rounded-md text-[11px] font-semibold transition shrink-0">
-                            <i class="fa-regular fa-copy mr-1"></i>Copy Link
-                        </button>
                     </div>
                 </div>
             </div>
