@@ -100,17 +100,95 @@
                         <i class="fa-solid fa-user-shield mr-1.5"></i>Admin
                     </button>
 
-                    <!-- Authenticated Photographer Controls -->
-                    <div id="navAdminControls" class="hidden flex items-center space-x-1.5">
-                        <button type="button" onclick="App.showView('admin')"
-                            class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center shadow-sm">
-                            <i class="fa-solid fa-folder-tree mr-1.5"></i>Quản trị
+                    <!-- Authenticated Photographer Profile Menu (Shotpik / Modern Dropdown Style) -->
+                    <div id="navAdminControls" class="relative hidden">
+                        <!-- Avatar Trigger Button with chevron badge -->
+                        <button id="adminProfileMenuBtn" type="button" onclick="AuthModule.toggleProfileDropdown(event)"
+                            class="relative flex items-center focus:outline-none group p-0.5 rounded-full transition hover:ring-2 hover:ring-blue-400">
+                            <div class="w-10 h-10 rounded-full ring-2 ring-blue-500 overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-400 flex items-center justify-center text-white shadow-md">
+                                <img src="https://lh3.googleusercontent.com/d/1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP=s120"
+                                     alt="Nguyễn Đức Thuận"
+                                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80';"
+                                     class="w-full h-full object-cover">
+                            </div>
+                            <!-- Small Chevron Down Circle Badge at bottom right -->
+                            <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-white border border-zinc-200 rounded-full flex items-center justify-center text-[9px] text-zinc-600 shadow-sm group-hover:text-blue-600">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </span>
                         </button>
-                        <button type="button" onclick="AuthModule.logout()"
-                            class="bg-zinc-100 hover:bg-zinc-200 text-zinc-700 p-2 rounded-full text-xs transition"
-                            title="Đăng xuất Admin">
-                            <i class="fa-solid fa-right-from-bracket"></i>
-                        </button>
+
+                        <!-- Dropdown Menu Box -->
+                        <div id="adminProfileDropdown"
+                             class="hidden absolute right-0 mt-2.5 w-72 sm:w-80 bg-white rounded-3xl shadow-2xl border border-zinc-100 py-3 z-50 text-left animate-fadeIn">
+                            <!-- User Header Card -->
+                            <div onclick="App.showView('admin'); AuthModule.closeProfileDropdown()"
+                                class="px-4 py-3 mx-2 rounded-2xl hover:bg-zinc-50 cursor-pointer transition flex items-center gap-3.5 group">
+                                <div class="relative shrink-0">
+                                    <div class="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-400 text-white shadow-sm ring-1 ring-blue-100">
+                                        <img src="https://lh3.googleusercontent.com/d/1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP=s120"
+                                             alt="Nguyễn Đức Thuận"
+                                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80';"
+                                             class="w-full h-full object-cover">
+                                    </div>
+                                    <!-- Online Active Green Dot Indicator -->
+                                    <span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-bold text-zinc-900 text-sm sm:text-base leading-tight truncate">Nguyễn Đức Thuận</div>
+                                    <div class="text-xs font-semibold text-blue-600 flex items-center gap-1.5 mt-0.5">
+                                        <i class="fa-solid fa-shield-halved text-[11px]"></i>
+                                        <span>Mở Trang Quản Trị</span>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-xs text-zinc-400 group-hover:text-zinc-700 transition"></i>
+                            </div>
+
+                            <div class="my-2 border-t border-zinc-100"></div>
+
+                            <!-- Menu Items -->
+                            <div class="px-2 space-y-1">
+                                <!-- Thay đổi mật khẩu -->
+                                <button type="button" onclick="AuthModule.openChangePasswordModal()"
+                                    class="w-full px-3 py-2.5 rounded-2xl hover:bg-zinc-50 text-left transition flex items-center gap-3.5 group">
+                                    <div class="w-9 h-9 rounded-full bg-zinc-100 group-hover:bg-blue-50 text-zinc-800 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition">
+                                        <i class="fa-solid fa-key text-xs"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs sm:text-sm font-bold text-zinc-900 leading-tight">Thay đổi mật khẩu</div>
+                                        <div class="text-[11px] text-zinc-500 leading-tight mt-0.5">Cập nhật mật khẩu bảo mật</div>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right text-xs text-zinc-300 group-hover:text-zinc-600 transition"></i>
+                                </button>
+
+                                <!-- Quản lý người dùng -->
+                                <button type="button" onclick="AuthModule.openUserManagerModal()"
+                                    class="w-full px-3 py-2.5 rounded-2xl hover:bg-zinc-50 text-left transition flex items-center gap-3.5 group">
+                                    <div class="w-9 h-9 rounded-full bg-zinc-100 group-hover:bg-blue-50 text-zinc-800 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition">
+                                        <i class="fa-solid fa-users-gear text-xs"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs sm:text-sm font-bold text-zinc-900 leading-tight">Quản lý người dùng</div>
+                                        <div class="text-[11px] text-zinc-500 leading-tight mt-0.5">Danh sách & phân quyền</div>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right text-xs text-zinc-300 group-hover:text-zinc-600 transition"></i>
+                                </button>
+                            </div>
+
+                            <div class="my-2 border-t border-zinc-100"></div>
+
+                            <!-- Đăng xuất -->
+                            <div class="px-2">
+                                <button type="button" onclick="AuthModule.logout(); AuthModule.closeProfileDropdown()"
+                                    class="w-full px-3 py-2.5 rounded-2xl hover:bg-rose-50 text-left transition flex items-center gap-3.5 group">
+                                    <div class="w-9 h-9 rounded-full bg-zinc-100 group-hover:bg-rose-100 text-zinc-700 group-hover:text-rose-600 flex items-center justify-center shrink-0 transition">
+                                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs sm:text-sm font-bold text-zinc-900 group-hover:text-rose-600 leading-tight">Đăng xuất</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2082,6 +2160,124 @@
         </div>
     </div>
 
+    <!-- 7. CHANGE PASSWORD MODAL -->
+    <div id="changePasswordModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm" onclick="AuthModule.closeChangePasswordModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-8 z-10">
+                <button type="button" onclick="AuthModule.closeChangePasswordModal()"
+                    class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl shadow-sm border border-blue-100">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-zinc-900">Thay Đổi Mật Khẩu</h3>
+                    <p class="text-xs text-zinc-500 mt-1">Cập nhật mật khẩu bảo mật cho tài khoản Quản trị Studio</p>
+                </div>
+
+                <div id="changePasswordAlert" class="hidden mb-4 p-3 rounded-xl bg-rose-50 text-rose-600 text-xs border border-rose-200"></div>
+
+                <form onsubmit="AuthModule.handleChangePasswordSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Mật khẩu hiện tại</label>
+                        <input type="password" id="currentPasswordInput" required
+                            placeholder="Nhập mật khẩu hiện tại..."
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Mật khẩu mới</label>
+                        <input type="password" id="newPasswordInput" required minlength="6"
+                            placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)..."
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-700 uppercase mb-1">Xác nhận mật khẩu mới</label>
+                        <input type="password" id="confirmNewPasswordInput" required minlength="6"
+                            placeholder="Nhập lại mật khẩu mới..."
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 outline-none text-sm focus:border-blue-600">
+                    </div>
+
+                    <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition text-sm shadow-md">
+                        Cập Nhật Mật Khẩu
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. USER MANAGEMENT MODAL -->
+    <div id="userManagerModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm" onclick="AuthModule.closeUserManagerModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 sm:p-7 z-10">
+                <button type="button" onclick="AuthModule.closeUserManagerModal()"
+                    class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-11 h-11 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-lg shadow-sm border border-blue-100">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-zinc-900 leading-tight">Quản Lý Người Dùng & Phân Quyền</h3>
+                        <p class="text-xs text-zinc-500">Danh sách tài khoản quản trị và phân quyền hệ thống</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 mb-6">
+                    <!-- User 1: Nguyễn Đức Thuận (Super Admin) -->
+                    <div class="p-3.5 rounded-2xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="relative">
+                                <div class="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-400">
+                                    <img src="https://lh3.googleusercontent.com/d/1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP=s120"
+                                         alt="Nguyễn Đức Thuận"
+                                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80';"
+                                         class="w-full h-full object-cover">
+                                </div>
+                                <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="font-bold text-zinc-900 text-sm truncate">Nguyễn Đức Thuận</div>
+                                <div class="text-[11px] text-zinc-500 truncate">admin@dihastory.vn • Chủ sở hữu Studio</div>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold shrink-0">Super Admin</span>
+                    </div>
+
+                    <!-- User 2: Assistant Photographer -->
+                    <div class="p-3.5 rounded-2xl border border-zinc-200 bg-white flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 rounded-full bg-zinc-100 text-zinc-600 flex items-center justify-center font-bold text-sm">
+                                TH
+                            </div>
+                            <div class="min-w-0">
+                                <div class="font-bold text-zinc-900 text-sm truncate">Nhiếp ảnh gia phụ</div>
+                                <div class="text-[11px] text-zinc-500 truncate">assistant@dihastory.vn • Đăng tải & chọn ảnh</div>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-700 text-[11px] font-semibold shrink-0">Editor</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="AuthModule.closeUserManagerModal()"
+                        class="px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICATION -->
     <div id="toast"
         class="fixed bottom-5 right-5 z-50 hidden bg-zinc-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 text-sm border border-zinc-700">
@@ -2100,9 +2296,9 @@
 
     <!-- JAVASCRIPT MODULES INCLUDES -->
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261108_21"></script>
-    <script src="js/admin.js?v=20261108_21"></script>
-    <script src="js/app.js?v=20261108_21"></script>
+    <script src="js/auth.js?v=20261108_22"></script>
+    <script src="js/admin.js?v=20261108_22"></script>
+    <script src="js/app.js?v=20261108_22"></script>
 </body>
 
 </html>
