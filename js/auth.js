@@ -566,7 +566,7 @@ const AuthModule = (function () {
 
         const modal = document.getElementById('userEditModal');
         const title = document.getElementById('userEditModalTitle');
-        if (title) title.innerText = 'Thêm Người Dùng Mới';
+        if (title) title.innerText = 'Thêm Người Dùng';
         document.getElementById('editUserId').value = '';
         document.getElementById('editUserUsername').value = '';
         document.getElementById('editUserUsername').removeAttribute('readonly');
@@ -613,7 +613,7 @@ const AuthModule = (function () {
         const title = document.getElementById('userEditModalTitle');
         const isSelf = currentUser && (currentUser.id === targetUser.id || currentUser.username === targetUser.username);
 
-        if (title) title.innerText = isSelf ? `Chỉnh sửa thông tin cá nhân (${targetUser.fullName})` : `Chỉnh Sửa: ${targetUser.fullName}`;
+        if (title) title.innerText = isSelf ? 'Chỉnh sửa thông tin cá nhân' : `Chỉnh Sửa: ${targetUser.fullName}`;
 
         document.getElementById('editUserId').value = targetUser.id;
         document.getElementById('editUserUsername').value = targetUser.username;
