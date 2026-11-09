@@ -2024,13 +2024,19 @@ const App = (function () {
         const codesEl = document.getElementById('submitModalCodesPreview');
         const countEl = document.getElementById('submitModalCountBadge');
         const nameInput = document.getElementById('submitClientName');
+        const phoneInput = document.getElementById('submitClientPhone');
         const lockNotice = document.getElementById('submitModalAutoLockNotice');
 
         if (countEl) {
             countEl.innerText = `${selectedPhotos.length} / ${album.selectionLimit || '∞'} ảnh đã chọn`;
         }
         if (nameInput) {
-            nameInput.value = album.clientName || '';
+            const savedName = localStorage.getItem(`dutustory_client_name_${album.id}`) || localStorage.getItem('dutustory_client_name');
+            nameInput.value = savedName || album.clientName || '';
+        }
+        if (phoneInput) {
+            const savedPhone = localStorage.getItem(`dutustory_client_phone_${album.id}`) || localStorage.getItem('dutustory_client_phone');
+            phoneInput.value = savedPhone || '';
         }
         if (lockNotice) {
             lockNotice.classList.toggle('hidden', !album.completeLockEnabled);
@@ -2074,8 +2080,32 @@ const App = (function () {
             return;
         }
 
-        const clientName = document.getElementById('submitClientName').value.trim() || album.clientName;
-        const clientPhone = document.getElementById('submitClientPhone').value.trim() || "Khách hàng";
+        const clientName = document.getElementById('submitClientName').value.trim() || album.clientName || "Khách hàng";
+        const rawPhone = document.getElementById('submitClientPhone').value.trim();
+
+        // Kiểm tra định dạng số điện thoại Việt Nam chuẩn (10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)
+        const cleanPhone = rawPhone.replace(/[\s\.\-\(\)]/g, '');
+        const vnPhoneRegex = /^(0|\+84)(3[2-9]|5[25689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
+        if (!vnPhoneRegex.test(cleanPhone)) {
+            showToast("Vui lòng nhập đúng định dạng số điện thoại Việt Nam (10 số, VD: 0909123456)!", "error");
+            document.getElementById('submitClientPhone').focus();
+            return;
+        }
+
+        const clientPhone = cleanPhone.startsWith('+84') ? '0' + cleanPhone.slice(3) : cleanPhone;
+
+        // Lưu lại thông tin vào LocalStorage để khách không cần nhập lại khi chọn thêm ảnh
+        try {
+            localStorage.setItem(`dutustory_client_phone_${album.id}`, clientPhone);
+            localStorage.setItem('dutustory_client_phone', clientPhone);
+            if (clientName) {
+                localStorage.setItem(`dutustory_client_name_${album.id}`, clientName);
+                localStorage.setItem('dutustory_client_name', clientName);
+            }
+        } catch (e) {
+            console.warn("Storage error", e);
+        }
+
         const generalNote = document.getElementById('submitGeneralNote').value.trim();
 
         const now = new Date();
