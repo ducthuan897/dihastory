@@ -390,31 +390,9 @@
                                     <div class="space-y-1.5">
                                         <div class="flex items-center justify-between gap-3">
                                             <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
-                                            <!-- Toggle Switch -->
-                                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                            <!-- Toggle Switch căn giữa dọc -->
+                                            <label class="relative inline-flex items-center cursor-pointer shrink-0 self-center">
                                                 <input type="checkbox" id="createAlbumReminderToggle"
-                                                    onchange="AdminModule.handleCreateModalToggleChange()" class="sr-only peer">
-                                                <div
-                                                    class="w-10 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-600">
-                                                </div>
-                                            </label>
-                                        </div>
-
-                                        <div id="createAlbumReminderExpand" class="hidden pt-1.5 border-t border-sky-100">
-                                            <textarea id="createAlbumReminderText" rows="2"
-                                                placeholder="Nhập nội dung lời nhắc gửi tới khách hàng (VD: Bạn chọn giúp Studio 15 tấm trước ngày 15 nhé)..."
-                                                class="w-full p-2 rounded-xl bg-white border border-sky-200 text-xs outline-none focus:border-sky-500"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <div class="border-t border-zinc-100"></div>
-
-                                    <!-- Hạn chọn ảnh -->
-                                    <div class="space-y-1.5">
-                                        <div class="flex items-center justify-between gap-2">
-                                            <span class="text-xs font-bold text-zinc-800 block">Hạn chọn ảnh (Đếm ngược)</span>
-                                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                                                <input type="checkbox" id="createAlbumDeadlineToggle"
                                                     onchange="AdminModule.handleCreateModalToggleChange()" class="sr-only peer">
                                                 <div
                                                     class="w-10 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600">
@@ -422,25 +400,38 @@
                                             </label>
                                         </div>
 
-                                        <div id="createAlbumDeadlineExpand"
-                                            class="hidden pt-1.5 border-t border-zinc-100 grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label class="block text-[10px] font-semibold text-zinc-600 mb-0.5">Thời hạn</label>
-                                                <input type="datetime-local" id="createAlbumDeadlineInput"
-                                                    class="w-full px-2 py-1 rounded-lg border border-zinc-300 text-xs outline-none">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[10px] font-semibold text-zinc-600 mb-0.5">Số ảnh chọn</label>
-                                                <input type="number" min="0" id="createAlbumLimitInput" value="15"
-                                                    class="w-full px-2 py-1 rounded-lg border border-zinc-300 text-xs outline-none">
-                                            </div>
+                                        <div id="createAlbumReminderExpand" class="hidden pt-1.5 border-t border-sky-100">
+                                            <textarea id="createAlbumReminderText" rows="2"
+                                                placeholder="Nhập nội dung lời nhắc gửi tới khách hàng (VD: Bạn chọn giúp Studio 15 tấm trước ngày 15 nhé)..."
+                                                class="w-full p-2 rounded-xl bg-white border border-sky-200 text-xs outline-none focus:border-sky-500 resize-none"></textarea>
                                         </div>
+                                    </div>
+
+                                    <div class="border-t border-zinc-100"></div>
+
+                                    <!-- Hạn chọn ảnh (1 hàng ngang, toggle căn giữa dọc) -->
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-xs font-bold text-zinc-800 shrink-0">Hạn chọn ảnh</span>
+                                        <div id="createAlbumDeadlineExpand" class="hidden flex items-center gap-1.5 flex-1 max-w-[240px]">
+                                            <input type="datetime-local" id="createAlbumDeadlineInput"
+                                                class="flex-1 min-w-0 px-2 py-1 rounded-lg border border-zinc-300 text-xs outline-none">
+                                            <input type="number" min="0" id="createAlbumLimitInput" value="15"
+                                                title="Số ảnh chọn" placeholder="Giới hạn"
+                                                class="w-14 px-1.5 py-1 rounded-lg border border-zinc-300 text-xs outline-none text-center">
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer shrink-0 self-center">
+                                            <input type="checkbox" id="createAlbumDeadlineToggle"
+                                                onchange="AdminModule.handleCreateModalToggleChange()" class="sr-only peer">
+                                            <div
+                                                class="w-10 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600">
+                                            </div>
+                                        </label>
                                     </div>
 
                                     <!-- Nút Hoàn tất chọn ảnh -->
                                     <div class="border-t border-zinc-100 pt-2 flex items-center justify-between gap-2">
                                         <span class="text-xs font-bold text-zinc-800 block">Nút "Hoàn tất chọn ảnh"</span>
-                                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                        <label class="relative inline-flex items-center cursor-pointer shrink-0 self-center">
                                             <input type="checkbox" id="createAlbumCompleteLockToggle" checked class="sr-only peer">
                                             <div
                                                 class="w-10 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600">
@@ -712,39 +703,37 @@
                                             <input type="checkbox" id="adminReminderEnabledCheckbox"
                                                 class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0">
                                         </div>
-                                        <input type="text" id="adminReminderTextInput"
+                                        <textarea id="adminReminderTextInput" rows="2"
                                             placeholder="Nhập nội dung lời nhắc gửi tới khách hàng..."
-                                            class="w-full px-2.5 py-1.5 rounded-xl border border-sky-200 bg-white text-xs outline-none focus:border-sky-600">
+                                            class="w-full px-2.5 py-1.5 rounded-xl border border-sky-200 bg-white text-xs outline-none focus:border-sky-600 resize-none"></textarea>
                                     </div>
 
                                     <div class="border-t border-zinc-100"></div>
 
-                                    <!-- Hạn chọn ảnh (Đếm ngược) -->
-                                    <div class="space-y-1.5">
-                                        <div class="flex items-center justify-between gap-2">
-                                            <span class="text-xs font-bold text-zinc-800 block">Hạn chọn ảnh (Đếm ngược)</span>
-                                            <input type="checkbox" id="adminDeadlineEnabledCheckbox"
-                                                class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0">
-                                        </div>
-                                        <div class="flex items-center gap-1.5 pt-0.5">
+                                    <!-- Hạn chọn ảnh (Đếm ngược) trên 1 hàng ngang, checkbox căn dọc giữa -->
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-xs font-bold text-zinc-800 shrink-0">Hạn chọn ảnh</span>
+                                        <div class="flex items-center gap-1.5 flex-1 max-w-[240px]">
                                             <input type="datetime-local" id="adminDeadlineAtInput"
-                                                class="flex-1 px-2 py-1 rounded-lg border border-zinc-300 bg-white text-xs outline-none">
+                                                class="flex-1 min-w-0 px-2 py-1 rounded-lg border border-zinc-300 bg-white text-xs outline-none">
                                             <input type="number" min="0" id="adminSelectionLimit"
                                                 title="Giới hạn số ảnh chọn (0 = Không giới hạn)" placeholder="Giới hạn"
-                                                class="w-16 px-2 py-1 rounded-lg border border-zinc-300 bg-white text-xs outline-none">
+                                                class="w-14 px-1.5 py-1 rounded-lg border border-zinc-300 bg-white text-xs outline-none text-center">
                                         </div>
+                                        <input type="checkbox" id="adminDeadlineEnabledCheckbox"
+                                            class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0 self-center">
                                     </div>
 
                                     <div class="border-t border-zinc-100 pt-2 flex items-center justify-between gap-2">
                                         <span class="text-xs font-bold text-zinc-800 block">Nút "Hoàn tất chọn ảnh"</span>
                                         <input type="checkbox" id="adminCompleteLockCheckbox"
-                                            class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0">
+                                            class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0 self-center">
                                     </div>
 
                                     <div class="border-t border-zinc-100 pt-2 flex items-center justify-between gap-2">
                                         <span class="text-xs font-bold text-zinc-800 block">Nhiều người cùng chọn</span>
                                         <input type="checkbox" id="adminMultiSelectorCheckbox"
-                                            class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0">
+                                            class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0 self-center">
                                     </div>
                                 </div>
                             </div>
