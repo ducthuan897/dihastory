@@ -742,7 +742,7 @@ const App = (function () {
             }
 
             const isLocked = lockedBySubmit || expired;
-            if (isLocked) {
+            if (isLocked && isClientMode) {
                 if (lockBanner) lockBanner.classList.remove('hidden');
                 if (lockReasonText) {
                     lockReasonText.innerText = lockedBySubmit
@@ -830,13 +830,16 @@ const App = (function () {
         if (heroLoc) heroLoc.innerText = album.location || album.city || 'Việt Nam';
         if (heroCount) heroCount.innerText = `${album.photos.length} Ảnh`;
 
+        const guideToolbar = document.getElementById('galleryToolbarAnchor');
         if (isClientMode) {
             if (heroDlBtn) heroDlBtn.classList.remove('hidden');
             if (heroSubmitBtn) heroSubmitBtn.classList.remove('hidden');
+            if (guideToolbar) guideToolbar.classList.remove('hidden');
             document.body.classList.remove('view-only-protected');
         } else {
             if (heroDlBtn) heroDlBtn.classList.add('hidden');
             if (heroSubmitBtn) heroSubmitBtn.classList.add('hidden');
+            if (guideToolbar) guideToolbar.classList.add('hidden');
             document.body.classList.add('view-only-protected');
         }
 
