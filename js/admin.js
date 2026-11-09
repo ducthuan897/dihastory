@@ -2840,22 +2840,22 @@ function testRun() {
                             <button
                                 type="button"
                                 onclick="AdminModule.toggleAlbumPublic('${album.id}')"
-                                class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 ${
+                                class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition flex items-center gap-2 shadow-xs ${
                                     album.isPublic
                                         ? 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
                                         : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200'
                                 }"
                             >
-                                <i class="fa-solid ${album.isPublic ? 'fa-toggle-on text-emerald-600 text-sm' : 'fa-toggle-off text-zinc-400 text-sm'}"></i>
+                                <i class="fa-solid ${album.isPublic ? 'fa-toggle-on text-emerald-600 text-base' : 'fa-toggle-off text-zinc-400 text-base'}"></i>
                                 <span>${album.isPublic ? 'Công khai' : 'Riêng tư'}</span>
                             </button>
 
                             <button
                                 type="button"
                                 onclick="AdminModule.copyAlbumClientLink('${album.id}')"
-                                class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold transition flex items-center gap-1.5"
+                                class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-xs"
                             >
-                                <i class="fa-solid fa-link"></i>
+                                <i class="fa-solid fa-link text-sm"></i>
                                 <span>Gửi khách</span>
                             </button>
 
@@ -2864,11 +2864,11 @@ function testRun() {
                                 <button
                                     type="button"
                                     onclick="event.stopPropagation(); AdminModule.toggleOpenAlbumDropdown('${album.id}')"
-                                    class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs"
+                                    class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-xs"
                                 >
-                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                                     <span>Mở album</span>
-                                    <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-80"></i>
+                                    <i class="fa-solid fa-chevron-down text-[11px] ml-0.5 opacity-80"></i>
                                 </button>
                                 <div id="openAlbumDropdown_${album.id}"
                                     class="hidden absolute right-0 sm:left-0 mt-1.5 w-64 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
@@ -2901,9 +2901,10 @@ function testRun() {
                             <button
                                 type="button"
                                 onclick="AdminModule.openEditAlbumSettingsModal('${album.id}')"
-                                class="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 text-xs font-semibold transition"
+                                class="px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-xs"
                             >
-                                <i class="fa-solid fa-gear mr-1"></i>Cài đặt album
+                                <i class="fa-solid fa-gear text-sm mr-0.5"></i>
+                                <span>Cài đặt album</span>
                             </button>
 
                             ${
@@ -2911,7 +2912,7 @@ function testRun() {
                                     ? `<button
                                         type="button"
                                         onclick="AdminModule.deleteAlbum('${album.id}')"
-                                        class="p-1.5 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                        class="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition text-sm"
                                         title="Xoá Album này"
                                     >
                                         <i class="fa-solid fa-trash-can"></i>
