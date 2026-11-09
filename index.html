@@ -619,27 +619,27 @@
 
                             <!-- 2. Cập nhật album (Đồng bộ thêm ảnh từ Google Drive / Máy tính) -->
                             <div class="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2.5">
-                                <div class="flex items-center gap-2">
-                                    <h4 class="text-xs font-bold text-zinc-900 flex items-center gap-1.5 flex-1">
-                                        <i class="fa-solid fa-arrows-rotate text-emerald-600"></i>
-                                        <span>Cập nhật album (Thêm ảnh mới)</span>
-                                    </h4>
-                                    <label
-                                        class="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 text-xs font-semibold transition cursor-pointer shrink-0">
-                                        <i class="fa-solid fa-upload mr-1"></i>Tải máy tính
-                                        <input type="file" accept="image/*" multiple
-                                            onchange="AdminModule.handleLocalFilesUpload(event)" class="hidden">
-                                    </label>
-                                </div>
+                                <h4 class="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-arrows-rotate text-emerald-600"></i>
+                                    <span>Cập nhật album (Thêm ảnh mới)</span>
+                                </h4>
 
-                                <div class="flex items-center gap-2">
-                                    <input type="text" id="editAlbumNewDriveLinkInput"
+                                <div class="space-y-1.5">
+                                    <textarea id="editAlbumNewDriveLinkInput" rows="3"
                                         placeholder="Dán link Drive vào đây..."
-                                        class="flex-1 px-3 py-1.5 rounded-xl border border-zinc-300 bg-white text-xs outline-none focus:border-zinc-900">
-                                    <button type="button" onclick="AdminModule.addDriveLinkToExistingAlbum()"
-                                        class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition shrink-0">
-                                        <i class="fa-solid fa-plus mr-1"></i>Thêm Drive
-                                    </button>
+                                        class="w-full px-3 py-1.5 rounded-xl border border-zinc-300 bg-white text-xs outline-none focus:border-zinc-900 resize-none"></textarea>
+                                    <div class="flex items-center gap-2 justify-end">
+                                        <label
+                                            class="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 text-xs font-semibold transition cursor-pointer shrink-0">
+                                            <i class="fa-solid fa-upload mr-1"></i>Tải máy tính
+                                            <input type="file" accept="image/*" multiple
+                                                onchange="AdminModule.handleLocalFilesUpload(event)" class="hidden">
+                                        </label>
+                                        <button type="button" onclick="AdminModule.addDriveLinkToExistingAlbum()"
+                                            class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition shrink-0">
+                                            <i class="fa-solid fa-plus mr-1"></i>Thêm Drive
+                                        </button>
+                                    </div>
                                 </div>
                                 <div id="editAlbumDriveLinksList" class="space-y-1"></div>
                             </div>
