@@ -986,6 +986,7 @@ const App = (function () {
                         referrerpolicy="no-referrer"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     >
+                    ${album && album.watermarkEnabled ? '<div class="watermark-pattern-overlay rounded"></div>' : ''}
                     <div class="absolute inset-0 bg-black/15 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-[10px] font-mono text-white">
                         ${photo.code || 'IMG'}
@@ -1206,6 +1207,15 @@ const App = (function () {
                 notePreview.innerText = `Ghi chú: ${sel.note}`;
             } else {
                 notePreview.classList.add('hidden');
+            }
+        }
+
+        const watermarkOverlay = document.getElementById('lightboxWatermarkOverlay');
+        if (watermarkOverlay) {
+            if (album && album.watermarkEnabled) {
+                watermarkOverlay.classList.remove('hidden');
+            } else {
+                watermarkOverlay.classList.add('hidden');
             }
         }
     }

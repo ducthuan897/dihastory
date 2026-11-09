@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AdminModule - Quản lý danh sách nhiều Album theo chuẩn Shotpik:
  * - Tạo Album từ Google Drive / Local
  * - Tên miền album tuỳ chỉnh (slug), Tags (tối đa 5 tag)
@@ -2721,6 +2721,7 @@ function testRun() {
             deadlineAt,
             completeLockEnabled,
             isSelectionLockedBySubmit: false,
+            watermarkEnabled: false,
             youtubeId: "",
             coverUrl: defaultCover,
             description: `Album ${title} của khách hàng ${clientName} (${albumLocation}).`,
@@ -3399,6 +3400,7 @@ function testRun() {
                         loading="lazy"
                         class="w-full h-72 sm:h-80 object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
                     >
+                    ${album && album.watermarkEnabled ? '<div class="watermark-pattern-overlay rounded-xl"></div>' : ''}
 
                     <!-- Top-left: Star Badge & Cover Badge -->
                     <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10" onclick="event.stopPropagation()">
