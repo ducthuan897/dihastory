@@ -3831,8 +3831,10 @@ function testRun() {
         album.title = document.getElementById('adminAlbumTitle').value.trim() || "Album Khách Hàng";
         album.clientName = document.getElementById('adminClientName').value.trim() || "Khách Hàng";
         album.date = document.getElementById('adminShootDate').value.trim() || "2026-11-07";
-        album.city = document.getElementById('adminCity').value.trim() || "Đà Lạt";
-        album.location = document.getElementById('adminLocation').value.trim() || album.city;
+        album.location = document.getElementById('adminLocation').value.trim() || album.location || "Việt Nam";
+        // Tự động trích xuất Tỉnh/Thành phố từ phần cuối của Địa điểm chi tiết nếu người dùng nhập có dấu phẩy
+        const locParts = album.location.split(',').map(s => s.trim()).filter(Boolean);
+        album.city = locParts.length > 1 ? locParts[locParts.length - 1] : (locParts[0] || album.city || "Việt Nam");
         album.description = document.getElementById('adminDescription').value.trim();
         album.coverUrl = document.getElementById('adminCoverUrl').value.trim() || album.coverUrl;
         album.selectionLimit = parseInt(document.getElementById('adminSelectionLimit').value, 10) || 0;
