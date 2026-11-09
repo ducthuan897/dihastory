@@ -569,6 +569,16 @@ const App = (function () {
         const countEl = document.getElementById('homePublicAlbumsCount');
         if (countEl) countEl.innerText = `${publicAlbums.length} Dự Án Công Khai`;
 
+        // Tự động cập nhật ảnh bìa banner Trang Chủ (Hero Cover) từ Album công khai mới nhất
+        const heroCoverEl = document.getElementById('homeStudioHeroCover');
+        if (heroCoverEl) {
+            // Album công khai đầu tiên trong danh sách (hoặc album đầu tiên nếu chưa có công khai)
+            const targetAlbum = publicAlbums[0] || allAlbums[0];
+            if (targetAlbum && targetAlbum.coverUrl) {
+                heroCoverEl.src = targetAlbum.coverUrl;
+            }
+        }
+
         // 1. Sắp xếp danh sách Album theo thời gian của bức ảnh cũ nhất (sớm nhất) trong album
         let sortedAlbums = [...publicAlbums];
         sortedAlbums.sort((a, b) => {
