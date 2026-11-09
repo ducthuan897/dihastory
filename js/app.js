@@ -1409,7 +1409,14 @@ const App = (function () {
         // Check if Before/After comparison is available for this photo
         const compareBtn = document.getElementById('lightboxCompareBtn');
         const compareLabel = document.getElementById('lightboxCompareBtnLabel');
-        const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
+        const cleanCode = (photo.code || '').toUpperCase();
+        const baseTarget = cleanCode.replace(/[-_]EDIT[-_]\d+/i, '').trim();
+        const matchedDelivered = (album.deliveredPhotos || []).find(d => {
+            if (d.originalPhotoId && d.originalPhotoId === photo.id) return true;
+            const dc = (d.code || '').toUpperCase();
+            const dBase = (d.originalPhotoCode || dc).toUpperCase().replace(/[-_]EDIT[-_]\d+/i, '').trim();
+            return (dBase && dBase === cleanCode) || (baseTarget && baseTarget === dc) || (baseTarget && baseTarget === dBase);
+        });
         const hasComparison = !!(photo.beforeUrl || matchedDelivered);
         if (compareBtn) {
             compareBtn.classList.toggle('hidden', !hasComparison);
@@ -1468,7 +1475,14 @@ const App = (function () {
         const photo = currentFilteredPhotos[currentLightboxIndex];
         if (!photo) return;
         const album = AdminModule.getAlbumById(currentAlbumId);
-        const matchedDelivered = (album.deliveredPhotos || []).find(d => d.originalPhotoId === photo.id);
+        const cleanCode = (photo.code || '').toUpperCase();
+        const baseTarget = cleanCode.replace(/[-_]EDIT[-_]\d+/i, '').trim();
+        const matchedDelivered = (album.deliveredPhotos || []).find(d => {
+            if (d.originalPhotoId && d.originalPhotoId === photo.id) return true;
+            const dc = (d.code || '').toUpperCase();
+            const dBase = (d.originalPhotoCode || dc).toUpperCase().replace(/[-_]EDIT[-_]\d+/i, '').trim();
+            return (dBase && dBase === cleanCode) || (baseTarget && baseTarget === dc) || (baseTarget && baseTarget === dBase);
+        });
         const img = document.getElementById('lightboxImage');
         const compareLabel = document.getElementById('lightboxCompareBtnLabel');
 

@@ -1840,6 +1840,26 @@ function testRun() {
         }
     }
 
+    function isDeliveredPhotoName(fileNameOrCode) {
+        if (!fileNameOrCode) return false;
+        const s = String(fileNameOrCode).trim();
+        // Check pattern: <original_name>-edit-<sequence> (e.g. DSC01150-edit-00001 or DSC01150-edit-1)
+        return /[-_]edit[-_]\d+/i.test(s);
+    }
+
+    function extractOriginalCodeFromDelivered(fileNameOrCode) {
+        if (!fileNameOrCode) return "";
+        const s = String(fileNameOrCode).trim();
+        // Remove file extension first if present
+        const noExt = s.replace(/\.[^/.]+$/, "");
+        // Match everything before -edit- or _edit-
+        const match = noExt.match(/^(.*?)[-_]edit[-_]\d+/i);
+        if (match && match[1]) {
+            return match[1].trim();
+        }
+        return noExt;
+    }
+
     function compressImageFile(file, maxDim = 1600, quality = 0.82) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -2641,25 +2661,59 @@ function testRun() {
         }
 
         let initialPhotos = [];
+        let autoDeliveredPhotos = [];
         try {
             // Load photos from computer if selected
             if (createModalLocalFilesData.length > 0) {
-                const localMapped = createModalLocalFilesData.map((f, idx) => ({
-                    id: "loc_" + Date.now() + "_" + idx,
-                    code: f.code,
-                    location: f.location || hintCity || "",
-                    city: f.city || hintCity || "",
-                    capturedAt: f.capturedAt,
-                    title: f.title,
-                    url: f.url
-                }));
-                initialPhotos.push(...localMapped);
+                createModalLocalFilesData.forEach((f, idx) => {
+                    const isDelivered = isDeliveredPhotoName(f.code) || isDeliveredPhotoName(f.title);
+                    if (isDelivered) {
+                        const origCode = extractOriginalCodeFromDelivered(f.code) || extractOriginalCodeFromDelivered(f.title);
+                        autoDeliveredPhotos.push({
+                            id: "deliv_loc_" + Date.now() + "_" + idx,
+                            originalPhotoCode: origCode,
+                            code: f.code,
+                            location: f.location || hintCity || "",
+                            city: f.city || hintCity || "",
+                            capturedAt: f.capturedAt,
+                            title: f.title ? `${f.title} (Ảnh đã chỉnh)` : `${f.code} (Ảnh đã chỉnh)`,
+                            url: f.url
+                        });
+                    } else {
+                        initialPhotos.push({
+                            id: "loc_" + Date.now() + "_" + idx,
+                            code: f.code,
+                            location: f.location || hintCity || "",
+                            city: f.city || hintCity || "",
+                            capturedAt: f.capturedAt,
+                            title: f.title,
+                            url: f.url
+                        });
+                    }
+                });
             }
 
             // Load real photos & EXIF metadata from shared Google Drive links if provided
             if (createModalDriveLinks.length > 0) {
                 const drivePhotos = await fetchRealPhotosFromDriveLinks(createModalDriveLinks, hintCity, hintDate, initialPhotos.length);
-                initialPhotos.push(...drivePhotos);
+                drivePhotos.forEach((dp, idx) => {
+                    const isDelivered = isDeliveredPhotoName(dp.code) || isDeliveredPhotoName(dp.title);
+                    if (isDelivered) {
+                        const origCode = extractOriginalCodeFromDelivered(dp.code) || extractOriginalCodeFromDelivered(dp.title);
+                        autoDeliveredPhotos.push({
+                            id: "deliv_drv_" + Date.now() + "_" + idx,
+                            originalPhotoCode: origCode,
+                            code: dp.code,
+                            location: dp.location || hintCity || "",
+                            city: dp.city || hintCity || "",
+                            capturedAt: dp.capturedAt,
+                            title: dp.title ? `${dp.title} (Ảnh đã chỉnh)` : `${dp.code} (Ảnh đã chỉnh)`,
+                            url: dp.url
+                        });
+                    } else {
+                        initialPhotos.push(dp);
+                    }
+                });
             }
         } finally {
             if (submitBtn) {
@@ -2667,6 +2721,21 @@ function testRun() {
                 submitBtn.innerHTML = oldBtnHtml;
             }
         }
+
+        // Link autoDeliveredPhotos with matching original photos (DSC01150-edit-00001 -> DSC01150)
+        autoDeliveredPhotos.forEach(dp => {
+            const cleanTarget = (dp.originalPhotoCode || '').toUpperCase();
+            const matchedOrig = initialPhotos.find(p => {
+                const origCode = (p.code || '').toUpperCase();
+                return origCode === cleanTarget || (cleanTarget && origCode.includes(cleanTarget)) || (cleanTarget && cleanTarget.includes(origCode));
+            });
+            if (matchedOrig) {
+                dp.originalPhotoId = matchedOrig.id;
+                dp.beforeUrl = matchedOrig.url;
+                if (!dp.location && matchedOrig.location) dp.location = matchedOrig.location;
+                if (!dp.capturedAt && matchedOrig.capturedAt) dp.capturedAt = matchedOrig.capturedAt;
+            }
+        });
 
         if (createModalDriveLinks.length > 0 && initialPhotos.length === 0) {
             App.showToast("Không đọc được file ảnh từ link Google Drive! Hãy kiểm tra thư mục/file Drive đã bật chia sẻ 'Bất kỳ ai có đường liên kết' chưa.", "error");
@@ -2708,7 +2777,8 @@ function testRun() {
             youtubeId: "",
             coverUrl: defaultCover,
             description: `Album ${title} của khách hàng ${clientName} (${albumLocation}).`,
-            photos: initialPhotos
+            photos: initialPhotos,
+            deliveredPhotos: autoDeliveredPhotos
         };
 
         albums.unshift(newAlbum);
@@ -3674,23 +3744,76 @@ function testRun() {
 
             let addedCount = 0;
             let updatedCount = 0;
+            let deliveredAddedCount = 0;
+            if (!album.deliveredPhotos) album.deliveredPhotos = [];
+
             fetchedPhotos.forEach(fp => {
-                const existing = album.photos.find(
-                    p => (fp.driveFileId && p.driveFileId === fp.driveFileId) || p.url === fp.url || (p.code && p.code === fp.code)
-                );
-                if (!existing) {
-                    album.photos.push(fp);
-                    addedCount++;
-                } else {
-                    if (fp.location && existing.location !== fp.location) {
-                        existing.location = fp.location;
-                        updatedCount++;
+                const isDelivered = isDeliveredPhotoName(fp.code) || isDeliveredPhotoName(fp.title);
+                if (isDelivered) {
+                    const origCode = extractOriginalCodeFromDelivered(fp.code) || extractOriginalCodeFromDelivered(fp.title);
+                    const cleanTarget = (origCode || '').toUpperCase();
+                    const matchedOrig = album.photos.find(p => {
+                        const oc = (p.code || '').toUpperCase();
+                        return oc === cleanTarget || (cleanTarget && oc.includes(cleanTarget)) || (cleanTarget && cleanTarget.includes(oc));
+                    });
+
+                    const existingDeliv = album.deliveredPhotos.find(
+                        d => (fp.driveFileId && d.driveFileId === fp.driveFileId) || d.url === fp.url || (d.code && d.code === fp.code)
+                    );
+
+                    if (!existingDeliv) {
+                        album.deliveredPhotos.push({
+                            id: `deliv_drv_${Date.now()}_${album.deliveredPhotos.length}`,
+                            driveFileId: fp.driveFileId,
+                            originalPhotoId: matchedOrig ? matchedOrig.id : null,
+                            originalPhotoCode: origCode,
+                            code: fp.code,
+                            location: matchedOrig ? matchedOrig.location : fp.location,
+                            city: matchedOrig ? matchedOrig.city : fp.city,
+                            capturedAt: matchedOrig ? matchedOrig.capturedAt : fp.capturedAt,
+                            title: fp.title ? `${fp.title} (Ảnh đã chỉnh)` : `${fp.code} (Ảnh đã chỉnh)`,
+                            beforeUrl: matchedOrig ? matchedOrig.url : null,
+                            url: fp.url
+                        });
+                        deliveredAddedCount++;
+                    } else if (matchedOrig && !existingDeliv.originalPhotoId) {
+                        existingDeliv.originalPhotoId = matchedOrig.id;
+                        existingDeliv.beforeUrl = matchedOrig.url;
                     }
-                    if (fp.city && existing.city !== fp.city) existing.city = fp.city;
-                    if (fp.capturedAt && existing.capturedAt !== fp.capturedAt) existing.capturedAt = fp.capturedAt;
-                    if (fp.lat != null) existing.lat = fp.lat;
-                    if (fp.lon != null) existing.lon = fp.lon;
-                    if (fp.title && !existing.title) existing.title = fp.title;
+                } else {
+                    const existing = album.photos.find(
+                        p => (fp.driveFileId && p.driveFileId === fp.driveFileId) || p.url === fp.url || (p.code && p.code === fp.code)
+                    );
+                    if (!existing) {
+                        album.photos.push(fp);
+                        addedCount++;
+                    } else {
+                        if (fp.location && existing.location !== fp.location) {
+                            existing.location = fp.location;
+                            updatedCount++;
+                        }
+                        if (fp.city && existing.city !== fp.city) existing.city = fp.city;
+                        if (fp.capturedAt && existing.capturedAt !== fp.capturedAt) existing.capturedAt = fp.capturedAt;
+                        if (fp.lat != null) existing.lat = fp.lat;
+                        if (fp.lon != null) existing.lon = fp.lon;
+                        if (fp.title && !existing.title) existing.title = fp.title;
+                    }
+                }
+            });
+
+            // Re-link any delivered photos that might have arrived before original photos
+            album.deliveredPhotos.forEach(dp => {
+                if (!dp.originalPhotoId && dp.originalPhotoCode) {
+                    const cleanTarget = dp.originalPhotoCode.toUpperCase();
+                    const matchedOrig = album.photos.find(p => {
+                        const oc = (p.code || '').toUpperCase();
+                        return oc === cleanTarget || (cleanTarget && oc.includes(cleanTarget)) || (cleanTarget && cleanTarget.includes(oc));
+                    });
+                    if (matchedOrig) {
+                        dp.originalPhotoId = matchedOrig.id;
+                        dp.beforeUrl = matchedOrig.url;
+                        if (!dp.location && matchedOrig.location) dp.location = matchedOrig.location;
+                    }
                 }
             });
 
@@ -3959,6 +4082,10 @@ function testRun() {
         const locInput = document.getElementById('newPhotoLocation');
         const manualLoc = (locInput && locInput.value.trim()) ? locInput.value.trim() : "";
 
+        if (!album.deliveredPhotos) album.deliveredPhotos = [];
+        let localDeliveredCount = 0;
+        let localPhotosCount = 0;
+
         const fileList = Array.from(files);
         for (let idx = 0; idx < fileList.length; idx++) {
             const file = fileList[idx];
@@ -3969,26 +4096,67 @@ function testRun() {
             if (!dataUrl) continue;
 
             const cleanName = file.name.replace(/\.[^/.]+$/, "").toUpperCase();
-            const code = cleanName.length <= 20 ? cleanName : `IMG_${1001 + album.photos.length}`;
+            const isDelivered = isDeliveredPhotoName(cleanName) || isDeliveredPhotoName(file.name);
 
-            const photoLocation = meta.location || manualLoc || (album.location || album.city || "");
-            const photoCity = meta.city || album.city || "";
-            const capturedAt = meta.capturedAt || `${album.date || '2026-11-07'}T08:00`;
+            if (isDelivered) {
+                const origCode = extractOriginalCodeFromDelivered(cleanName) || extractOriginalCodeFromDelivered(file.name);
+                const cleanTarget = (origCode || '').toUpperCase();
+                const matchedOrig = album.photos.find(p => {
+                    const oc = (p.code || '').toUpperCase();
+                    return oc === cleanTarget || (cleanTarget && oc.includes(cleanTarget)) || (cleanTarget && cleanTarget.includes(oc));
+                });
 
-            album.photos.push({
-                id: "local_" + Date.now() + "_" + idx,
-                code,
-                location: photoLocation,
-                city: photoCity,
-                capturedAt,
-                title: file.name,
-                url: dataUrl
-            });
+                album.deliveredPhotos.push({
+                    id: "deliv_local_" + Date.now() + "_" + idx,
+                    originalPhotoId: matchedOrig ? matchedOrig.id : null,
+                    originalPhotoCode: origCode,
+                    code: cleanName,
+                    location: matchedOrig ? matchedOrig.location : (meta.location || manualLoc || album.city || ""),
+                    city: matchedOrig ? matchedOrig.city : (meta.city || album.city || ""),
+                    capturedAt: matchedOrig ? matchedOrig.capturedAt : (meta.capturedAt || `${album.date || '2026-11-07'}T08:00`),
+                    title: `${file.name} (Ảnh đã chỉnh)`,
+                    beforeUrl: matchedOrig ? matchedOrig.url : null,
+                    url: dataUrl
+                });
+                localDeliveredCount++;
+            } else {
+                const code = cleanName.length <= 20 ? cleanName : `IMG_${1001 + album.photos.length}`;
+                const photoLocation = meta.location || manualLoc || (album.location || album.city || "");
+                const photoCity = meta.city || album.city || "";
+                const capturedAt = meta.capturedAt || `${album.date || '2026-11-07'}T08:00`;
 
-            if (album.photos.length === 1) {
-                album.coverUrl = dataUrl;
+                album.photos.push({
+                    id: "local_" + Date.now() + "_" + idx,
+                    code,
+                    location: photoLocation,
+                    city: photoCity,
+                    capturedAt,
+                    title: file.name,
+                    url: dataUrl
+                });
+                localPhotosCount++;
+
+                if (album.photos.length === 1) {
+                    album.coverUrl = dataUrl;
+                }
             }
         }
+
+        // Re-link any delivered photos that match newly added local photos
+        album.deliveredPhotos.forEach(dp => {
+            if (!dp.originalPhotoId && dp.originalPhotoCode) {
+                const cleanTarget = dp.originalPhotoCode.toUpperCase();
+                const matchedOrig = album.photos.find(p => {
+                    const oc = (p.code || '').toUpperCase();
+                    return oc === cleanTarget || (cleanTarget && oc.includes(cleanTarget)) || (cleanTarget && cleanTarget.includes(oc));
+                });
+                if (matchedOrig) {
+                    dp.originalPhotoId = matchedOrig.id;
+                    dp.beforeUrl = matchedOrig.url;
+                    if (!dp.location && matchedOrig.location) dp.location = matchedOrig.location;
+                }
+            }
+        });
 
         const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title, album.city, album.date);
         if (derived.date) album.date = derived.date;
@@ -4408,10 +4576,18 @@ function testRun() {
 
         driveDelivered.forEach((dPhoto, idx) => {
             const cleanCode = (dPhoto.code || '').toUpperCase();
-            const matchedOrig = album.photos.find(p => cleanCode.includes(p.code.toUpperCase()) || p.code.toUpperCase().includes(cleanCode)) || album.photos[idx % Math.max(1, album.photos.length)];
+            const origCode = extractOriginalCodeFromDelivered(cleanCode) || extractOriginalCodeFromDelivered(dPhoto.title || '');
+            const cleanTarget = (origCode || '').toUpperCase();
+            const matchedOrig = album.photos.find(p => {
+                const oc = (p.code || '').toUpperCase();
+                return oc === cleanTarget || (cleanTarget && oc.includes(cleanTarget)) || (cleanTarget && cleanTarget.includes(oc)) || cleanCode.includes(oc);
+            }) || album.photos[idx % Math.max(1, album.photos.length)];
+
             album.deliveredPhotos.push({
                 id: "deliv_drv_" + Date.now() + "_" + idx,
+                driveFileId: dPhoto.driveFileId,
                 originalPhotoId: matchedOrig ? matchedOrig.id : null,
+                originalPhotoCode: origCode || (matchedOrig ? matchedOrig.code : null),
                 code: dPhoto.code,
                 location: matchedOrig ? matchedOrig.location : (album.city || "Đà Lạt"),
                 capturedAt: matchedOrig ? matchedOrig.capturedAt : dPhoto.capturedAt,
@@ -4446,11 +4622,18 @@ function testRun() {
             if (!dataUrl) continue;
 
             const cleanName = file.name.replace(/\.[^/.]+$/, "").toUpperCase();
-            const matchedOrig = album.photos.find(p => cleanName.includes(p.code.toUpperCase())) || album.photos[idx % Math.max(1, album.photos.length)];
+            const origCode = extractOriginalCodeFromDelivered(cleanName) || extractOriginalCodeFromDelivered(file.name);
+            const cleanTarget = (origCode || '').toUpperCase();
+            const matchedOrig = album.photos.find(p => {
+                const oc = (p.code || '').toUpperCase();
+                return oc === cleanTarget || (cleanTarget && oc.includes(cleanTarget)) || (cleanTarget && cleanTarget.includes(oc)) || cleanName.includes(oc);
+            }) || album.photos[idx % Math.max(1, album.photos.length)];
+
             album.deliveredPhotos.push({
                 id: "deliv_local_" + Date.now() + "_" + idx,
                 originalPhotoId: matchedOrig ? matchedOrig.id : null,
-                code: `${cleanName}_PTS`,
+                originalPhotoCode: origCode || (matchedOrig ? matchedOrig.code : null),
+                code: cleanName,
                 location: matchedOrig ? matchedOrig.location : album.city,
                 capturedAt: matchedOrig ? matchedOrig.capturedAt : `${album.date}T10:00`,
                 title: `${file.name} (Ảnh đã chỉnh)`,
