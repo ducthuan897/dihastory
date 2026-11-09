@@ -256,7 +256,7 @@
                 <!-- Modal Body: 2 Columns 16:9 -->
                 <div class="py-3 overflow-y-auto pr-1 flex-1">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-                        <!-- CỘT TRÁI: Nguồn ảnh (Drive / Local), Metadata GPS & Lời nhắc -->
+                        <!-- CỘT TRÁI: Nguồn ảnh (Drive / Local) & Metadata GPS -->
                         <div class="space-y-3.5">
                             <!-- Nguồn ảnh: Source Tabs Google Drive | Local -->
                             <div class="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3">
@@ -351,35 +351,21 @@
                                 </div>
                             </div>
 
-                            <!-- Lời nhắc cho khách hàng -->
-                            <div class="rounded-2xl bg-sky-50/80 border border-sky-100 p-3 space-y-2">
-                                <div class="flex items-center justify-between gap-3">
-                                    <div class="flex items-start gap-2">
-                                        <i class="fa-regular fa-bell text-sky-600 text-sm mt-0.5"></i>
-                                        <div>
-                                            <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
-                                            <p class="text-[11px] text-zinc-500 leading-snug">Hiện thông báo khi khách mở album</p>
-                                        </div>
-                                    </div>
-                                    <!-- Toggle Switch -->
-                                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                                        <input type="checkbox" id="createAlbumReminderToggle"
-                                            onchange="AdminModule.handleCreateModalToggleChange()" class="sr-only peer">
-                                        <div
-                                            class="w-10 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-600">
-                                        </div>
-                                    </label>
+                            <!-- Chiếu Trang Chủ & Ghi chú ảnh bìa -->
+                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 cursor-pointer">
+                                <div>
+                                    <span class="text-xs font-bold text-emerald-950 block">Chiếu công khai lên Trang Chủ</span>
+                                    <span class="text-[10px] text-emerald-700">Khách hàng đồng ý chia sẻ lên Portfolio</span>
                                 </div>
-
-                                <div id="createAlbumReminderExpand" class="hidden pt-1.5 border-t border-sky-200/60">
-                                    <textarea id="createAlbumReminderText" rows="2"
-                                        placeholder="Nhập nội dung lời nhắc gửi tới khách hàng (VD: Bạn chọn giúp Studio 15 tấm trước ngày 15 nhé)..."
-                                        class="w-full p-2.5 rounded-xl bg-white border border-sky-200 text-xs outline-none focus:border-sky-500"></textarea>
-                                </div>
+                                <input type="checkbox" id="createAlbumPublicInput" class="w-4 h-4 accent-emerald-600 rounded">
                             </div>
+
+                            <p class="text-[11px] text-zinc-400 italic">
+                                <i class="fa-solid fa-circle-info mr-1 text-amber-500"></i>Ảnh bìa Album sẽ được chọn nhanh sau khi tạo album xong.
+                            </p>
                         </div>
 
-                        <!-- CỘT PHẢI: Thông tin album, Tên miền, Cấu hình chọn ảnh, Chiếu Portfolio -->
+                        <!-- CỘT PHẢI: Thông tin album, Tên miền, Cấu hình khách chọn ảnh -->
                         <div class="space-y-3.5">
                             <!-- Thông tin Tên album & Tên khách hàng -->
                             <div class="p-3.5 rounded-2xl bg-zinc-50/80 border border-zinc-200 space-y-2.5">
@@ -431,17 +417,42 @@
                                 </div>
                             </div>
 
-                            <!-- Khách chọn ảnh -->
+                            <!-- Cấu hình khách chọn ảnh (Bao gồm cả Lời nhắc cho khách hàng) -->
                             <div class="rounded-2xl bg-emerald-50/70 border border-emerald-100 p-3 space-y-2.5">
                                 <div class="flex items-start gap-2">
                                     <i class="fa-regular fa-circle-check text-emerald-600 text-sm mt-0.5"></i>
                                     <div>
                                         <h4 class="text-xs font-bold text-zinc-800">Cấu hình khách chọn ảnh</h4>
-                                        <p class="text-[11px] text-zinc-500">Hạn chọn đếm ngược và nút Hoàn tất</p>
                                     </div>
                                 </div>
 
                                 <div class="bg-white rounded-xl p-2.5 border border-emerald-100/80 space-y-2.5">
+                                    <!-- Lời nhắc cho khách hàng -->
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <div class="flex items-center gap-1.5">
+                                                <i class="fa-regular fa-bell text-sky-600 text-xs"></i>
+                                                <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
+                                            </div>
+                                            <!-- Toggle Switch -->
+                                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                                <input type="checkbox" id="createAlbumReminderToggle"
+                                                    onchange="AdminModule.handleCreateModalToggleChange()" class="sr-only peer">
+                                                <div
+                                                    class="w-10 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-600">
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <div id="createAlbumReminderExpand" class="hidden pt-1.5 border-t border-sky-100">
+                                            <textarea id="createAlbumReminderText" rows="2"
+                                                placeholder="Nhập nội dung lời nhắc gửi tới khách hàng (VD: Bạn chọn giúp Studio 15 tấm trước ngày 15 nhé)..."
+                                                class="w-full p-2 rounded-xl bg-white border border-sky-200 text-xs outline-none focus:border-sky-500"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="border-t border-zinc-100"></div>
+
                                     <!-- Hạn chọn ảnh -->
                                     <div class="space-y-1.5">
                                         <div class="flex items-center justify-between gap-2">
@@ -488,19 +499,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Chiếu Trang Chủ & Ghi chú ảnh bìa -->
-                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 cursor-pointer">
-                                <div>
-                                    <span class="text-xs font-bold text-emerald-950 block">Chiếu công khai lên Trang Chủ</span>
-                                    <span class="text-[10px] text-emerald-700">Khách hàng đồng ý chia sẻ lên Portfolio</span>
-                                </div>
-                                <input type="checkbox" id="createAlbumPublicInput" class="w-4 h-4 accent-emerald-600 rounded">
-                            </div>
-
-                            <p class="text-[11px] text-zinc-400 italic">
-                                <i class="fa-solid fa-circle-info mr-1 text-amber-500"></i>Ảnh bìa Album sẽ được chọn nhanh sau khi tạo album xong.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -715,25 +713,7 @@
                                 <div id="editAlbumDriveLinksList" class="space-y-1"></div>
                             </div>
 
-                            <!-- 3. Lời nhắc cho khách hàng -->
-                            <div class="rounded-2xl bg-sky-50/80 border border-sky-100 p-3.5 space-y-2">
-                                <div class="flex items-center justify-between gap-3">
-                                    <div class="flex items-start gap-2">
-                                        <i class="fa-regular fa-bell text-sky-600 text-sm mt-0.5"></i>
-                                        <div>
-                                            <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
-                                            <p class="text-[11px] text-zinc-500">Hiện khi khách mở link xem / chọn ảnh</p>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" id="adminReminderEnabledCheckbox"
-                                        class="w-4 h-4 accent-sky-600 rounded cursor-pointer shrink-0">
-                                </div>
-                                <input type="text" id="adminReminderTextInput"
-                                    placeholder="Nhập nội dung lời nhắc gửi tới khách hàng..."
-                                    class="w-full px-3 py-1.5 rounded-xl border border-sky-200 bg-white text-xs outline-none focus:border-sky-600">
-                            </div>
-
-                            <!-- 4. Mô tả ngắn dự án -->
+                            <!-- 3. Mô tả ngắn dự án -->
                             <div>
                                 <label class="block text-xs font-semibold text-zinc-700 mb-1">Mô tả ngắn dự án</label>
                                 <input type="text" id="adminDescription"
@@ -776,17 +756,33 @@
                                 </div>
                             </div>
 
-                            <!-- Khách chọn ảnh -->
+                            <!-- Cấu hình khách chọn ảnh (Bao gồm cả Lời nhắc cho khách hàng) -->
                             <div class="rounded-2xl bg-emerald-50/70 border border-emerald-100 p-3.5 space-y-2.5">
                                 <div class="flex items-start gap-2">
                                     <i class="fa-regular fa-circle-check text-emerald-600 text-sm mt-0.5"></i>
                                     <div>
-                                        <h4 class="text-xs font-bold text-zinc-800">Khách chọn ảnh</h4>
-                                        <p class="text-[11px] text-zinc-500">Cấu hình hạn chọn, nút hoàn tất &amp; chế độ nhiều người</p>
+                                        <h4 class="text-xs font-bold text-zinc-800">Cấu hình khách chọn ảnh</h4>
                                     </div>
                                 </div>
 
                                 <div class="bg-white rounded-xl p-3 border border-emerald-100/80 space-y-2.5">
+                                    <!-- Lời nhắc cho khách hàng -->
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <div class="flex items-center gap-1.5">
+                                                <i class="fa-regular fa-bell text-sky-600 text-xs"></i>
+                                                <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
+                                            </div>
+                                            <input type="checkbox" id="adminReminderEnabledCheckbox"
+                                                class="w-4 h-4 accent-sky-600 rounded cursor-pointer shrink-0">
+                                        </div>
+                                        <input type="text" id="adminReminderTextInput"
+                                            placeholder="Nhập nội dung lời nhắc gửi tới khách hàng..."
+                                            class="w-full px-2.5 py-1.5 rounded-xl border border-sky-200 bg-white text-xs outline-none focus:border-sky-600">
+                                    </div>
+
+                                    <div class="border-t border-zinc-100"></div>
+
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
                                         <label class="flex items-center gap-2 cursor-pointer">
                                             <input type="checkbox" id="adminDeadlineEnabledCheckbox"
