@@ -3424,7 +3424,7 @@ function testRun() {
                         }
                     </div>
 
-                    <!-- Top-right: Heart Icon & Note / Delete -->
+                    <!-- Top-right: Red Heart Icon (Only shown if client selected) & Note -->
                     <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10" onclick="event.stopPropagation()">
                         ${
                             hasNote
@@ -3438,35 +3438,24 @@ function testRun() {
                                 </button>`
                                 : ''
                         }
-                        <button
-                            type="button"
-                            onclick="AdminModule.togglePhotoHeartAdmin('${photo.id}')"
-                            class="w-7 h-7 rounded-full ${isHearted ? 'bg-white/90 text-red-500' : 'bg-white/70 opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-500'} flex items-center justify-center transition shadow-xs"
-                            title="${isHearted ? 'Khách đã thả tim chọn' : 'Đánh dấu tim cho ảnh này'}"
-                        >
-                            <i class="fa-solid fa-heart text-xs"></i>
-                        </button>
+                        ${
+                            isHearted
+                                ? `<span
+                                    class="w-7 h-7 rounded-full bg-white/95 text-red-500 flex items-center justify-center shadow-xs"
+                                    title="Khách đã thả tim chọn ảnh này"
+                                >
+                                    <i class="fa-solid fa-heart text-xs"></i>
+                                </span>`
+                                : ''
+                        }
                     </div>
 
-                    <!-- Bottom Bar: Photo Code / Location + "Chọn tải" Pill (Giống hệt hình mẫu Shotpik) -->
+                    <!-- Bottom Bar: Photo Code / Location -->
                     <div class="absolute bottom-2.5 inset-x-2.5 flex items-end justify-between gap-2 pointer-events-none">
-                        <div class="opacity-0 group-hover:opacity-100 transition bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] max-w-[60%] truncate">
+                        <div class="opacity-0 group-hover:opacity-100 transition bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] max-w-[85%] truncate">
                             <span class="font-mono font-bold block truncate">${photo.code}</span>
                             <span class="text-amber-300 block truncate"><i class="fa-solid fa-location-dot mr-1"></i>${photo.location || album.city} • ${timeLabel}</span>
                         </div>
-
-                        <button
-                            type="button"
-                            onclick="event.stopPropagation(); AdminModule.togglePhotoDownloadSelect('${photo.id}')"
-                            class="pointer-events-auto ml-auto ${
-                                isDlChecked
-                                    ? 'opacity-100 bg-zinc-900 text-white'
-                                    : 'opacity-0 group-hover:opacity-100 bg-white/95 hover:bg-white text-zinc-800'
-                            } px-3 py-1 rounded-full text-xs font-medium shadow-md border border-zinc-200/80 flex items-center gap-1.5 transition"
-                        >
-                            <i class="${isDlChecked ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-regular fa-circle text-zinc-500'} text-xs"></i>
-                            <span>${isDlChecked ? 'Đã chọn' : 'Chọn tải'}</span>
-                        </button>
                     </div>
                 </div>
             `;
