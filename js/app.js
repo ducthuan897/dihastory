@@ -1410,6 +1410,27 @@ const App = (function () {
             lbWatermark.classList.toggle('hidden', !(album && album.watermarkEnabled));
         }
 
+        // Cập nhật kích thước khớp tuyệt đối với ảnh thực tế khi ảnh load xong trên máy tính
+        const updateLbWatermarkSize = () => {
+            if (!lbWatermark) return;
+            const w = img.clientWidth;
+            const h = img.clientHeight;
+            if (w > 0 && h > 0) {
+                lbWatermark.style.width = w + 'px';
+                lbWatermark.style.height = h + 'px';
+                lbWatermark.style.left = img.offsetLeft + 'px';
+                lbWatermark.style.top = img.offsetTop + 'px';
+            }
+        };
+
+        if (img.complete) {
+            updateLbWatermarkSize();
+        } else {
+            img.onload = () => {
+                updateLbWatermarkSize();
+            };
+        }
+
         // Check if Before/After comparison is available for this photo
         const compareBtn = document.getElementById('lightboxCompareBtn');
         const compareLabel = document.getElementById('lightboxCompareBtnLabel');
