@@ -723,24 +723,15 @@
                     <!-- 1. Đặt làm ảnh bìa -->
                     <div class="p-3.5 sm:p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2.5">
                         <div class="flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <img id="modalCoverPreviewImg" src="" alt="Cover Preview" referrerpolicy="no-referrer"
-                                    class="w-12 h-12 rounded-xl object-cover border-2 border-amber-400 shadow-sm shrink-0 bg-zinc-100">
-                                <div class="min-w-0">
-                                    <span class="text-xs font-bold uppercase tracking-wider text-amber-900 block truncate">
-                                        <i class="fa-solid fa-image mr-1 text-amber-600"></i>Đặt làm ảnh bìa Album
-                                    </span>
-                                    <p class="text-[11px] text-zinc-500 truncate">
-                                        Bấm vào ảnh bên dưới để đặt làm ảnh bìa đại diện
-                                    </p>
-                                </div>
-                            </div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-amber-900 block truncate">
+                                <i class="fa-solid fa-image mr-1 text-amber-600"></i>Đặt làm ảnh bìa Album
+                            </span>
                             <span id="adminPhotoCountBadge"
                                 class="text-[11px] bg-white border border-amber-200 text-amber-900 px-2.5 py-1 rounded-full font-semibold shrink-0">0
                                 ảnh</span>
                         </div>
 
-                        <!-- Quick Thumbnails from Album Photos -->
+                        <!-- Quick Thumbnails from Album Photos (Ảnh đã chọn làm ảnh bìa sẽ có khung viền vàng nổi bật và chữ 'Ảnh bìa') -->
                         <div id="modalCoverPhotoPickerGrid" class="flex items-center gap-2 overflow-x-auto pb-1">
                             <!-- Rendered dynamically by AdminModule -->
                         </div>
@@ -1711,9 +1702,9 @@
     <script src="js/firebase-db.js?v=20261108_25"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261109_07"></script>
-    <script src="js/admin.js?v=20261109_07"></script>
-    <script src="js/app.js?v=20261109_07"></script>
+    <script src="js/auth.js?v=20261109_08"></script>
+    <script src="js/admin.js?v=20261109_08"></script>
+    <script src="js/app.js?v=20261109_08"></script>
 </body>
 
 </html>
