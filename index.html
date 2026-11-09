@@ -677,11 +677,9 @@
                     <div>
                         <h2 class="text-lg sm:text-xl font-bold text-zinc-900 flex items-center gap-2">
                             <i class="fa-solid fa-sliders text-rose-600"></i>
-                            <span>Quản Lý &amp; Tùy Chỉnh Album: <span id="editingAlbumNameBadge"
+                            <span>Tùy Chỉnh Album: <span id="editingAlbumNameBadge"
                                     class="text-rose-600"></span></span>
                         </h2>
-                        <p class="text-xs text-zinc-500 mt-0.5">Đặt ảnh bìa, cập nhật ảnh mới, lọc file khách chọn và
-                            bàn giao ảnh đã chỉnh sửa</p>
                     </div>
                     <button type="button" onclick="AdminModule.closeEditAlbumSettingsModal()"
                         class="w-9 h-9 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center justify-center transition shrink-0">
@@ -695,13 +693,13 @@
                         onclick="AdminModule.switchEditModalTab('settings')"
                         class="pb-2.5 text-xs sm:text-sm font-semibold text-rose-600 border-b-2 border-rose-600 transition whitespace-nowrap flex items-center gap-1.5">
                         <i class="fa-solid fa-sliders"></i>
-                        <span>Tùy chỉnh &amp; Đặt ảnh bìa</span>
+                        <span>Tùy chỉnh</span>
                     </button>
                     <button id="editModalTabBtn_selections" type="button"
                         onclick="AdminModule.switchEditModalTab('selections')"
                         class="pb-2.5 text-xs sm:text-sm font-medium text-zinc-500 hover:text-zinc-800 border-b-2 border-transparent transition whitespace-nowrap flex items-center gap-1.5">
                         <i class="fa-solid fa-filter"></i>
-                        <span>Danh sách chọn &amp; Lọc file</span>
+                        <span>Ảnh khách chọn</span>
                         <span id="editModalSelectedCountPill"
                             class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
                     </button>
@@ -709,7 +707,7 @@
                         onclick="AdminModule.switchEditModalTab('delivered')"
                         class="pb-2.5 text-xs sm:text-sm font-medium text-zinc-500 hover:text-zinc-800 border-b-2 border-transparent transition whitespace-nowrap flex items-center gap-1.5">
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <span>Bàn giao Ảnh đã chỉnh</span>
+                        <span>Ảnh studio đã sửa</span>
                         <span id="editModalDeliveredCountPill"
                             class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
                     </button>
@@ -1702,9 +1700,9 @@
     <script src="js/firebase-db.js?v=20261108_25"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261109_08"></script>
-    <script src="js/admin.js?v=20261109_08"></script>
-    <script src="js/app.js?v=20261109_08"></script>
+    <script src="js/auth.js?v=20261109_09"></script>
+    <script src="js/admin.js?v=20261109_09"></script>
+    <script src="js/app.js?v=20261109_09"></script>
 </body>
 
 </html>
