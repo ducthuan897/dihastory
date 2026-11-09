@@ -2847,7 +2847,7 @@ function testRun() {
                                 }"
                             >
                                 <i class="fa-solid ${album.isPublic ? 'fa-toggle-on text-emerald-600 text-sm' : 'fa-toggle-off text-zinc-400 text-sm'}"></i>
-                                <span>${album.isPublic ? 'Công khai' : 'Ẩn Trang chủ'}</span>
+                                <span>${album.isPublic ? 'Công khai' : 'Riêng tư'}</span>
                             </button>
 
                             <button
@@ -2856,10 +2856,10 @@ function testRun() {
                                 class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold transition flex items-center gap-1.5"
                             >
                                 <i class="fa-solid fa-link"></i>
-                                <span>Copy Link Khách</span>
+                                <span>Gửi khách</span>
                             </button>
 
-                            <!-- Nút Mở Trang Album (2 tùy chọn: 1. Trang chỉ xem (Trang chủ) | 2. Trang chọn ảnh (Gửi khách)) -->
+                            <!-- Nút Mở Album (2 tùy chọn: 1. Trang chỉ xem (Trang chủ) | 2. Trang chọn ảnh (Gửi khách)) -->
                             <div class="relative inline-block text-left" id="openAlbumMenuWrap_${album.id}">
                                 <button
                                     type="button"
@@ -2867,7 +2867,7 @@ function testRun() {
                                     class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs"
                                 >
                                     <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                    <span>Mở Trang Album</span>
+                                    <span>Mở album</span>
                                     <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-80"></i>
                                 </button>
                                 <div id="openAlbumDropdown_${album.id}"
@@ -2903,7 +2903,7 @@ function testRun() {
                                 onclick="AdminModule.openEditAlbumSettingsModal('${album.id}')"
                                 class="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 text-xs font-semibold transition"
                             >
-                                <i class="fa-solid fa-pen-to-square mr-1"></i>Sửa / Đặt ảnh bìa
+                                <i class="fa-solid fa-gear mr-1"></i>Cài đặt album
                             </button>
 
                             ${
