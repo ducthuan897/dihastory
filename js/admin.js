@@ -665,7 +665,6 @@ function testRun() {
     // State for Shotpik "Tạo album" Modal & "Quản lý / Sửa album" Modal
     let createModalSourceTab = 'drive'; // 'drive' | 'local'
     let createModalDriveLinks = [];
-    let createModalTags = [];
     let createModalLocalFilesData = [];
     let previewedDrivePhotosCache = {};
     let activeEditModalTab = 'settings'; // 'settings' | 'selections' | 'delivered'
@@ -685,7 +684,6 @@ function testRun() {
             selectionLimit: 15,
             pinCode: "",
             isPublic: true,
-            tags: [],
             sourceType: "drive",
             driveLinks: [
                 "https://drive.google.com/drive/folders/1qn8ym9BE2ojfXv1NZRQNXkbqnG9bp_mB?usp=sharing"
@@ -748,10 +746,6 @@ function testRun() {
             selectionLimit: 15,
             pinCode: "",
             isPublic: true,
-            tags: [
-                "Thủ Dầu Một",
-                "Chân dung"
-            ],
             sourceType: "drive",
             driveLinks: [
                 "https://drive.google.com/drive/folders/1GJ1XAfPhF5wYF9BwqZUL1f96IdLm9t09?usp=drive_link"
@@ -1131,7 +1125,6 @@ function testRun() {
     function openCreateAlbumModal() {
         createModalSourceTab = 'drive';
         createModalDriveLinks = [];
-        createModalTags = [];
         createModalLocalFilesData = [];
 
         const resetIds = [
@@ -1139,7 +1132,6 @@ function testRun() {
             'createAlbumTitleInput',
             'createAlbumClientInput',
             'createAlbumSlugInput',
-            'createAlbumTagInput',
             'createAlbumCityInput',
             'createAlbumReminderText'
         ];
@@ -1185,7 +1177,6 @@ function testRun() {
 
         switchCreateAlbumTab('drive');
         renderCreateModalDriveLinks();
-        renderCreateModalTags();
         renderCreateModalLocalPreview();
         handleCreateModalToggleChange();
         updateDriveApiKeyBadge();
@@ -1262,45 +1253,6 @@ function testRun() {
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-        `).join('');
-    }
-
-    function addTagToCreateModal() {
-        const input = document.getElementById('createAlbumTagInput');
-        if (!input) return;
-        const val = input.value.trim();
-        if (!val) return;
-
-        if (createModalTags.length >= 5) {
-            App.showToast("Tối đa 5 tag cho mỗi Album!", "error");
-            return;
-        }
-        if (!createModalTags.includes(val)) {
-            createModalTags.push(val);
-        }
-        input.value = '';
-        renderCreateModalTags();
-    }
-
-    function removeTagFromCreateModal(idx) {
-        createModalTags.splice(idx, 1);
-        renderCreateModalTags();
-    }
-
-    function renderCreateModalTags() {
-        const container = document.getElementById('createAlbumTagsList');
-        if (!container) return;
-        if (!createModalTags.length) {
-            container.innerHTML = '';
-            return;
-        }
-        container.innerHTML = createModalTags.map((tag, idx) => `
-            <span class="inline-flex items-center gap-1.5 bg-zinc-200/80 text-zinc-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                <span>#${tag}</span>
-                <button type="button" onclick="AdminModule.removeTagFromCreateModal(${idx})" class="text-zinc-500 hover:text-rose-600">
-                    <i class="fa-solid fa-xmark text-[10px]"></i>
-                </button>
-            </span>
         `).join('');
     }
 
@@ -2617,14 +2569,10 @@ function testRun() {
     async function createNewAlbum(event) {
         if (event) event.preventDefault();
 
-        // Check if user left a link or tag in the input without clicking '+'
+        // Check if user left a link in the input without clicking '+'
         const pendingDrive = document.getElementById('createAlbumDriveInput')?.value.trim();
         if (pendingDrive && !createModalDriveLinks.includes(pendingDrive)) {
             createModalDriveLinks.push(pendingDrive);
-        }
-        const pendingTag = document.getElementById('createAlbumTagInput')?.value.trim();
-        if (pendingTag && createModalTags.length < 5 && !createModalTags.includes(pendingTag)) {
-            createModalTags.push(pendingTag);
         }
 
         const title = (document.getElementById('createAlbumTitleInput')?.value || '').trim();
@@ -2743,7 +2691,7 @@ function testRun() {
         }
 
         // Automatically derive album's Date, City, and Location from the shared photos' metadata
-        const derivedMeta = deriveAlbumDateAndLocation(initialPhotos, createModalTags, title, hintCity, hintDate);
+        const derivedMeta = deriveAlbumDateAndLocation(initialPhotos, [], title, hintCity, hintDate);
         const date = derivedMeta.date;
         const city = derivedMeta.city;
         const albumLocation = derivedMeta.location;
@@ -2765,7 +2713,6 @@ function testRun() {
             selectionLimit,
             pinCode: "",
             isPublic,
-            tags: [...createModalTags],
             sourceType: createModalLocalFilesData.length > 0 && createModalDriveLinks.length === 0 ? 'local' : 'drive',
             driveLinks: [...createModalDriveLinks],
             reminderEnabled,
@@ -2846,7 +2793,6 @@ function testRun() {
             const sel = selectionsMap[album.id] || {};
             const selectedCount = album.photos.filter(p => sel[p.id] && sel[p.id].selected).length;
             const shareLink = getClientShareUrl(album.id);
-            const tagsHtml = (album.tags || []).map(t => `<span class="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">#${t}</span>`).join('');
 
             return `
                 <div
@@ -2887,7 +2833,6 @@ function testRun() {
                                     ${(album.deliveredPhotos && album.deliveredPhotos.length > 0) ? `<span class="text-emerald-700 font-semibold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Đã chỉnh: ${album.deliveredPhotos.length} ảnh</span>` : ''}
                                     ${album.deadlineEnabled && album.deadlineAt ? `<span class="text-amber-700"><i class="fa-regular fa-clock mr-1"></i>Hạn: ${formatTimeShort(album.deadlineAt)}</span>` : ''}
                                 </div>
-                                ${tagsHtml ? `<div class="flex flex-wrap gap-1 mt-1.5">${tagsHtml}</div>` : ''}
                             </div>
                         </div>
 
@@ -3879,7 +3824,6 @@ function testRun() {
         setVal('adminShootDate', album.date);
         setVal('adminCity', album.city || "Đà Lạt");
         setVal('adminLocation', album.location);
-        setVal('adminTagsInput', (album.tags || []).join(', '));
         setVal('adminDescription', album.description || "");
         setVal('adminCoverUrl', album.coverUrl);
         setVal('adminSelectionLimit', album.selectionLimit !== undefined ? album.selectionLimit : 10);
@@ -3963,13 +3907,7 @@ function testRun() {
         album.selectionLimit = parseInt(document.getElementById('adminSelectionLimit').value, 10) || 0;
         album.pinCode = document.getElementById('adminPinCode').value.trim();
         album.isPublic = document.getElementById('adminIsPublicCheckbox').checked;
-
-        const rawTags = (document.getElementById('adminTagsInput')?.value || '').trim();
-        if (rawTags) {
-            album.tags = rawTags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 5);
-        } else {
-            album.tags = [];
-        }
+        delete album.tags;
 
         album.reminderEnabled = !!document.getElementById('adminReminderEnabledCheckbox')?.checked;
         album.reminderText = (document.getElementById('adminReminderTextInput')?.value || '').trim();
@@ -4748,8 +4686,6 @@ function testRun() {
         handleCreateTitleInput,
         addDriveLinkToCreateModal,
         removeDriveLinkFromCreateModal,
-        addTagToCreateModal,
-        removeTagFromCreateModal,
         handleCreateModalLocalFiles,
         removeLocalFileFromCreateModal,
         handleCreateModalToggleChange,

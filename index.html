@@ -396,25 +396,6 @@
                                             class="flex-1 min-w-0 bg-white px-2.5 py-1.5 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition font-mono">
                                     </div>
                                 </div>
-
-                                <!-- Tags -->
-                                <div class="space-y-1 pt-1 border-t border-zinc-200/60">
-                                    <label class="block text-xs font-bold text-zinc-700">
-                                        Tags <span class="font-normal text-zinc-400">(Tối đa 5 tag)</span>
-                                    </label>
-                                    <div class="relative">
-                                        <input type="text" id="createAlbumTagInput"
-                                            onkeydown="if(event.key==='Enter'){event.preventDefault();AdminModule.addTagToCreateModal();}"
-                                            placeholder="Nhập Tag rồi bấm + (VD: Pre-Wedding, Ngoại cảnh...)"
-                                            class="w-full bg-white pl-3 pr-8 py-1.5 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition">
-                                        <button type="button" onclick="AdminModule.addTagToCreateModal()"
-                                            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-600 hover:text-emerald-700 text-sm font-medium"
-                                            title="Thêm Tag">
-                                            <i class="fa-solid fa-plus"></i>
-                                        </button>
-                                    </div>
-                                    <div id="createAlbumTagsList" class="flex flex-wrap gap-1 pt-0.5"></div>
-                                </div>
                             </div>
 
                             <!-- Cấu hình khách chọn ảnh (Bao gồm cả Lời nhắc cho khách hàng) -->
@@ -742,7 +723,6 @@
                                             placeholder="Tự động nhận diện từ GPS..."
                                             class="w-full px-3 py-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-800 text-xs outline-none cursor-default">
                                         <input type="hidden" id="adminCity" value="">
-                                        <input type="hidden" id="adminTagsInput" value="">
                                     </div>
                                 </div>
                             </div>

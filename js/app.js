@@ -617,7 +617,6 @@ const App = (function () {
             ? oldestTime.split('T')[0].split('-').reverse().join('.')
             : (album.date ? album.date.split('-').reverse().join('.') : '');
 
-        const tagsHtml = (album.tags || []).slice(0, 3).map(t => `<span class="text-[10px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">#${t}</span>`).join('');
         return `
             <article
                 onclick="App.openAlbumPage('${album.id}', false)"
@@ -650,7 +649,6 @@ const App = (function () {
                             <i class="fa-solid fa-map-pin text-zinc-400"></i>
                             <span class="truncate">${album.location || album.city || ''}</span>
                         </p>
-                        ${tagsHtml ? `<div class="flex flex-wrap gap-1 mt-2">${tagsHtml}</div>` : ''}
                     </div>
 
                     <div class="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">

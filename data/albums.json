@@ -10,7 +10,6 @@
         "selectionLimit": 15,
         "pinCode": "",
         "isPublic": true,
-        "tags": [],
         "sourceType": "drive",
         "driveLinks": [
             "https://drive.google.com/drive/folders/1qn8ym9BE2ojfXv1NZRQNXkbqnG9bp_mB?usp=sharing"
@@ -73,10 +72,6 @@
         "selectionLimit": 15,
         "pinCode": "",
         "isPublic": true,
-        "tags": [
-            "Thủ Dầu Một",
-            "Chân dung"
-        ],
         "sourceType": "drive",
         "driveLinks": [
             "https://drive.google.com/drive/folders/1GJ1XAfPhF5wYF9BwqZUL1f96IdLm9t09?usp=drive_link"
