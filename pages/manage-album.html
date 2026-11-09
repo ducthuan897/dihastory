@@ -181,42 +181,14 @@
 
                 <!-- Right Action Pill Groups -->
                 <div class="flex flex-wrap items-center gap-2">
-                    <!-- Group 1: Cập nhật album + Tìm khuôn mặt -->
-                    <div
-                        class="inline-flex items-center rounded-full border border-zinc-200 bg-white px-1 py-0.5 shadow-2xs">
-                        <button id="managePageSyncBtn" type="button"
-                            onclick="AdminModule.syncUpdateAlbumDrive()"
-                            class="px-3 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-800 text-xs font-medium flex items-center gap-1.5 transition"
-                            title="Đồng bộ cập nhật ngay ảnh và vị trí/ngày chụp từ Google Drive">
-                            <i id="managePageSyncBtnIcon" class="fa-solid fa-rotate text-zinc-600"></i>
-                            <span id="managePageSyncBtnLabel">Cập nhật album</span>
-                        </button>
-                        <div class="w-px h-4 bg-zinc-200"></div>
-                        <div class="relative">
-                            <button type="button" onclick="AdminModule.toggleFaceFilterDropdown()"
-                                class="px-3 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-800 text-xs font-medium flex items-center gap-1.5 transition">
-                                <i class="fa-solid fa-expand text-zinc-600"></i>
-                                <span id="manageFaceFilterLabel">Tìm khuôn mặt</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] text-zinc-400"></i>
-                            </button>
-                            <!-- Dropdown lọc người chọn / tìm theo ảnh chân dung -->
-                            <div id="manageFaceFilterDropdown"
-                                class="hidden absolute right-0 mt-2 w-60 rounded-2xl bg-white shadow-xl border border-zinc-200 p-2 z-30 space-y-1 text-xs">
-                                <div class="px-2.5 py-1 text-[11px] font-bold text-zinc-400 uppercase">Lọc theo
-                                    người chọn / Khuôn mặt</div>
-                                <div id="manageFaceFilterList" class="space-y-1"></div>
-                                <div class="border-t border-zinc-100 pt-1.5 mt-1">
-                                    <label
-                                        class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-zinc-100 cursor-pointer text-zinc-700 font-medium">
-                                        <i class="fa-solid fa-camera text-rose-500"></i>
-                                        <span>Tải ảnh mẫu để lọc nhanh</span>
-                                        <input type="file" accept="image/*"
-                                            onchange="AdminModule.handleFaceSampleSearch(event)" class="hidden">
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Nút Cập nhật album -->
+                    <button id="managePageSyncBtn" type="button"
+                        onclick="AdminModule.syncUpdateAlbumDrive()"
+                        class="px-3.5 py-1.5 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-xs font-medium flex items-center gap-1.5 shadow-2xs transition"
+                        title="Đồng bộ cập nhật ngay ảnh và vị trí/ngày chụp từ Google Drive">
+                        <i id="managePageSyncBtnIcon" class="fa-solid fa-rotate text-zinc-600"></i>
+                        <span id="managePageSyncBtnLabel">Cập nhật album</span>
+                    </button>
 
                     <!-- Group 2: Khoá album + Tải PDF ghi chú -->
                     <div
@@ -233,64 +205,6 @@
                             <i class="fa-regular fa-file-lines text-zinc-600"></i>
                             <span>Tải PDF ghi chú</span>
                         </button>
-                    </div>
-
-                    <!-- Group 3: Các tính năng khác -->
-                    <div class="relative">
-                        <button type="button" onclick="AdminModule.toggleMoreFeaturesDropdown()"
-                            class="px-3.5 py-2 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-xs font-medium flex items-center gap-1.5 shadow-2xs transition">
-                            <i class="fa-solid fa-ellipsis"></i>
-                            <span>Các tính năng khác</span>
-                        </button>
-                        <div id="manageMoreFeaturesDropdown"
-                            class="hidden absolute right-0 mt-2 w-64 rounded-2xl bg-white shadow-xl border border-zinc-200 p-2 z-30 space-y-1 text-xs">
-                            <button type="button"
-                                onclick="AdminModule.openCustomAlbumModal('selections'); AdminModule.toggleMoreFeaturesDropdown(false);"
-                                class="w-full text-left px-3 py-2 rounded-xl hover:bg-zinc-100 flex items-center gap-2.5 text-zinc-700 font-medium">
-                                <i class="fa-solid fa-filter text-amber-500 w-4"></i>
-                                <span>Chuỗi lọc file Lightroom / Capture One</span>
-                            </button>
-                            <button type="button"
-                                onclick="AdminModule.openCustomAlbumModal('delivered'); AdminModule.toggleMoreFeaturesDropdown(false);"
-                                class="w-full text-left px-3 py-2 rounded-xl hover:bg-zinc-100 flex items-center gap-2.5 text-zinc-700 font-medium">
-                                <i class="fa-solid fa-wand-magic-sparkles text-emerald-600 w-4"></i>
-                                <span>Bàn giao Ảnh đã chỉnh (Before/After)</span>
-                            </button>
-                            <label
-                                class="w-full text-left px-3 py-2 rounded-xl hover:bg-zinc-100 flex items-center gap-2.5 text-zinc-700 font-medium cursor-pointer">
-                                <i class="fa-solid fa-cloud-arrow-up text-sky-600 w-4"></i>
-                                <span>Tải thêm ảnh từ máy tính</span>
-                                <input type="file" accept="image/*" multiple
-                                    onchange="AdminModule.handleLocalFilesUpload(event); AdminModule.toggleMoreFeaturesDropdown(false);"
-                                    class="hidden">
-                            </label>
-                            <button type="button"
-                                onclick="AdminModule.clearClientSelections(); AdminModule.toggleMoreFeaturesDropdown(false);"
-                                class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-50 flex items-center gap-2.5 text-rose-600 font-medium">
-                                <i class="fa-solid fa-eraser w-4"></i>
-                                <span>Gỡ tương tác (Khách chọn lại)</span>
-                            </button>
-                            <button type="button"
-                                onclick="AdminModule.restoreRemovedInteractions(); AdminModule.toggleMoreFeaturesDropdown(false);"
-                                class="w-full text-left px-3 py-2 rounded-xl hover:bg-emerald-50 flex items-center gap-2.5 text-emerald-700 font-medium">
-                                <i class="fa-solid fa-clock-rotate-left w-4"></i>
-                                <span>Khôi phục tương tác đã gỡ</span>
-                            </button>
-                            <div class="border-t border-zinc-100 my-1"></div>
-                            <div class="px-3 py-1 text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Mở Album</div>
-                            <button type="button"
-                                onclick="App.openAlbumPage(AdminModule.getActiveAdminAlbum()?.id, false); AdminModule.toggleMoreFeaturesDropdown(false);"
-                                class="w-full text-left px-3 py-2 rounded-xl hover:bg-zinc-100 flex items-center gap-2.5 text-zinc-700 font-medium">
-                                <i class="fa-regular fa-eye text-zinc-500 w-4"></i>
-                                <span>1. Trang chỉ xem</span>
-                            </button>
-                            <button type="button"
-                                onclick="App.openAlbumPage(AdminModule.getActiveAdminAlbum()?.id, true); AdminModule.toggleMoreFeaturesDropdown(false);"
-                                class="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-50 flex items-center gap-2.5 text-rose-700 font-medium">
-                                <i class="fa-solid fa-heart text-rose-600 w-4"></i>
-                                <span>2. Trang chọn ảnh của khách</span>
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
