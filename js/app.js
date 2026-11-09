@@ -1164,7 +1164,7 @@ const App = (function () {
         return `
             <div class="photo-card ${cardStateClass}" onclick="App.openLightbox(${lightboxIdx})">
                 <img src="${photo.url}" alt="${photo.code}" referrerpolicy="no-referrer" loading="lazy">
-                ${showWatermark ? `<div class="pointer-events-none absolute inset-0 flex items-center justify-center"><span class="text-white/35 font-serif-display text-sm sm:text-base font-bold tracking-widest uppercase -rotate-12 border border-white/25 px-3 py-1 rounded select-none">DIHA STORY</span></div>` : ''}
+                ${showWatermark ? `<div class="watermark-pattern-overlay"></div>` : ''}
                 <div class="photo-card-overlay">
                     <div class="flex items-center justify-between">
                         <span class="bg-black/65 backdrop-blur-md text-white text-[11px] font-mono px-2.5 py-1 rounded-full tracking-wide flex items-center gap-1">
@@ -1404,6 +1404,12 @@ const App = (function () {
         document.getElementById('lightboxTitle').innerText = `${photo.location || ''} • ${timeStr}`;
         document.getElementById('lightboxCounter').innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
 
+        // Hiển thị Watermark dạng lưới lặp lại phủ toàn bộ ảnh nếu Album bật Watermark
+        const lbWatermark = document.getElementById('lightboxWatermarkOverlay');
+        if (lbWatermark) {
+            lbWatermark.classList.toggle('hidden', !(album && album.watermarkEnabled));
+        }
+
         // Check if Before/After comparison is available for this photo
         const compareBtn = document.getElementById('lightboxCompareBtn');
         const compareLabel = document.getElementById('lightboxCompareBtnLabel');
@@ -1530,10 +1536,15 @@ const App = (function () {
     let _lbTargetPanY = 0;
 
     function _lbRenderTransform() {
+        const container = document.getElementById('lightboxImageContainer');
         const img = document.getElementById('lightboxImage');
-        if (!img) return;
-        img.style.transform = `translate3d(${_lbPanX}px, ${_lbPanY}px, 0) scale(${_lbScale})`;
-        img.style.cursor = _lbDragging ? 'grabbing' : (_lbScale > 1 ? 'grab' : 'default');
+        if (container) {
+            container.style.transform = `translate3d(${_lbPanX}px, ${_lbPanY}px, 0) scale(${_lbScale})`;
+            container.style.cursor = _lbDragging ? 'grabbing' : (_lbScale > 1 ? 'grab' : 'default');
+        } else if (img) {
+            img.style.transform = `translate3d(${_lbPanX}px, ${_lbPanY}px, 0) scale(${_lbScale})`;
+            img.style.cursor = _lbDragging ? 'grabbing' : (_lbScale > 1 ? 'grab' : 'default');
+        }
     }
 
     function _lbApplyTransform(animate) {
@@ -1542,12 +1553,12 @@ const App = (function () {
             return;
         }
         // Smooth lerp / transition on double-click or button clicks
-        const img = document.getElementById('lightboxImage');
-        if (!img) return;
-        img.style.transition = 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)';
+        const targetEl = document.getElementById('lightboxImageContainer') || document.getElementById('lightboxImage');
+        if (!targetEl) return;
+        targetEl.style.transition = 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)';
         _lbRenderTransform();
         setTimeout(() => {
-            if (img) img.style.transition = 'none';
+            if (targetEl) targetEl.style.transition = 'none';
         }, 220);
     }
 
