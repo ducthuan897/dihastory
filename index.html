@@ -387,23 +387,22 @@
 
                                 <div class="bg-white rounded-xl p-2.5 border border-emerald-100/80 space-y-2.5">
                                     <!-- Lời nhắc cho khách hàng -->
-                                    <div class="space-y-1.5">
+                                    <div class="space-y-1">
+                                        <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
                                         <div class="flex items-center justify-between gap-3">
-                                            <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
+                                            <div id="createAlbumReminderExpand" class="hidden flex-1 min-w-0">
+                                                <textarea id="createAlbumReminderText" rows="2"
+                                                    placeholder="Nhập nội dung lời nhắc gửi tới khách hàng (VD: Bạn chọn giúp Studio 15 tấm trước ngày 15 nhé)..."
+                                                    class="w-full px-2.5 py-1.5 rounded-xl bg-white border border-sky-200 text-xs outline-none focus:border-sky-500 resize-none"></textarea>
+                                            </div>
                                             <!-- Toggle Switch căn giữa dọc -->
-                                            <label class="relative inline-flex items-center cursor-pointer shrink-0 self-center">
+                                            <label class="relative inline-flex items-center cursor-pointer shrink-0 self-center ml-auto">
                                                 <input type="checkbox" id="createAlbumReminderToggle"
                                                     onchange="AdminModule.handleCreateModalToggleChange()" class="sr-only peer">
                                                 <div
                                                     class="w-10 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600">
                                                 </div>
                                             </label>
-                                        </div>
-
-                                        <div id="createAlbumReminderExpand" class="hidden pt-1.5 border-t border-sky-100">
-                                            <textarea id="createAlbumReminderText" rows="2"
-                                                placeholder="Nhập nội dung lời nhắc gửi tới khách hàng (VD: Bạn chọn giúp Studio 15 tấm trước ngày 15 nhé)..."
-                                                class="w-full p-2 rounded-xl bg-white border border-sky-200 text-xs outline-none focus:border-sky-500 resize-none"></textarea>
                                         </div>
                                     </div>
 
@@ -697,15 +696,15 @@
 
                                 <div class="bg-white rounded-xl p-3 border border-emerald-100/80 space-y-2.5">
                                     <!-- Lời nhắc cho khách hàng -->
-                                    <div class="space-y-1.5">
+                                    <div class="space-y-1">
+                                        <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
                                         <div class="flex items-center justify-between gap-3">
-                                            <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
+                                            <textarea id="adminReminderTextInput" rows="2"
+                                                placeholder="Nhập nội dung lời nhắc gửi tới khách hàng..."
+                                                class="flex-1 min-w-0 px-2.5 py-1.5 rounded-xl border border-sky-200 bg-white text-xs outline-none focus:border-sky-600 resize-none"></textarea>
                                             <input type="checkbox" id="adminReminderEnabledCheckbox"
-                                                class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0">
+                                                class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0 self-center">
                                         </div>
-                                        <textarea id="adminReminderTextInput" rows="2"
-                                            placeholder="Nhập nội dung lời nhắc gửi tới khách hàng..."
-                                            class="w-full px-2.5 py-1.5 rounded-xl border border-sky-200 bg-white text-xs outline-none focus:border-sky-600 resize-none"></textarea>
                                     </div>
 
                                     <div class="border-t border-zinc-100"></div>
