@@ -382,20 +382,7 @@
                                             class="w-full bg-white px-3 py-1.5 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition">
                                     </div>
                                 </div>
-
-                                <!-- Tên miền album -->
-                                <div class="space-y-1 pt-1 border-t border-zinc-200/60">
-                                    <label class="flex items-center gap-1 text-xs font-bold text-zinc-700">
-                                        <span>Đường dẫn link Album (Slug):</span>
-                                    </label>
-                                    <div class="flex items-center gap-1.5">
-                                        <span id="createAlbumDomainPrefix"
-                                            class="text-[11px] text-zinc-500 font-mono shrink-0 select-all truncate max-w-[190px]">https://ducthuan897.github.io/dutustory/</span>
-                                        <input type="text" id="createAlbumSlugInput"
-                                            oninput="this.dataset.manual = this.value ? '1' : ''" placeholder="ten-album"
-                                            class="flex-1 min-w-0 bg-white px-2.5 py-1.5 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition font-mono">
-                                    </div>
-                                </div>
+                                <input type="hidden" id="createAlbumSlugInput">
                             </div>
 
                             <!-- Cấu hình khách chọn ảnh (Bao gồm cả Lời nhắc cho khách hàng) -->
