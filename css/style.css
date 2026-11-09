@@ -256,12 +256,26 @@ body.view-only-protected {
     -moz-user-select: none !important;
     -ms-user-select: none !important;
     user-select: none !important;
+    -webkit-touch-callout: none !important; /* Chặn popup menu lưu ảnh khi nhấn giữ trên iOS Safari / Android Chrome */
 }
 
 body.view-only-protected img {
     -webkit-user-drag: none !important;
     user-drag: none !important;
-    pointer-events: auto;
+    -webkit-touch-callout: none !important;
+    pointer-events: none !important; /* Triệt tiêu sự kiện chạm trực tiếp vào thẻ ảnh trên di động để trình duyệt không bắt sự kiện lưu */
+}
+
+/* Cho phép click vào thẻ ảnh photo-card cha và container để mở xem Lightbox bình thường */
+body.view-only-protected .photo-card {
+    pointer-events: auto !important;
+    -webkit-touch-callout: none !important;
+}
+
+body.view-only-protected #lightboxStage,
+body.view-only-protected #lightboxImageContainer {
+    pointer-events: auto !important;
+    -webkit-touch-callout: none !important;
 }
 
 /* Chặn chụp bằng in ấn (Print / Save PDF) */

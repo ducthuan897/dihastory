@@ -1880,13 +1880,41 @@ const App = (function () {
             else if (e.key === 'Escape') closeLightbox();
         });
 
-        // Chặn menu chuột phải ở chế độ Chỉ Xem
+        // Chặn menu chuột phải & menu nhấn giữ (long-press) trên di động ở chế độ Chỉ Xem
         document.addEventListener('contextmenu', (e) => {
             if (currentView === 'album' && !isClientMode) {
                 e.preventDefault();
                 showToast("Hình ảnh này là tài sản của studio và khách hàng. Vui lòng không lưu ảnh khi không được phép", "error");
+                return false;
             }
-        });
+        }, { passive: false });
+
+        // Chặn long-press trên di động (touchstart / touchend) để chặn triệt để popup lưu ảnh của Safari / Chrome mobile
+        let touchTimer = null;
+        document.addEventListener('touchstart', (e) => {
+            if (currentView === 'album' && !isClientMode) {
+                const targetImg = e.target.closest('img');
+                if (targetImg) {
+                    touchTimer = setTimeout(() => {
+                        showToast("Hình ảnh này là tài sản của studio và khách hàng. Vui lòng không lưu ảnh khi không được phép", "error");
+                    }, 500);
+                }
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            if (touchTimer) {
+                clearTimeout(touchTimer);
+                touchTimer = null;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', () => {
+            if (touchTimer) {
+                clearTimeout(touchTimer);
+                touchTimer = null;
+            }
+        }, { passive: true });
 
         // Chặn kéo ảnh (drag) ra ngoài để lưu
         document.addEventListener('dragstart', (e) => {
