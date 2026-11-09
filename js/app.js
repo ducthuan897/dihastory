@@ -741,7 +741,9 @@ const App = (function () {
                         : "Đã hết thời hạn chọn ảnh cho Album này. Phần chọn ảnh đã tự động khoá, bạn vẫn có thể xem và tải ảnh về máy.";
                 }
                 if (unlockBtnAdmin) {
-                    unlockBtnAdmin.classList.toggle('hidden', !lockedBySubmit);
+                    // Nút mở khoá này là dành riêng cho Quản trị viên, chỉ hiển thị nếu Admin đã đăng nhập
+                    const isAdmin = typeof AuthModule !== 'undefined' && AuthModule.isLoggedIn();
+                    unlockBtnAdmin.classList.toggle('hidden', !lockedBySubmit || !isAdmin);
                 }
             } else {
                 if (lockBanner) lockBanner.classList.add('hidden');
@@ -862,13 +864,16 @@ const App = (function () {
             document.body.classList.remove('view-only-protected');
         }
 
+        // Khi đã bấm Hoàn tất chọn ảnh (isSelectionLockedBySubmit hoặc hết hạn), ẩn hoàn toàn nút "Hoàn Tất Chọn Ảnh" và toolbar hướng dẫn
+        const isSelectionLocked = isAlbumSelectionLocked(album);
+
         if (shareLinkWrap) shareLinkWrap.classList.toggle('hidden', !isClientMode);
         if (heroDownloadBtn) heroDownloadBtn.classList.toggle('hidden', !isClientMode);
-        if (heroSubmitBtn) heroSubmitBtn.classList.toggle('hidden', !isClientMode);
+        if (heroSubmitBtn) heroSubmitBtn.classList.toggle('hidden', !isClientMode || isSelectionLocked);
         if (heroViewGalleryLabel) {
             heroViewGalleryLabel.innerText = isClientMode ? 'Xem Ảnh & Chọn Ảnh Lưu Về' : 'Khám Phá Bộ Ảnh';
         }
-        if (guideToolbar) guideToolbar.classList.toggle('hidden', !isClientMode);
+        if (guideToolbar) guideToolbar.classList.toggle('hidden', !isClientMode || isSelectionLocked);
         if (navAlbumContextual) navAlbumContextual.classList.toggle('hidden', !isClientMode);
         if (reminderBtn) {
             reminderBtn.classList.toggle('hidden', !isClientMode || !(album.reminderEnabled && album.reminderText));
@@ -1103,11 +1108,13 @@ const App = (function () {
         const isDeliveredItem = !!photo.beforeUrl || activeCategory === 'DELIVERED';
         const showWatermark = !!(album && album.watermarkEnabled);
 
+        const isSelectionLocked = isAlbumSelectionLocked(album);
+
         const cardStateClass = isClientMode
             ? `${isSelected ? 'is-selected' : ''} ${hasNote ? 'has-note' : ''}`
             : '';
 
-        const clientActionIcons = isClientMode ? `
+        const clientActionIcons = (isClientMode && !isSelectionLocked) ? `
             <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
                 <button
                     type="button"
@@ -1126,7 +1133,20 @@ const App = (function () {
                     <i class="${isSelected ? 'fa-solid' : 'fa-regular'} fa-heart text-sm"></i>
                 </button>
             </div>
-        ` : '<div></div>';
+        ` : (isClientMode && (isSelected || hasNote) ? `
+            <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+                ${hasNote ? `
+                    <span class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-md" title="Đã có ghi chú: ${st.note.replace(/"/g, '&quot;')}">
+                        <i class="fa-solid fa-comment-dots"></i>
+                    </span>
+                ` : ''}
+                ${isSelected ? `
+                    <span class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs shadow-md" title="Đã chọn lưu ảnh">
+                        <i class="fa-solid fa-heart"></i>
+                    </span>
+                ` : ''}
+            </div>
+        ` : '<div></div>');
 
         const clientMetaInfo = isClientMode ? `
             ${st.selectorName ? `<span class="text-[10px] text-sky-300 block"><i class="fa-regular fa-user mr-1"></i>Người chọn: ${st.selectorName}</span>` : ''}
@@ -1397,23 +1417,29 @@ const App = (function () {
             downloadBtn.classList.toggle('hidden', !isClientMode);
         }
 
+        const isSelectionLocked = isAlbumSelectionLocked(album);
+
         const proofingControls = document.getElementById('lightboxProofingControls');
         if (proofingControls) {
             proofingControls.classList.toggle('hidden', !isClientMode);
         }
 
         const noteBtn = document.getElementById('lightboxNoteBtn');
-        if (noteBtn) noteBtn.classList.toggle('hidden', !isClientMode);
+        if (noteBtn) noteBtn.classList.toggle('hidden', !isClientMode || isSelectionLocked);
 
         const heartBtn = document.getElementById('lightboxHeartBtn');
         if (heartBtn) {
-            heartBtn.classList.toggle('hidden', !isClientMode);
-            if (st.selected) {
-                heartBtn.className = "px-4 py-2 rounded-full bg-rose-600 text-white text-xs font-semibold flex items-center gap-2 transition shadow-lg";
-                heartBtn.innerHTML = `<i class="fa-solid fa-heart"></i> <span>Đã chọn lưu ảnh này</span>`;
+            if (!isClientMode || isSelectionLocked) {
+                heartBtn.classList.add('hidden');
             } else {
-                heartBtn.className = "px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-2 transition";
-                heartBtn.innerHTML = `<i class="fa-regular fa-heart"></i> <span>Chọn lưu ảnh này</span>`;
+                heartBtn.classList.remove('hidden');
+                if (st.selected) {
+                    heartBtn.className = "px-4 py-2 rounded-full bg-rose-600 text-white text-xs font-semibold flex items-center gap-2 transition shadow-lg";
+                    heartBtn.innerHTML = `<i class="fa-solid fa-heart"></i> <span>Đã chọn lưu ảnh này</span>`;
+                } else {
+                    heartBtn.className = "px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-2 transition";
+                    heartBtn.innerHTML = `<i class="fa-regular fa-heart"></i> <span>Chọn lưu ảnh này</span>`;
+                }
             }
         }
 
