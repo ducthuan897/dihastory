@@ -235,298 +235,278 @@
          MODALS & OVERLAYS
          ================================================================= -->
 
-    <!-- 0. SHOTPIK "TẠO ALBUM" MODAL (EXACT DESIGN FROM SCREENSHOT) -->
+    <!-- 0. SHOTPIK "TẠO ALBUM" MODAL (16:9 WIDESCREEN TWO-COLUMN LAYOUT) -->
     <div id="createAlbumModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
         <div class="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm" onclick="AdminModule.closeCreateAlbumModal()"></div>
-        <div class="flex min-h-full items-center justify-center p-4">
+        <div class="flex min-h-full items-center justify-center p-3 sm:p-5">
             <form onsubmit="AdminModule.createNewAlbum(event)"
-                class="relative bg-white w-full max-w-lg rounded-[26px] shadow-2xl p-6 sm:p-7 z-10 space-y-5 border border-zinc-200/80">
+                class="relative bg-white w-full max-w-6xl rounded-[28px] shadow-2xl p-5 sm:p-6 z-10 flex flex-col max-h-[92vh] border border-zinc-200/80">
                 <!-- Modal Header -->
-                <div class="flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-zinc-900">Tạo album</h3>
+                <div class="flex items-center justify-between pb-3 border-b border-zinc-100 shrink-0">
+                    <h3 class="text-lg sm:text-xl font-bold text-zinc-900 flex items-center gap-2">
+                        <i class="fa-solid fa-folder-plus text-rose-600"></i>
+                        <span>Tạo album mới</span>
+                    </h3>
                     <button type="button" onclick="AdminModule.closeCreateAlbumModal()"
-                        class="w-9 h-9 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center justify-center transition">
+                        class="w-9 h-9 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center justify-center transition shrink-0">
                         <i class="fa-solid fa-xmark text-base"></i>
                     </button>
                 </div>
 
-                <!-- Source Tabs: Google Drive | Local -->
-                <div class="flex items-center gap-6 border-b border-zinc-200">
-                    <button id="tabBtnDrive" type="button" onclick="AdminModule.switchCreateAlbumTab('drive')"
-                        class="pb-2.5 text-sm font-semibold text-rose-600 border-b-2 border-rose-600 transition">
-                        Google Drive
-                    </button>
-                    <button id="tabBtnLocal" type="button" onclick="AdminModule.switchCreateAlbumTab('local')"
-                        class="pb-2.5 text-sm font-medium text-zinc-500 hover:text-zinc-800 border-b-2 border-transparent transition">
-                        Local
-                    </button>
-                </div>
+                <!-- Modal Body: 2 Columns 16:9 -->
+                <div class="py-3 overflow-y-auto pr-1 flex-1">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                        <!-- CỘT TRÁI: Nguồn ảnh (Drive / Local), Metadata GPS & Lời nhắc -->
+                        <div class="space-y-3.5">
+                            <!-- Nguồn ảnh: Source Tabs Google Drive | Local -->
+                            <div class="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3">
+                                <div class="flex items-center gap-6 border-b border-zinc-200">
+                                    <button id="tabBtnDrive" type="button" onclick="AdminModule.switchCreateAlbumTab('drive')"
+                                        class="pb-2 text-xs sm:text-sm font-semibold text-rose-600 border-b-2 border-rose-600 transition flex items-center gap-1.5">
+                                        <i class="fa-brands fa-google-drive"></i>
+                                        <span>Google Drive</span>
+                                    </button>
+                                    <button id="tabBtnLocal" type="button" onclick="AdminModule.switchCreateAlbumTab('local')"
+                                        class="pb-2 text-xs sm:text-sm font-medium text-zinc-500 hover:text-zinc-800 border-b-2 border-transparent transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-laptop"></i>
+                                        <span>Ảnh từ máy tính (Local)</span>
+                                    </button>
+                                </div>
 
-                <!-- TAB 1: Link ảnh Google Drive -->
-                <div id="createModalDriveSection" class="space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="flex items-center gap-1.5 text-sm font-bold text-zinc-700">
-                            <span>Link ảnh Google Drive</span>
-                            <span
-                                class="w-4 h-4 rounded-full border border-zinc-400 text-zinc-500 inline-flex items-center justify-center text-[10px] cursor-help"
-                                title="Dán link thư mục Google Drive (đã bật chia sẻ công khai) hoặc link file ảnh Google Drive rồi bấm dấu +">?</span>
-                        </label>
-                        <button type="button" onclick="AdminModule.openDriveApiKeyModal()"
-                            class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold inline-flex items-center gap-1.5 transition">
-                            <i class="fa-solid fa-key text-[11px]"></i>
-                            <span>Google API Key</span>
-                            <span id="driveApiKeyBadge"
-                                class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 font-normal">Cài
-                                đặt</span>
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="text" id="createAlbumDriveInput"
-                            placeholder="Link Google Drive thư mục chứa ảnh vào đây"
-                            class="flex-1 bg-zinc-100/90 hover:bg-zinc-100 focus:bg-white px-4 py-3 rounded-xl border border-transparent focus:border-zinc-300 text-sm outline-none transition">
-                        <button type="button" onclick="AdminModule.addDriveLinkToCreateModal()"
-                            class="w-10 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center text-base font-bold shrink-0 shadow-sm transition"
-                            title="Thêm link Google Drive">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-                    <div id="createAlbumDriveLinksList" class="space-y-1.5 pt-1"></div>
-                </div>
+                                <!-- TAB 1: Link ảnh Google Drive -->
+                                <div id="createModalDriveSection" class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <label class="flex items-center gap-1.5 text-xs font-bold text-zinc-700">
+                                            <span>Link ảnh Google Drive</span>
+                                            <span class="w-4 h-4 rounded-full border border-zinc-400 text-zinc-500 inline-flex items-center justify-center text-[10px] cursor-help"
+                                                title="Dán link thư mục Google Drive (đã bật chia sẻ công khai) hoặc link file ảnh rồi bấm dấu +">?</span>
+                                        </label>
+                                        <button type="button" onclick="AdminModule.openDriveApiKeyModal()"
+                                            class="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold inline-flex items-center gap-1 transition">
+                                            <i class="fa-solid fa-key text-[10px]"></i>
+                                            <span>Google API Key</span>
+                                            <span id="driveApiKeyBadge"
+                                                class="text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-200/80 text-zinc-600 font-normal">Cài đặt</span>
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" id="createAlbumDriveInput"
+                                            placeholder="Dán link thư mục Google Drive chứa ảnh vào đây..."
+                                            class="flex-1 bg-white px-3 py-2 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition">
+                                        <button type="button" onclick="AdminModule.addDriveLinkToCreateModal()"
+                                            class="w-9 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shrink-0 shadow-sm transition"
+                                            title="Thêm link Google Drive">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div id="createAlbumDriveLinksList" class="space-y-1 pt-0.5"></div>
+                                </div>
 
-                <!-- TAB 2: Local Files Upload -->
-                <div id="createModalLocalSection" class="hidden space-y-2">
-                    <label class="block text-sm font-bold text-zinc-700">Tải ảnh trực tiếp từ máy tính (Local)</label>
-                    <label
-                        class="block p-4 rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 hover:border-rose-500 text-center cursor-pointer transition">
-                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-zinc-400 mb-1 block"></i>
-                        <span class="text-sm font-semibold text-zinc-700 block">Nhấn để chọn ảnh từ máy tính</span>
-                        <span id="createModalLocalCount" class="text-xs text-emerald-600 font-medium mt-0.5 block">Chưa
-                            chọn file nào</span>
-                        <input type="file" accept="image/*" multiple
-                            onchange="AdminModule.handleCreateModalLocalFiles(event)" class="hidden">
-                    </label>
-                    <div id="createModalLocalThumbGrid" class="grid grid-cols-5 gap-2 pt-1 max-h-36 overflow-y-auto">
-                    </div>
-                </div>
-
-                <!-- Tên album -->
-                <div class="space-y-1.5">
-                    <label class="block text-sm font-bold text-zinc-700">Tên album</label>
-                    <input type="text" id="createAlbumTitleInput" required
-                        oninput="AdminModule.handleCreateTitleInput(this.value)" placeholder="Tên album"
-                        class="w-full bg-zinc-100/90 hover:bg-zinc-100 focus:bg-white px-4 py-3 rounded-xl border border-transparent focus:border-zinc-300 text-sm outline-none transition">
-                </div>
-
-                <!-- Tên khách hàng -->
-                <div class="space-y-1.5">
-                    <label class="block text-sm font-bold text-zinc-700">Tên khách hàng</label>
-                    <input type="text" id="createAlbumClientInput" required placeholder="Tên khách hàng"
-                        class="w-full bg-zinc-100/90 hover:bg-zinc-100 focus:bg-white px-4 py-3 rounded-xl border border-transparent focus:border-zinc-300 text-sm outline-none transition">
-                </div>
-
-                <!-- Tên miền album -->
-                <div class="space-y-1.5">
-                    <label class="flex items-center gap-1.5 text-sm font-bold text-zinc-700">
-                        <span>Tên miền album</span>
-                        <span
-                            class="w-4 h-4 rounded-full border border-zinc-400 text-zinc-500 inline-flex items-center justify-center text-[10px] cursor-help"
-                            title="Đường dẫn định danh duy nhất của Album để gửi cho khách hàng">?</span>
-                    </label>
-                    <div class="flex items-center gap-2">
-                        <span id="createAlbumDomainPrefix"
-                            class="text-xs sm:text-sm text-zinc-600 font-mono font-semibold shrink-0 select-all">https://ducthuan897.github.io/dutustory/</span>
-                        <input type="text" id="createAlbumSlugInput"
-                            oninput="this.dataset.manual = this.value ? '1' : ''" placeholder="tên-album"
-                            class="flex-1 min-w-0 bg-zinc-100/90 hover:bg-zinc-100 focus:bg-white px-3.5 py-2.5 rounded-xl border border-transparent focus:border-zinc-300 text-sm outline-none transition font-mono">
-                    </div>
-                </div>
-
-                <!-- Tags (Tối đa 5 tag) -->
-                <div class="space-y-1.5">
-                    <label class="block text-sm font-bold text-zinc-700">
-                        Tags <span class="font-normal text-zinc-500">(Tối đa 5 tag)</span>
-                    </label>
-                    <div class="relative">
-                        <input type="text" id="createAlbumTagInput"
-                            onkeydown="if(event.key==='Enter'){event.preventDefault();AdminModule.addTagToCreateModal();}"
-                            placeholder="Nhập Tag (VD: Đà Lạt, Wedding...)"
-                            class="w-full bg-zinc-100/90 hover:bg-zinc-100 focus:bg-white pl-4 pr-10 py-3 rounded-xl border border-transparent focus:border-zinc-300 text-sm outline-none transition">
-                        <button type="button" onclick="AdminModule.addTagToCreateModal()"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 hover:text-emerald-700 text-lg font-medium"
-                            title="Thêm Tag">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-                    <div id="createAlbumTagsList" class="flex flex-wrap gap-1.5 pt-1"></div>
-                </div>
-
-                <!-- Thông tin Vị trí & Ngày chụp tự động trích xuất từ metadata ảnh (EXIF / GPS / Google Drive) -->
-                <div id="createModalDetectedMetaBox"
-                    class="rounded-2xl bg-zinc-50 border border-zinc-200/80 p-3.5 space-y-2.5 text-xs">
-                    <div class="flex items-center gap-2 text-zinc-600 min-w-0">
-                        <i class="fa-solid fa-wand-magic-sparkles text-emerald-600 shrink-0 text-sm"></i>
-                        <span id="createModalDetectedMetaText" class="truncate font-medium">Vị trí &amp; Ngày chụp sẽ tự
-                            động trích xuất từ thông tin ảnh (EXIF / GPS)</span>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 border-t border-zinc-200/60">
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="block text-[11px] font-semibold text-zinc-700 flex items-center gap-1">
-                                    <i class="fa-solid fa-location-dot text-rose-500"></i>
-                                    <span>Địa điểm &amp; Tỉnh/Thành:</span>
-                                </label>
-                                <span class="text-[10px] text-zinc-400">Tự động nhận diện từ GPS ảnh</span>
+                                <!-- TAB 2: Local Files Upload -->
+                                <div id="createModalLocalSection" class="hidden space-y-2">
+                                    <label class="block text-xs font-bold text-zinc-700">Tải ảnh trực tiếp từ máy tính (Local)</label>
+                                    <label class="block p-3 rounded-xl border-2 border-dashed border-zinc-300 bg-white hover:border-rose-500 text-center cursor-pointer transition">
+                                        <i class="fa-solid fa-cloud-arrow-up text-xl text-zinc-400 mb-1 block"></i>
+                                        <span class="text-xs font-semibold text-zinc-700 block">Nhấn để chọn ảnh từ máy tính</span>
+                                        <span id="createModalLocalCount" class="text-[11px] text-emerald-600 font-medium block">Chưa chọn file nào</span>
+                                        <input type="file" accept="image/*" multiple
+                                            onchange="AdminModule.handleCreateModalLocalFiles(event)" class="hidden">
+                                    </label>
+                                    <div id="createModalLocalThumbGrid" class="grid grid-cols-5 gap-1.5 pt-1 max-h-28 overflow-y-auto"></div>
+                                </div>
                             </div>
-                            <input type="text" id="createAlbumCityInput" readonly
-                                placeholder="Hệ thống tự động quét GPS từ ảnh để điền địa điểm..."
-                                class="w-full bg-zinc-100/80 px-3 py-2 rounded-xl border border-zinc-200 text-xs font-medium text-zinc-700 outline-none cursor-default transition">
+
+                            <!-- Thông tin Vị trí & Ngày chụp tự động trích xuất từ metadata ảnh (EXIF / GPS) -->
+                            <div id="createModalDetectedMetaBox"
+                                class="rounded-2xl bg-zinc-50 border border-zinc-200/80 p-3 space-y-2 text-xs">
+                                <div class="flex items-center gap-2 text-zinc-600 min-w-0">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-emerald-600 shrink-0 text-sm"></i>
+                                    <span id="createModalDetectedMetaText" class="truncate font-medium text-[11px]">Vị trí &amp; Ngày chụp sẽ tự động trích xuất từ EXIF/GPS ảnh</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-zinc-200/60">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <label class="block text-[11px] font-semibold text-zinc-700 flex items-center gap-1">
+                                                <i class="fa-solid fa-location-dot text-rose-500"></i>
+                                                <span>Địa điểm chi tiết:</span>
+                                            </label>
+                                            <span class="text-[9px] text-zinc-400">Tự quét GPS</span>
+                                        </div>
+                                        <input type="text" id="createAlbumCityInput" readonly
+                                            placeholder="Tự động nhận diện từ GPS ảnh..."
+                                            class="w-full bg-white px-2.5 py-1.5 rounded-xl border border-zinc-200 text-xs font-medium text-zinc-700 outline-none cursor-default transition">
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <label class="block text-[11px] font-semibold text-zinc-700 flex items-center gap-1">
+                                                <i class="fa-regular fa-calendar text-emerald-600"></i>
+                                                <span>Ngày chụp:</span>
+                                            </label>
+                                            <span class="text-[9px] text-zinc-400">Tự quét EXIF</span>
+                                        </div>
+                                        <input type="date" id="createAlbumDateInput" oninput="delete this.dataset.autoFilled"
+                                            class="w-full bg-white px-2.5 py-1.5 rounded-xl border border-zinc-200 text-xs font-medium text-zinc-800 outline-none focus:border-zinc-900 transition">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Lời nhắc cho khách hàng -->
+                            <div class="rounded-2xl bg-sky-50/80 border border-sky-100 p-3 space-y-2">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="flex items-start gap-2">
+                                        <i class="fa-regular fa-bell text-sky-600 text-sm mt-0.5"></i>
+                                        <div>
+                                            <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
+                                            <p class="text-[11px] text-zinc-500 leading-snug">Hiện thông báo khi khách mở album</p>
+                                        </div>
+                                    </div>
+                                    <!-- Toggle Switch -->
+                                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                        <input type="checkbox" id="createAlbumReminderToggle"
+                                            onchange="AdminModule.handleCreateModalToggleChange()" class="sr-only peer">
+                                        <div
+                                            class="w-10 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-600">
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div id="createAlbumReminderExpand" class="hidden pt-1.5 border-t border-sky-200/60">
+                                    <textarea id="createAlbumReminderText" rows="2"
+                                        placeholder="Nhập nội dung lời nhắc gửi tới khách hàng (VD: Bạn chọn giúp Studio 15 tấm trước ngày 15 nhé)..."
+                                        class="w-full p-2.5 rounded-xl bg-white border border-sky-200 text-xs outline-none focus:border-sky-500"></textarea>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="block text-[11px] font-semibold text-zinc-700 flex items-center gap-1">
-                                    <i class="fa-regular fa-calendar text-emerald-600"></i>
-                                    <span>Ngày chụp:</span>
-                                </label>
-                                <span class="text-[10px] text-zinc-400">Tự quét từ EXIF</span>
+
+                        <!-- CỘT PHẢI: Thông tin album, Tên miền, Cấu hình chọn ảnh, Chiếu Portfolio -->
+                        <div class="space-y-3.5">
+                            <!-- Thông tin Tên album & Tên khách hàng -->
+                            <div class="p-3.5 rounded-2xl bg-zinc-50/80 border border-zinc-200 space-y-2.5">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <div class="space-y-1">
+                                        <label class="block text-xs font-bold text-zinc-700">Tên album</label>
+                                        <input type="text" id="createAlbumTitleInput" required
+                                            oninput="AdminModule.handleCreateTitleInput(this.value)" placeholder="VD: Phóng sự cưới Tuấn &amp; Lan"
+                                            class="w-full bg-white px-3 py-1.5 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="block text-xs font-bold text-zinc-700">Tên khách hàng</label>
+                                        <input type="text" id="createAlbumClientInput" required placeholder="VD: Tuấn &amp; Lan"
+                                            class="w-full bg-white px-3 py-1.5 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition">
+                                    </div>
+                                </div>
+
+                                <!-- Tên miền album -->
+                                <div class="space-y-1 pt-1 border-t border-zinc-200/60">
+                                    <label class="flex items-center gap-1 text-xs font-bold text-zinc-700">
+                                        <span>Đường dẫn link Album (Slug):</span>
+                                    </label>
+                                    <div class="flex items-center gap-1.5">
+                                        <span id="createAlbumDomainPrefix"
+                                            class="text-[11px] text-zinc-500 font-mono shrink-0 select-all truncate max-w-[190px]">https://ducthuan897.github.io/dutustory/</span>
+                                        <input type="text" id="createAlbumSlugInput"
+                                            oninput="this.dataset.manual = this.value ? '1' : ''" placeholder="ten-album"
+                                            class="flex-1 min-w-0 bg-white px-2.5 py-1.5 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition font-mono">
+                                    </div>
+                                </div>
+
+                                <!-- Tags -->
+                                <div class="space-y-1 pt-1 border-t border-zinc-200/60">
+                                    <label class="block text-xs font-bold text-zinc-700">
+                                        Tags <span class="font-normal text-zinc-400">(Tối đa 5 tag)</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input type="text" id="createAlbumTagInput"
+                                            onkeydown="if(event.key==='Enter'){event.preventDefault();AdminModule.addTagToCreateModal();}"
+                                            placeholder="Nhập Tag rồi bấm + (VD: Pre-Wedding, Ngoại cảnh...)"
+                                            class="w-full bg-white pl-3 pr-8 py-1.5 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition">
+                                        <button type="button" onclick="AdminModule.addTagToCreateModal()"
+                                            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-600 hover:text-emerald-700 text-sm font-medium"
+                                            title="Thêm Tag">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div id="createAlbumTagsList" class="flex flex-wrap gap-1 pt-0.5"></div>
+                                </div>
                             </div>
-                            <input type="date" id="createAlbumDateInput" oninput="delete this.dataset.autoFilled"
-                                class="w-full bg-white px-3 py-2 rounded-xl border border-zinc-200 text-xs font-medium text-zinc-800 outline-none focus:border-zinc-900 transition">
-                            <p class="text-[11px] text-zinc-400 mt-2 leading-relaxed">
-                                <i class="fa-solid fa-camera mr-1 text-zinc-400"></i>Hệ thống tự động quét ngày chụp gốc
-                                từ EXIF từng bức ảnh tải lên.
+
+                            <!-- Khách chọn ảnh -->
+                            <div class="rounded-2xl bg-emerald-50/70 border border-emerald-100 p-3 space-y-2.5">
+                                <div class="flex items-start gap-2">
+                                    <i class="fa-regular fa-circle-check text-emerald-600 text-sm mt-0.5"></i>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-zinc-800">Cấu hình khách chọn ảnh</h4>
+                                        <p class="text-[11px] text-zinc-500">Hạn chọn đếm ngược và nút Hoàn tất</p>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white rounded-xl p-2.5 border border-emerald-100/80 space-y-2.5">
+                                    <!-- Hạn chọn ảnh -->
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div>
+                                                <span class="text-xs font-bold text-zinc-800 block">Hạn chọn ảnh (Đếm ngược)</span>
+                                                <p class="text-[10px] text-zinc-500 leading-tight">Hết hạn tự động khoá chọn ảnh</p>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                                <input type="checkbox" id="createAlbumDeadlineToggle"
+                                                    onchange="AdminModule.handleCreateModalToggleChange()" class="sr-only peer">
+                                                <div
+                                                    class="w-10 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600">
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <div id="createAlbumDeadlineExpand"
+                                            class="hidden pt-1.5 border-t border-zinc-100 grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label class="block text-[10px] font-semibold text-zinc-600 mb-0.5">Thời hạn</label>
+                                                <input type="datetime-local" id="createAlbumDeadlineInput"
+                                                    class="w-full px-2 py-1 rounded-lg border border-zinc-300 text-xs outline-none">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-semibold text-zinc-600 mb-0.5">Số ảnh chọn</label>
+                                                <input type="number" min="0" id="createAlbumLimitInput" value="15"
+                                                    class="w-full px-2 py-1 rounded-lg border border-zinc-300 text-xs outline-none">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Nút Hoàn tất chọn ảnh -->
+                                    <div class="border-t border-zinc-100 pt-2 flex items-center justify-between gap-2">
+                                        <div>
+                                            <span class="text-xs font-bold text-zinc-800 block">Nút "Hoàn tất chọn ảnh"</span>
+                                            <p class="text-[10px] text-zinc-500 leading-tight">Khách gửi kết quả sẽ tự khoá phần chọn</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                            <input type="checkbox" id="createAlbumCompleteLockToggle" checked class="sr-only peer">
+                                            <div
+                                                class="w-10 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600">
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Chiếu Trang Chủ & Ghi chú ảnh bìa -->
+                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 cursor-pointer">
+                                <div>
+                                    <span class="text-xs font-bold text-emerald-950 block">Chiếu công khai lên Trang Chủ</span>
+                                    <span class="text-[10px] text-emerald-700">Khách hàng đồng ý chia sẻ lên Portfolio</span>
+                                </div>
+                                <input type="checkbox" id="createAlbumPublicInput" class="w-4 h-4 accent-emerald-600 rounded">
+                            </div>
+
+                            <p class="text-[11px] text-zinc-400 italic">
+                                <i class="fa-solid fa-circle-info mr-1 text-amber-500"></i>Ảnh bìa Album sẽ được chọn nhanh sau khi tạo album xong.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Lưu ý ảnh bìa (Giống hệt thiết kế Shotpik) -->
-                <div class="space-y-1 pt-1">
-                    <p class="text-sm font-bold text-zinc-700">Lưu ý: Ảnh bìa album sẽ được thiết lập sau khi tạo album
-                    </p>
-                    <p class="text-xs text-zinc-500 leading-relaxed">
-                        Sau khi tạo album, hãy chọn mở ảnh bạn muốn làm ảnh bìa album và nhấn nút "Đặt làm ảnh bìa" để
-                        hoàn tất
-                    </p>
-                </div>
-
-                <!-- BOX 1 (LIGHT BLUE): Lời nhắc cho khách hàng -->
-                <div class="rounded-2xl bg-sky-50/80 border border-sky-100 p-4 space-y-3">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-start gap-2.5">
-                            <i class="fa-regular fa-bell text-sky-600 text-base mt-0.5"></i>
-                            <div>
-                                <h4 class="text-sm font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
-                                <p class="text-xs text-zinc-500 leading-snug mt-0.5">
-                                    Khi khách hàng mở link chọn ảnh, một bảng thông báo sẽ hiện lời nhắc của bạn
-                                </p>
-                            </div>
-                        </div>
-                        <!-- Toggle Switch -->
-                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                            <input type="checkbox" id="createAlbumReminderToggle"
-                                onchange="AdminModule.handleCreateModalToggleChange()" class="sr-only peer">
-                            <div
-                                class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600">
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Expandable Reminder Textarea -->
-                    <div id="createAlbumReminderExpand" class="hidden pt-2 border-t border-sky-200/60">
-                        <textarea id="createAlbumReminderText" rows="2"
-                            placeholder="Nhập nội dung lời nhắc gửi tới khách hàng (VD: Hai bạn chọn giúp Studio 15 tấm trước ngày 15/11 nhé)..."
-                            class="w-full p-3 rounded-xl bg-white border border-sky-200 text-xs outline-none focus:border-sky-500"></textarea>
-                    </div>
-                </div>
-
-                <!-- BOX 2 (LIGHT GREEN): Khách chọn ảnh -->
-                <div class="rounded-2xl bg-emerald-50/70 border border-emerald-100 p-4 space-y-4">
-                    <div class="flex items-start gap-2.5">
-                        <i class="fa-regular fa-circle-check text-emerald-600 text-base mt-0.5"></i>
-                        <div>
-                            <h4 class="text-sm font-bold text-zinc-800">Khách chọn ảnh</h4>
-                            <p class="text-xs text-zinc-500">Hạn chọn ảnh và nút Hoàn tất cho khách</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-xl p-3.5 border border-emerald-100/80 space-y-4">
-                        <!-- Sub-row 1: Hạn chọn ảnh -->
-                        <div class="space-y-2.5">
-                            <div class="flex items-center justify-between gap-3">
-                                <div>
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-sm font-bold text-zinc-800">Hạn chọn ảnh</span>
-                                        <span
-                                            class="w-4 h-4 rounded-full border border-zinc-400 text-zinc-500 inline-flex items-center justify-center text-[10px]">?</span>
-                                    </div>
-                                    <p class="text-xs text-zinc-500 leading-snug mt-0.5">
-                                        Khách thấy đếm ngược. Hết hạn thì album tự khoá phần chọn, khách vẫn xem và tải
-                                        ảnh được.
-                                    </p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                                    <input type="checkbox" id="createAlbumDeadlineToggle"
-                                        onchange="AdminModule.handleCreateModalToggleChange()" class="sr-only peer">
-                                    <div
-                                        class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600">
-                                    </div>
-                                </label>
-                            </div>
-
-                            <!-- Expandable Deadline Picker -->
-                            <div id="createAlbumDeadlineExpand"
-                                class="hidden pt-2 border-t border-zinc-100 grid sm:grid-cols-2 gap-2.5">
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-zinc-600 mb-1">Ngày giờ hết hạn
-                                        chọn</label>
-                                    <input type="datetime-local" id="createAlbumDeadlineInput"
-                                        class="w-full px-3 py-1.5 rounded-lg border border-zinc-300 text-xs outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-zinc-600 mb-1">Số ảnh tối đa được
-                                        chọn</label>
-                                    <input type="number" min="0" id="createAlbumLimitInput" value="15"
-                                        class="w-full px-3 py-1.5 rounded-lg border border-zinc-300 text-xs outline-none">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="border-t border-zinc-100"></div>
-
-                        <!-- Sub-row 2: Nút "Hoàn tất chọn ảnh" -->
-                        <div class="flex items-center justify-between gap-3">
-                            <div>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-sm font-bold text-zinc-800">Nút "Hoàn tất chọn ảnh"</span>
-                                    <span
-                                        class="w-4 h-4 rounded-full border border-zinc-400 text-zinc-500 inline-flex items-center justify-center text-[10px]">?</span>
-                                </div>
-                                <p class="text-xs text-zinc-500 leading-snug mt-0.5">
-                                    Khách bấm gửi kết quả, album tự khoá phần chọn và bạn nhận thông báo. Mở lại cho
-                                    khách lúc nào cũng được.
-                                </p>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                                <input type="checkbox" id="createAlbumCompleteLockToggle" checked class="sr-only peer">
-                                <div
-                                    class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600">
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Optional Public Showcase Checkbox -->
-                <label
-                    class="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-100/80 border border-zinc-200 cursor-pointer">
-                    <span class="text-xs font-semibold text-zinc-700">Đồng thời chiếu công khai dự án này lên Trang
-                        Chủ</span>
-                    <input type="checkbox" id="createAlbumPublicInput" class="w-4 h-4 accent-zinc-900 rounded">
-                </label>
-
                 <!-- Submit Footer -->
-                <div class="flex items-center justify-end gap-2.5 pt-2">
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-100 shrink-0">
                     <button type="button" onclick="AdminModule.closeCreateAlbumModal()"
                         class="px-5 py-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-sm font-semibold transition">
                         Huỷ
