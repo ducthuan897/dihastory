@@ -57,6 +57,15 @@ const App = (function () {
     // Bộ nhớ đệm lưu HTML các trang content (Modular Multi-Pages Cache)
     const pageHtmlCache = {};
 
+    // Helper: Tối ưu kích thước thumbnail Google Drive giúp tăng tốc tải trang và tiết kiệm băng thông
+    function getOptimizedThumbnailUrl(url, size = 'w600') {
+        if (!url || typeof url !== 'string') return url || '';
+        if (url.includes('drive.google.com/thumbnail')) {
+            return url.replace(/sz=w\d+/i, `sz=${size}`);
+        }
+        return url;
+    }
+
     async function loadPageContent(pageName) {
         if (pageHtmlCache[pageName]) {
             return pageHtmlCache[pageName];
@@ -624,8 +633,9 @@ const App = (function () {
             >
                 <div class="relative aspect-[4/3] overflow-hidden bg-zinc-100">
                     <img
-                        src="${album.coverUrl}"
+                        src="${getOptimizedThumbnailUrl(album.coverUrl, 'w600')}"
                         alt="${album.title}"
+                        loading="lazy"
                         referrerpolicy="no-referrer"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     >
@@ -997,7 +1007,7 @@ const App = (function () {
             <div class="group relative bg-zinc-100 rounded-xl overflow-hidden shadow-2xs hover:shadow-lg transition-all duration-300 border border-zinc-200/80 flex flex-col select-none">
                 <div class="relative aspect-[4/3] overflow-hidden cursor-pointer" onclick="App.openLightbox(${indexInFiltered})">
                     <img
-                        src="${photo.url}"
+                        src="${getOptimizedThumbnailUrl(photo.url, 'w800')}"
                         alt="${photo.code || photo.title || ''}"
                         loading="lazy"
                         referrerpolicy="no-referrer"
@@ -1184,7 +1194,7 @@ const App = (function () {
         const proofingControls = document.getElementById('lightboxProofingControls');
         const notePreview = document.getElementById('lightboxNotePreview');
 
-        if (img) img.src = photo.url;
+        if (img) img.src = getOptimizedThumbnailUrl(photo.url, 'w1600');
         if (codeEl) codeEl.innerText = photo.code || photo.title || 'IMG';
         if (counterEl) counterEl.innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
         if (titleEl) titleEl.innerText = photo.location || photo.city || '';
