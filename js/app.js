@@ -840,6 +840,20 @@ const App = (function () {
             document.body.classList.add('view-only-protected');
         }
 
+        // Cập nhật khối Video Highlight: chỉ hiển thị khi có link YouTube
+        const videoSection = document.getElementById('videoHighlightSection');
+        const videoPlayer = document.getElementById('mainVideoPlayer');
+        if (videoSection && videoPlayer) {
+            const ytId = (album.youtubeId || '').trim();
+            if (ytId) {
+                videoPlayer.src = `https://www.youtube.com/embed/${ytId}`;
+                videoSection.classList.remove('hidden');
+            } else {
+                videoPlayer.src = '';
+                videoSection.classList.add('hidden');
+            }
+        }
+
         renderCategoryTabs(album);
         filterAndRenderPhotos(album);
         updateSelectionUI();
