@@ -374,52 +374,13 @@
                             <div class="flex items-center justify-between mb-1">
                                 <label class="block text-[11px] font-semibold text-zinc-700 flex items-center gap-1">
                                     <i class="fa-solid fa-location-dot text-rose-500"></i>
-                                    <span>Địa điểm / Thành phố:</span>
+                                    <span>Địa điểm &amp; Tỉnh/Thành:</span>
                                 </label>
-                                <span class="text-[10px] text-zinc-400">Chọn nhanh 1 chạm 👇</span>
+                                <span class="text-[10px] text-zinc-400">Tự động nhận diện từ GPS ảnh</span>
                             </div>
-                            <div class="flex flex-wrap gap-1 mb-2" id="createQuickLocationChips">
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Đà Lạt')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Đà
-                                    Lạt</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Hà Nội')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Hà
-                                    Nội</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('TP. Hồ Chí Minh')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">TP.HCM</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Thủ Dầu Một')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Thủ
-                                    Dầu Một</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Phú Quốc')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Phú
-                                    Quốc</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Đà Nẵng')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Đà
-                                    Nẵng</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Hội An')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Hội
-                                    An</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Nha Trang')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Nha
-                                    Trang</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Sa Pa')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Sa
-                                    Pa</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Ninh Bình')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Ninh
-                                    Bình</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Huế')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Huế</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Vũng Tàu')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Vũng
-                                    Tàu</button>
-                                <button type="button" onclick="AdminModule.quickPickCreateCity('Quy Nhơn')"
-                                    class="px-2 py-0.5 rounded-md bg-white hover:bg-rose-50 hover:text-rose-600 text-zinc-700 text-[11px] border border-zinc-200 transition">Quy
-                                    Nhơn</button>
-                            </div>
-                            <input type="text" id="createAlbumCityInput" oninput="delete this.dataset.autoFilled"
-                                placeholder="Tự điền từ ảnh hoặc gõ: Đà Lạt, Phú Quốc, Hội An..."
-                                class="w-full bg-white px-3 py-2 rounded-xl border border-zinc-200 text-xs font-medium text-zinc-800 outline-none focus:border-zinc-900 transition">
+                            <input type="text" id="createAlbumCityInput" readonly
+                                placeholder="Hệ thống tự động quét GPS từ ảnh để điền địa điểm..."
+                                class="w-full bg-zinc-100/80 px-3 py-2 rounded-xl border border-zinc-200 text-xs font-medium text-zinc-700 outline-none cursor-default transition">
                         </div>
                         <div>
                             <div class="flex items-center justify-between mb-1">
@@ -795,10 +756,14 @@
                                 class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-zinc-700 mb-1">Địa điểm chi tiết</label>
-                            <input type="text" id="adminLocation" placeholder="VD: Nhà thờ Phú Cường, Thủ Dầu Một"
-                                class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-sm outline-none focus:border-zinc-900">
-                            <!-- Ẩn ô Tỉnh / Thành phố và Tags, tự động đồng bộ từ Địa điểm chi tiết -->
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-semibold text-zinc-700">Địa điểm chi tiết</label>
+                                <span class="text-[10px] text-zinc-400 font-normal"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>Tự động nhận diện từ GPS ảnh</span>
+                            </div>
+                            <input type="text" id="adminLocation" readonly
+                                placeholder="Tự động nhận diện từ GPS có trong ảnh..."
+                                class="w-full px-3.5 py-2 rounded-xl border border-zinc-200 bg-zinc-50/80 text-zinc-800 text-sm outline-none cursor-default">
+                            <!-- Ẩn ô Tỉnh / Thành phố và Tags, tự động đồng bộ từ GPS ảnh -->
                             <input type="hidden" id="adminCity" value="">
                             <input type="hidden" id="adminTagsInput" value="">
                         </div>
@@ -1692,9 +1657,9 @@
     <script src="js/firebase-db.js?v=20261108_25"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261109_10"></script>
-    <script src="js/admin.js?v=20261109_10"></script>
-    <script src="js/app.js?v=20261109_10"></script>
+    <script src="js/auth.js?v=20261109_11"></script>
+    <script src="js/admin.js?v=20261109_11"></script>
+    <script src="js/app.js?v=20261109_11"></script>
 </body>
 
 </html>
