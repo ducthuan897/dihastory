@@ -325,5 +325,5 @@ body.view-only-protected #lightboxImageContainer {
     background-repeat: repeat !important;
     background-position: center !important;
     background-size: 150px 80px !important;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='80' viewBox='0 0 150 80'><text x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle' transform='rotate(-22 75 40)' fill='%23ffffff' fill-opacity='0.28' stroke='%23000000' stroke-width='0.4' stroke-opacity='0.22' font-family='Arial, sans-serif' font-size='13' font-weight='800' letter-spacing='2'>DIHA STORY</text></svg>") !important;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='80' viewBox='0 0 150 80'><text x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle' transform='rotate(-22 75 40)' fill='%23ffffff' fill-opacity='0.48' stroke='%23000000' stroke-width='0.6' stroke-opacity='0.38' font-family='Arial, sans-serif' font-size='13' font-weight='800' letter-spacing='2'>DIHA STORY</text></svg>") !important;
 }
