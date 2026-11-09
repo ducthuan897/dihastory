@@ -1,13 +1,11 @@
 <!-- TRANG 4: TRANG SỬA / ĐẶT ẢNH BÌA & QUẢN LÝ CHI TIẾT ALBUM (SHOTPIK PAGE) -->
 <main id="albumManageView" class="hidden min-h-screen bg-[#f4f1ea]/70 pb-16">
-    <div class="w-full px-3 sm:px-6 lg:px-10 xl:px-12 pt-3 space-y-3.5">
-
-        <!-- 1. TOP FLOATING PILL BAR (SHOTPIK HEADER) -->
-        <div
-            class="bg-white rounded-2xl px-4 sm:px-6 py-3 shadow-xs border border-zinc-200/80 flex items-center justify-between gap-3">
+    <!-- Top Back Notice Bar (Đồng bộ chuẩn thanh màu đen có nút quay lại như Trang Album Khách Hàng) -->
+    <div class="bg-zinc-900 text-zinc-200 py-2.5 px-4 border-b border-zinc-800">
+        <div class="w-full px-2 sm:px-6 lg:px-8 flex items-center justify-between gap-2 text-xs">
             <button type="button" onclick="App.showView('admin')"
-                class="px-4 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold flex items-center gap-2 transition">
-                <i class="fa-solid fa-arrow-left text-xs"></i>
+                class="text-zinc-300 hover:text-white font-medium flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrow-left"></i>
                 <span>Quay về trang quản lý</span>
             </button>
             <div class="flex items-center gap-2">
@@ -15,6 +13,9 @@
                 <span id="managePageBellBadge" class="hidden">0</span>
             </div>
         </div>
+    </div>
+
+    <div class="w-full px-3 sm:px-6 lg:px-10 xl:px-12 pt-3 space-y-3.5">
 
         <!-- 2. MAIN ALBUM HEADER CARD (BANNER + INFO + TOOLBAR + SUBTABS) -->
         <div class="bg-white rounded-[26px] p-4 sm:p-5 shadow-xs border border-zinc-200/80 space-y-4">
