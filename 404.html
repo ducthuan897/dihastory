@@ -2,40 +2,46 @@
 <html lang="vi">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diha Story - Đang chuyển hướng...</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="alternate icon" href="favicon.svg">
-    <script>
-        (function () {
-            var path = window.location.pathname;
-            var repo = "/dutustory";
-            var sub = path;
-            if (sub.indexOf(repo) === 0) {
-                sub = sub.substring(repo.length);
-            }
-            sub = sub.replace(/^\/+|\/+$/g, "");
-            var search = window.location.search || "";
-            var hash = window.location.hash || "";
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diha Story - Đang chuyển hướng...</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="alternate icon" href="favicon.svg">
+    <script>
+        (function () {
+            var path = window.location.pathname;
+            var isGithub = window.location.hostname.includes("github.io");
+            var repo = "";
+            if (isGithub) {
+                var firstSeg = path.split("/")[1];
+                repo = firstSeg ? ("/" + firstSeg) : "/dihastory";
+            }
 
-            if (sub && sub.indexOf(".") === -1 && sub !== "index.html") {
-                // Save clean path into sessionStorage so app.js can restore clean URL in address bar
-                sessionStorage.setItem("spa_clean_path", sub);
-                var searchParam = search ? ("&" + search.substring(1)) : "";
-                var target = repo + "/?album_path=" + encodeURIComponent(sub) + searchParam + (hash ? hash : "");
-                window.location.replace(target);
-            } else {
-                window.location.replace(repo + "/" + search + hash);
-            }
-        })();
-    </script>
+            var sub = path;
+            if (repo && sub.indexOf(repo) === 0) {
+                sub = sub.substring(repo.length);
+            }
+            sub = sub.replace(/^\/+|\/+$/g, "");
+            var search = window.location.search || "";
+            var hash = window.location.hash || "";
+
+            var cleanBase = repo ? repo : "";
+            if (sub && sub.indexOf(".") === -1 && sub !== "index.html") {
+                sessionStorage.setItem("spa_clean_path", sub);
+                var searchParam = search ? ("&" + search.substring(1)) : "";
+                var target = cleanBase + "/?album_path=" + encodeURIComponent(sub) + searchParam + (hash ? hash : "");
+                window.location.replace(target);
+            } else {
+                window.location.replace(cleanBase + "/" + search + hash);
+            }
+        })();
+    </script>
 </head>
 
 <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #fafafa; color: #52525b;">
-    <div style="text-align: center;">
-        <p style="font-size: 15px; font-weight: 600;">Đang tải Album Diha Story...</p>
-    </div>
+    <div style="text-align: center;">
+        <p style="font-size: 15px; font-weight: 600;">Đang tải Album Diha Story...</p>
+    </div>
 </body>
 
 </html>

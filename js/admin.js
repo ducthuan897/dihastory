@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AdminModule - Quản lý danh sách nhiều Album theo chuẩn Shotpik:
  * - Tạo Album từ Google Drive / Local
  * - Tên miền album tuỳ chỉnh (slug), Tags (tối đa 5 tag)
@@ -156,9 +156,9 @@ function doPost(e) {
   }
 }
 
-// Lưu file 'dutustory_db.json' vào Google Drive
+// Lưu file 'dihastory_db.json' vào Google Drive
 function saveAlbumsToDrive(albums) {
-  var fileName = "dutustory_db.json";
+  var fileName = "dihastory_db.json";
   var jsonStr = JSON.stringify(albums);
   var files = DriveApp.getFilesByName(fileName);
   if (files.hasNext()) {
@@ -169,9 +169,9 @@ function saveAlbumsToDrive(albums) {
   }
 }
 
-// Đọc file 'dutustory_db.json' từ Google Drive
+// Đọc file 'dihastory_db.json' từ Google Drive
 function loadAlbumsFromDrive() {
-  var fileName = "dutustory_db.json";
+  var fileName = "dihastory_db.json";
   var files = DriveApp.getFilesByName(fileName);
   if (files.hasNext()) {
     var file = files.next();
@@ -949,7 +949,7 @@ function testRun() {
         try {
             let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
             if (window.location.hostname.includes('github.io')) {
-                base = '/dutustory';
+                base = '/dihastory';
             }
             const staticUrl = `${base}/data/albums.json?v=${Date.now()}`;
             const controller = new AbortController();
@@ -1025,7 +1025,7 @@ function testRun() {
         let base = window.location.origin + window.location.pathname;
         base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
         if (window.location.hostname.includes('github.io')) {
-            return `https://ducthuan897.github.io/dutustory/${encodeURIComponent(albumId)}?k=${token}`;
+            return `https://ducthuan897.github.io/dihastory/${encodeURIComponent(albumId)}?k=${token}`;
         }
         return `${base}/${encodeURIComponent(albumId)}?k=${token}`;
     }
@@ -1148,7 +1148,7 @@ function testRun() {
             let base = window.location.origin + window.location.pathname;
             base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
             prefixEl.innerText = window.location.hostname.includes('github.io')
-                ? "https://ducthuan897.github.io/dutustory/"
+                ? "https://ducthuan897.github.io/dihastory/"
                 : `${base}/`;
         }
 
