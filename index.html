@@ -628,21 +628,17 @@
 
                             <!-- 2. Cập nhật album (Đồng bộ thêm ảnh từ Google Drive / Máy tính) -->
                             <div class="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2.5">
-                                <div class="flex items-center justify-between gap-2">
-                                    <div>
-                                        <h4 class="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
-                                            <i class="fa-solid fa-arrows-rotate text-emerald-600"></i>
-                                            <span>Cập nhật album (Thêm ảnh mới)</span>
-                                        </h4>
-                                        <p class="text-[11px] text-zinc-500">
-                                            Thêm ảnh mới mà vẫn giữ nguyên link và lượt tương tác cũ.
-                                        </p>
-                                    </div>
-                                    <button type="button" onclick="AdminModule.syncUpdateAlbumDrive()"
-                                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 shadow-sm">
-                                        <i class="fa-solid fa-rotate"></i>
-                                        <span>Cập nhật</span>
-                                    </button>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-xs font-bold text-zinc-900 flex items-center gap-1.5 flex-1">
+                                        <i class="fa-solid fa-arrows-rotate text-emerald-600"></i>
+                                        <span>Cập nhật album (Thêm ảnh mới)</span>
+                                    </h4>
+                                    <label
+                                        class="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 text-xs font-semibold transition cursor-pointer shrink-0">
+                                        <i class="fa-solid fa-upload mr-1"></i>Tải máy tính
+                                        <input type="file" accept="image/*" multiple
+                                            onchange="AdminModule.handleLocalFilesUpload(event)" class="hidden">
+                                    </label>
                                 </div>
 
                                 <div class="flex items-center gap-2">
@@ -653,12 +649,6 @@
                                         class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition shrink-0">
                                         <i class="fa-solid fa-plus mr-1"></i>Thêm Drive
                                     </button>
-                                    <label
-                                        class="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 text-xs font-semibold transition cursor-pointer shrink-0">
-                                        <i class="fa-solid fa-upload mr-1"></i>Tải máy tính
-                                        <input type="file" accept="image/*" multiple
-                                            onchange="AdminModule.handleLocalFilesUpload(event)" class="hidden">
-                                    </label>
                                 </div>
                                 <div id="editAlbumDriveLinksList" class="space-y-1"></div>
                             </div>
@@ -720,7 +710,7 @@
                                         <div class="flex items-center justify-between gap-3">
                                             <h4 class="text-xs font-bold text-zinc-800">Lời nhắc cho khách hàng</h4>
                                             <input type="checkbox" id="adminReminderEnabledCheckbox"
-                                                class="w-4 h-4 accent-sky-600 rounded cursor-pointer shrink-0">
+                                                class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0">
                                         </div>
                                         <input type="text" id="adminReminderTextInput"
                                             placeholder="Nhập nội dung lời nhắc gửi tới khách hàng..."
@@ -729,13 +719,14 @@
 
                                     <div class="border-t border-zinc-100"></div>
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
-                                        <label class="flex items-center gap-2 cursor-pointer">
-                                            <input type="checkbox" id="adminDeadlineEnabledCheckbox"
-                                                class="w-4 h-4 accent-emerald-600">
+                                    <!-- Hạn chọn ảnh (Đếm ngược) -->
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-center justify-between gap-2">
                                             <span class="text-xs font-bold text-zinc-800 block">Hạn chọn ảnh (Đếm ngược)</span>
-                                        </label>
-                                        <div class="flex items-center gap-1.5">
+                                            <input type="checkbox" id="adminDeadlineEnabledCheckbox"
+                                                class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0">
+                                        </div>
+                                        <div class="flex items-center gap-1.5 pt-0.5">
                                             <input type="datetime-local" id="adminDeadlineAtInput"
                                                 class="flex-1 px-2 py-1 rounded-lg border border-zinc-300 bg-white text-xs outline-none">
                                             <input type="number" min="0" id="adminSelectionLimit"
@@ -747,13 +738,13 @@
                                     <div class="border-t border-zinc-100 pt-2 flex items-center justify-between gap-2">
                                         <span class="text-xs font-bold text-zinc-800 block">Nút "Hoàn tất chọn ảnh"</span>
                                         <input type="checkbox" id="adminCompleteLockCheckbox"
-                                            class="w-4 h-4 accent-emerald-600 shrink-0">
+                                            class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0">
                                     </div>
 
                                     <div class="border-t border-zinc-100 pt-2 flex items-center justify-between gap-2">
                                         <span class="text-xs font-bold text-zinc-800 block">Nhiều người cùng chọn</span>
                                         <input type="checkbox" id="adminMultiSelectorCheckbox"
-                                            class="w-4 h-4 accent-emerald-600 shrink-0">
+                                            class="w-4 h-4 accent-emerald-600 rounded cursor-pointer shrink-0">
                                     </div>
                                 </div>
                             </div>
