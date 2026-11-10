@@ -962,17 +962,25 @@ const App = (function () {
         const selectedCount = Object.values(selections).filter(s => s && s.selected).length;
 
         const locations = ['ALL'];
+        let hasNoLocation = false;
         album.photos.forEach(p => {
-            const loc = p.city || p.location;
-            if (loc && !locations.includes(loc)) {
-                locations.push(loc);
+            const loc = (p.location || p.city || '').trim();
+            if (loc) {
+                if (!locations.includes(loc)) {
+                    locations.push(loc);
+                }
+            } else {
+                hasNoLocation = true;
             }
         });
+        if (hasNoLocation) {
+            locations.push('OTHER');
+        }
 
         let tabsHtml = '';
         locations.forEach(loc => {
             const isActive = activeCategory === loc;
-            const label = loc === 'ALL' ? 'Tất cả ảnh' : loc;
+            const label = loc === 'ALL' ? 'Tất cả ảnh' : (loc === 'OTHER' ? 'Địa điểm khác' : loc);
             const cls = isActive
                 ? "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-zinc-900 text-white shadow-xs shrink-0 cursor-pointer"
                 : "px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200 shrink-0 cursor-pointer";
@@ -996,8 +1004,10 @@ const App = (function () {
 
         if (activeCategory === 'SELECTED') {
             photos = photos.filter(p => selections[p.id] && selections[p.id].selected);
+        } else if (activeCategory === 'OTHER') {
+            photos = photos.filter(p => !p.location && !p.city);
         } else if (activeCategory !== 'ALL') {
-            photos = photos.filter(p => (p.city === activeCategory || p.location === activeCategory));
+            photos = photos.filter(p => (p.location === activeCategory || p.city === activeCategory));
         }
 
         if (searchQuery.trim()) {
@@ -1036,7 +1046,7 @@ const App = (function () {
         if (albumGroupByLocation && activeCategory === 'ALL' && !searchQuery.trim()) {
             const groups = {};
             photos.forEach(p => {
-                const key = p.city || p.location || 'Chung';
+                const key = p.location || p.city || 'Địa điểm khác';
                 if (!groups[key]) groups[key] = [];
                 groups[key].push(p);
             });

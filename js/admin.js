@@ -2439,30 +2439,25 @@ function testRun() {
                     const cleanCode = (f.name || '').replace(/\.[^/.]+$/, "").toUpperCase();
 
                     // 1. Resolve Location strictly from EXIF GPS / reverse geocoding / photo filename metadata
-                    let photoLoc = f.location || "";
-                    let photoCity = f.city || "";
-                    if (!photoLoc && f.lat != null && f.lon != null) {
+                    let photoLoc = "";
+                    let photoCity = "";
+                    if (f.lat != null && f.lon != null) {
                         const geo = await reverseGeocodeCoords(f.lat, f.lon);
                         if (geo) {
-                            photoLoc = geo.location;
-                            photoCity = geo.city;
+                            photoLoc = geo.location || "";
+                            photoCity = geo.city || "";
                         }
-                    }
-                    if (!photoLoc && f.name) {
+                    } else if (f.location) {
+                        photoLoc = f.location;
+                        photoCity = f.city || "";
+                    } else if (f.name) {
                         const nameLoc = extractLocationFromText(f.name);
                         if (nameLoc) {
                             photoLoc = nameLoc.location;
                             photoCity = nameLoc.city;
                         }
                     }
-                    if (!photoLoc && folderData && folderData.folderLocation) {
-                        photoLoc = folderData.folderLocation;
-                        photoCity = folderData.folderCity || photoLoc;
-                    }
-                    if (!photoLoc && fallbackCity) {
-                        photoCity = fallbackCity;
-                        photoLoc = fallbackCity;
-                    }
+                    // Nếu không có thông tin toạ độ/vị trí EXIF thì để trống "", tuyệt đối không fallback gán địa điểm chung của album/thư mục
 
                     // 2. Resolve Capture Date/Time strictly from EXIF DateTimeOriginal / photo filename
                     let capturedAt =
@@ -2489,14 +2484,17 @@ function testRun() {
             if (fileId) {
                 counter++;
                 const meta = await fetchGoogleDriveSingleFileMeta(fileId);
-                let photoLoc = (meta && meta.location) || "";
-                let photoCity = (meta && meta.city) || "";
-                if (!photoLoc && meta && meta.lat != null && meta.lon != null) {
+                let photoLoc = "";
+                let photoCity = "";
+                if (meta && meta.lat != null && meta.lon != null) {
                     const geo = await reverseGeocodeCoords(meta.lat, meta.lon);
                     if (geo) {
-                        photoLoc = geo.location;
-                        photoCity = geo.city;
+                        photoLoc = geo.location || "";
+                        photoCity = geo.city || "";
                     }
+                } else if (meta && meta.location) {
+                    photoLoc = meta.location;
+                    photoCity = meta.city || "";
                 }
                 const fName = (meta && meta.name) ? meta.name : "";
                 if (!photoLoc && fName) {
@@ -2506,10 +2504,7 @@ function testRun() {
                         photoCity = nameLoc.city;
                     }
                 }
-                if (!photoLoc) {
-                    photoLoc = fallbackCity || "";
-                    photoCity = fallbackCity || "";
-                }
+                // Nếu không có thông tin vị trí thì để trống ""
 
                 const cleanCode = fName ? fName.replace(/\.[^/.]+$/, "").toUpperCase() : `DRV_${1000 + counter}`;
                 const min = ((counter * 5) % 60).toString().padStart(2, '0');
@@ -3328,15 +3323,23 @@ function testRun() {
         const subTabsEl = document.getElementById('managePageSubTabs');
         if (subTabsEl) {
             const locFolders = [];
+            let hasUnspecifiedLoc = false;
             (album.photos || []).forEach(p => {
-                const loc = p.location || album.city || 'Album';
-                if (loc && !locFolders.includes(loc)) locFolders.push(loc);
+                const loc = p.location ? p.location.trim() : '';
+                if (loc) {
+                    if (!locFolders.includes(loc)) locFolders.push(loc);
+                } else {
+                    hasUnspecifiedLoc = true;
+                }
             });
 
             const subTabs = [
                 { id: 'ALL', label: 'Tất cả' },
                 ...locFolders.map(l => ({ id: `LOC:${l}`, label: l }))
             ];
+            if (hasUnspecifiedLoc) {
+                subTabs.push({ id: 'LOC:OTHER', label: 'Địa điểm khác' });
+            }
             if (album.deliveredPhotos && album.deliveredPhotos.length > 0) {
                 subTabs.push({ id: 'DELIVERED', label: `Ảnh đã chỉnh (${album.deliveredPhotos.length})` });
             }
@@ -3379,8 +3382,12 @@ function testRun() {
             if (managePageStatFilter === 'NOTED' && !(st.note && st.note.trim())) return false;
             if (managePageSubTab.startsWith('LOC:')) {
                 const targetLoc = managePageSubTab.slice(4);
-                const pLoc = p.location || album.city || 'Album';
-                if (pLoc !== targetLoc) return false;
+                if (targetLoc === 'OTHER') {
+                    if (p.location && p.location.trim()) return false;
+                } else {
+                    const pLoc = p.location ? p.location.trim() : '';
+                    if (pLoc !== targetLoc) return false;
+                }
             }
             if (managePagePersonFilter !== 'ALL') {
                 const who = st.selectorName || album.clientName || 'Khách hàng';
@@ -3493,7 +3500,7 @@ function testRun() {
                     <div class="absolute bottom-2.5 inset-x-2.5 flex items-end justify-between gap-2 pointer-events-none">
                         <div class="opacity-0 group-hover:opacity-100 transition bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] max-w-[85%] truncate">
                             <span class="font-mono font-bold block truncate">${photo.code}</span>
-                            <span class="text-amber-300 block truncate"><i class="fa-solid fa-location-dot mr-1"></i>${photo.location || album.city} • ${timeLabel}</span>
+                            <span class="text-amber-300 block truncate">${photo.location ? `<i class="fa-solid fa-location-dot mr-1"></i>${photo.location} • ` : ''}${timeLabel}</span>
                         </div>
                     </div>
                 </div>
@@ -3833,19 +3840,29 @@ function testRun() {
             });
 
             // TUÂN THỦ ĐIỀU 5: Trích xuất và cập nhật lại thời gian (DateTimeOriginal) & vị trí GPS (quy đổi xã/phường - tỉnh/thành phố)
-            // cho từng bức ảnh trong album nếu có toạ độ hoặc trích xuất từ Google Drive
+            // cho từng bức ảnh trong album: nếu có toạ độ thì cập nhật đầy đủ Xã/Phường - Tỉnh/Thành phố, nếu không có thì để trống ""
             for (let i = 0; i < album.photos.length; i++) {
                 const photo = album.photos[i];
                 if (photo.lat != null && photo.lon != null) {
                     const geo = await reverseGeocodeCoords(photo.lat, photo.lon);
-                    if (geo) {
-                        if (geo.location && photo.location !== geo.location) {
+                    if (geo && geo.location) {
+                        if (photo.location !== geo.location) {
                             photo.location = geo.location;
                             updatedCount++;
                         }
                         if (geo.city && photo.city !== geo.city) {
                             photo.city = geo.city;
                         }
+                    }
+                } else if (!photo.lat && !photo.lon && photo.title) {
+                    const nameLoc = extractLocationFromText(photo.title);
+                    if (nameLoc && nameLoc.location) {
+                        photo.location = nameLoc.location;
+                        photo.city = nameLoc.city || "";
+                    } else if (!photo.location || photo.location === album.city || photo.location === album.location) {
+                        // Không có thông tin vị trí EXIF GPS hay tên file -> để trống
+                        photo.location = "";
+                        photo.city = "";
                     }
                 }
             }
