@@ -1560,16 +1560,27 @@ const App = (function () {
         const container = document.getElementById('lightboxImageContainer');
         if (!stage || !container) return;
 
-        const stageRect = stage.getBoundingClientRect();
+        const stageW = stage.clientWidth || window.innerWidth;
+        const stageH = stage.clientHeight || window.innerHeight;
         const baseW = Math.round((_lbFitWidth || container.offsetWidth) * _lbScale);
         const baseH = Math.round((_lbFitHeight || container.offsetHeight) * _lbScale);
 
-        // Giới hạn pan: cho phép kéo tự do khi ảnh to hơn khung hình
-        const maxPanX = Math.max(0, (baseW - stageRect.width) / 2) + 200;
-        const maxPanY = Math.max(0, (baseH - stageRect.height) / 2) + 200;
+        // Chuẩn Google Drive viewer: Khoá mép ảnh không bao giờ để lọt khoảng đen màn hình vào bên trong
+        let maxPanX = 0;
+        if (baseW > stageW) {
+            maxPanX = (baseW - stageW) / 2;
+            _lbPanX = Math.max(-maxPanX, Math.min(maxPanX, _lbPanX));
+        } else {
+            _lbPanX = 0;
+        }
 
-        _lbPanX = Math.max(-maxPanX, Math.min(maxPanX, _lbPanX));
-        _lbPanY = Math.max(-maxPanY, Math.min(maxPanY, _lbPanY));
+        let maxPanY = 0;
+        if (baseH > stageH) {
+            maxPanY = (baseH - stageH) / 2;
+            _lbPanY = Math.max(-maxPanY, Math.min(maxPanY, _lbPanY));
+        } else {
+            _lbPanY = 0;
+        }
     }
 
     function applyLightboxTransform() {
