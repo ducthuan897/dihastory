@@ -954,7 +954,13 @@ const App = (function () {
                     heroSubmitBtn.classList.remove('hidden');
                 }
             }
-            if (guideToolbar) guideToolbar.classList.remove('hidden');
+            if (guideToolbar) {
+                if (isLocked) {
+                    guideToolbar.classList.add('hidden');
+                } else {
+                    guideToolbar.classList.remove('hidden');
+                }
+            }
             document.body.classList.remove('view-only-protected');
         } else {
             if (heroDlBtn) heroDlBtn.classList.add('hidden');
@@ -1142,27 +1148,42 @@ const App = (function () {
 
                 <div class="p-2 sm:p-2.5 bg-white flex items-center justify-between gap-1.5 border-t border-zinc-100">
                     <span class="text-[11px] text-zinc-500 truncate font-mono">${timeStr}</span>
-                    ${isClientMode ? `
-                        <div class="flex items-center gap-1.5">
-                            <button
-                                type="button"
-                                onclick="App.openPhotoNoteModal('${photo.id}')"
-                                class="w-7 h-7 rounded-full border flex items-center justify-center text-xs transition ${noteCls}"
-                                title="${noteText ? 'Ghi chú: ' + noteText : 'Thêm ghi chú chỉnh sửa'}"
-                            >
-                                <i class="fa-solid fa-comment-dots"></i>
-                            </button>
-                            <button
-                                type="button"
-                                onclick="App.togglePhotoHeart('${photo.id}')"
-                                ${isLocked ? 'disabled' : ''}
-                                class="w-7 h-7 rounded-full border flex items-center justify-center text-xs transition ${heartCls} ${isLocked ? 'opacity-60 cursor-not-allowed' : ''}"
-                                title="${isSelected ? 'Bỏ chọn ảnh' : 'Chọn ảnh này'}"
-                            >
-                                <i class="fa-solid fa-heart"></i>
-                            </button>
-                        </div>
-                    ` : ''}
+                    ${isClientMode ? (
+                        isLocked ? `
+                            <div class="flex items-center gap-1.5">
+                                ${noteText ? `
+                                    <span class="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] shadow-2xs" title="Ghi chú: ${noteText}">
+                                        <i class="fa-solid fa-comment-dots"></i>
+                                    </span>
+                                ` : ''}
+                                ${isSelected ? `
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold shadow-2xs">
+                                        <i class="fa-solid fa-heart text-[9px]"></i>
+                                        <span>Đã chọn</span>
+                                    </span>
+                                ` : ''}
+                            </div>
+                        ` : `
+                            <div class="flex items-center gap-1.5">
+                                <button
+                                    type="button"
+                                    onclick="App.openPhotoNoteModal('${photo.id}')"
+                                    class="w-7 h-7 rounded-full border flex items-center justify-center text-xs transition ${noteCls}"
+                                    title="${noteText ? 'Ghi chú: ' + noteText : 'Thêm ghi chú chỉnh sửa'}"
+                                >
+                                    <i class="fa-solid fa-comment-dots"></i>
+                                </button>
+                                <button
+                                    type="button"
+                                    onclick="App.togglePhotoHeart('${photo.id}')"
+                                    class="w-7 h-7 rounded-full border flex items-center justify-center text-xs transition ${heartCls}"
+                                    title="${isSelected ? 'Bỏ chọn ảnh' : 'Chọn ảnh này'}"
+                                >
+                                    <i class="fa-solid fa-heart"></i>
+                                </button>
+                            </div>
+                        `
+                    ) : ''}
                 </div>
             </div>
         `;
@@ -1372,7 +1393,14 @@ const App = (function () {
         const sel = selections[photo.id] || {};
 
         if (isClientMode) {
-            if (proofingControls) proofingControls.classList.remove('hidden');
+            const isLocked = isAlbumSelectionLocked(album);
+            if (proofingControls) {
+                if (isLocked) {
+                    proofingControls.classList.add('hidden');
+                } else {
+                    proofingControls.classList.remove('hidden');
+                }
+            }
             if (dlBtn) dlBtn.classList.remove('hidden');
             if (setCoverBtn) setCoverBtn.classList.add('hidden');
 
