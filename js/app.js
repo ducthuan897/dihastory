@@ -20,7 +20,7 @@ const App = (function () {
     let activeCategory = 'ALL';
     let searchQuery = '';
     let albumTimeSort = 'asc';
-    let albumGroupByLocation = true;
+    let albumGroupByLocation = false; // Mặc định không nhóm theo địa điểm
     let gridCols = 'cols-4';
     let currentFilteredPhotos = [];
     let currentLightboxIndex = -1;
@@ -1063,11 +1063,7 @@ const App = (function () {
         }
 
         photos.sort((a, b) => {
-            if (albumTimeSort === 'name_asc') {
-                return (a.code || a.title || '').localeCompare(b.code || b.title || '');
-            } else if (albumTimeSort === 'name_desc') {
-                return (b.code || b.title || '').localeCompare(a.code || a.title || '');
-            } else if (albumTimeSort === 'asc') {
+            if (albumTimeSort === 'asc') {
                 return (a.capturedAt || '').localeCompare(b.capturedAt || '');
             } else {
                 return (b.capturedAt || '').localeCompare(a.capturedAt || '');

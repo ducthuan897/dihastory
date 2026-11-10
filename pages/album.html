@@ -98,38 +98,18 @@
                 <!-- Rendered dynamically by App.js -->
             </div>
 
-            <!-- Row 2: Group by Location, Sort by Time, Search & Grid Density -->
-            <div class="flex flex-wrap items-center justify-between gap-2.5">
-                <div class="flex items-center gap-2">
-                    <!-- Toggle Group by Location -->
-                    <button id="albumGroupLocationBtn" type="button" onclick="App.toggleAlbumGroupByLocation()"
-                        class="px-3 py-1.5 rounded-full text-xs font-semibold bg-zinc-900 text-white border border-zinc-900 transition flex items-center gap-1.5 shadow-xs"
-                        title="Bật/Tắt gom nhóm theo địa điểm chụp">
-                        <i class="fa-solid fa-layer-group text-[11px]"></i>
-                        <span>Nhóm địa điểm</span>
-                    </button>
-
-                    <!-- Sort by Captured Time -->
+            <!-- Row 2: Sort by Time & Grid Density -->
+            <div class="flex flex-wrap items-center justify-end gap-2.5">
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Sort by Captured Time (thay thế vị trí ô tìm kiếm) -->
                     <div
-                        class="flex items-center bg-white border border-zinc-200 hover:border-zinc-300 rounded-full px-2.5 py-1.5 text-xs transition shadow-2xs">
+                        class="flex items-center bg-white border border-zinc-200 hover:border-zinc-300 rounded-full px-3 py-1.5 text-xs transition shadow-2xs">
                         <span class="text-zinc-400 mr-1.5 text-xs">↓↑</span>
                         <select onchange="App.setAlbumTimeSort(this.value)"
                             class="bg-transparent font-medium text-zinc-800 outline-none cursor-pointer text-xs pr-1">
-                            <option value="name_asc">Tên hình ảnh từ A -&gt; Z</option>
-                            <option value="name_desc">Tên hình ảnh từ Z -&gt; A</option>
                             <option value="asc">Thời gian chụp: Cũ -&gt; Mới</option>
                             <option value="desc">Thời gian chụp: Mới -&gt; Cũ</option>
                         </select>
-                    </div>
-                </div>
-
-                <!-- Search, Grid Switcher & Download -->
-                <div class="flex flex-wrap items-center gap-2">
-                    <div class="relative flex-1 sm:flex-initial sm:w-48">
-                        <input type="text" placeholder="Tìm mã ảnh, địa điểm..."
-                            oninput="App.handleSearchInput(this.value)"
-                            class="w-full pl-8 pr-3 py-1.5 rounded-full bg-white border border-zinc-200 focus:border-zinc-900 outline-none text-xs">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2 text-zinc-400 text-xs"></i>
                     </div>
 
                     <div class="hidden sm:flex items-center bg-white border border-zinc-200 rounded-full p-1">
