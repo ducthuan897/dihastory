@@ -2877,15 +2877,16 @@ function testRun() {
 
             return `
                 <div
-                    class="p-4 rounded-2xl border transition ${
+                    onclick="AdminModule.openAlbumManagePage('${album.id}')"
+                    class="p-4 rounded-2xl border transition cursor-pointer ${
                         isEditing
                             ? 'border-zinc-900 bg-zinc-900/5 ring-2 ring-zinc-900/10'
-                            : 'border-zinc-200 bg-white hover:border-zinc-300'
+                            : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-xs'
                     }"
                 >
                     <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                         <!-- Album Info -->
-                        <div class="flex items-start gap-3.5 cursor-pointer flex-1 min-w-0" onclick="App.openAlbumPage('${album.id}')">
+                        <div class="flex items-start gap-3.5 flex-1 min-w-0">
                             <img src="${album.coverUrl}" alt="${album.title}" referrerpolicy="no-referrer" class="w-16 h-16 rounded-xl object-cover border border-zinc-200 shrink-0">
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-1.5">
@@ -2918,7 +2919,7 @@ function testRun() {
                         </div>
 
                         <!-- Quick Actions -->
-                        <div class="flex flex-wrap items-center gap-2 xl:shrink-0 pt-2 xl:pt-0 border-t border-zinc-100 xl:border-t-0">
+                        <div class="flex flex-wrap items-center gap-2 xl:shrink-0 pt-2 xl:pt-0 border-t border-zinc-100 xl:border-t-0" onclick="event.stopPropagation()">
                             ${
                                 album.isSelectionLockedBySubmit
                                     ? `<button
