@@ -835,6 +835,7 @@ const App = (function () {
 
             const isLocked = lockedBySubmit || expired;
             if (isLocked && isClientMode) {
+                if (heroSubmitBtn) heroSubmitBtn.classList.add('hidden');
                 if (lockBanner) lockBanner.classList.remove('hidden');
                 if (lockReasonText) {
                     lockReasonText.innerText = lockedBySubmit
@@ -923,9 +924,16 @@ const App = (function () {
         if (heroCount) heroCount.innerText = `${album.photos.length} Ảnh`;
 
         const guideToolbar = document.getElementById('galleryToolbarAnchor');
+        const isLocked = isAlbumSelectionLocked(album);
         if (isClientMode) {
             if (heroDlBtn) heroDlBtn.classList.remove('hidden');
-            if (heroSubmitBtn) heroSubmitBtn.classList.remove('hidden');
+            if (heroSubmitBtn) {
+                if (isLocked) {
+                    heroSubmitBtn.classList.add('hidden');
+                } else {
+                    heroSubmitBtn.classList.remove('hidden');
+                }
+            }
             if (guideToolbar) guideToolbar.classList.remove('hidden');
             document.body.classList.remove('view-only-protected');
         } else {
@@ -1992,8 +2000,7 @@ const App = (function () {
         };
 
         AdminModule.addSubmission(submission, album.id);
-        album.isSelectionLockedBySubmit = true;
-        AdminModule.saveAlbumsToStorage();
+        AdminModule.lockAlbumAfterClientSubmit(album.id);
 
         closeSubmitSelectionModal();
         showToast("Đã gửi kết quả chọn ảnh thành công! Studio sẽ tiến hành hậu kỳ.");

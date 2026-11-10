@@ -4311,9 +4311,13 @@ function testRun() {
     function lockAlbumAfterClientSubmit(albumId) {
         const albums = getAllAlbums();
         const album = albums.find(a => a.id === albumId);
-        if (album && album.completeLockEnabled) {
+        if (album) {
             album.isSelectionLockedBySubmit = true;
             saveAllAlbums(albums);
+            // Đồng bộ lên Cloud DB nếu đã cài đặt
+            if (hasCloudDatabase()) {
+                syncSingleAlbumToCloud(album);
+            }
         }
     }
 
@@ -4858,6 +4862,7 @@ function testRun() {
         removeLocalFileFromCreateModal,
         handleCreateModalToggleChange,
         createNewAlbum,
+        saveAllAlbums,
         unlockAlbumSelectionForClient,
         lockAlbumAfterClientSubmit,
         toggleAlbumPublic,
