@@ -22,9 +22,9 @@ body {
 /* Hero Cover Banner (Shotpik Style - Compact & Elegant) */
 .album-hero {
     position: relative;
-    height: 44vh;
-    min-height: 300px;
-    max-height: 450px;
+    height: 28vh;
+    min-height: 180px;
+    max-height: 260px;
     width: 100%;
     overflow: hidden;
     background-color: #09090b;
@@ -86,9 +86,9 @@ body {
         gap: 8px;
     }
     .album-hero {
-        height: 38vh;
-        min-height: 250px;
-        max-height: 340px;
+        height: 24vh;
+        min-height: 160px;
+        max-height: 200px;
     }
 }
 
