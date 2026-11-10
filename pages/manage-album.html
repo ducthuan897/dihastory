@@ -36,7 +36,7 @@
                         class="text-zinc-300 text-sm sm:text-base font-medium mt-1"></p>
                 </div>
 
-                <!-- Top-right "Thay đổi ảnh bìa" pill buttons -->
+                <!-- Top-right "Thay đổi ảnh bìa" pill buttons (đã ẩn nút theo yêu cầu) -->
                 <div class="absolute top-4 right-4 flex items-center gap-2 z-20">
                     <label
                         class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/45 hover:bg-black/65 backdrop-blur-md text-white text-xs font-medium cursor-pointer transition border border-white/25"
@@ -46,11 +46,6 @@
                         <input type="file" accept="image/*" onchange="AdminModule.handleUploadCoverFile(event)"
                             class="hidden">
                     </label>
-                    <button id="managePageChangeCoverBtn" type="button"
-                        onclick="AdminModule.toggleCoverSelectMode()"
-                        class="px-3.5 py-1.5 rounded-full bg-white/35 hover:bg-white/55 backdrop-blur-md text-white text-xs font-medium transition shadow-xs border border-white/30">
-                        Thay đổi ảnh bìa
-                    </button>
                 </div>
             </section>
 
