@@ -289,13 +289,13 @@
 
                 <div id="driveApiKeyAlert" class="hidden text-xs rounded-xl p-3 my-2 shrink-0"></div>
 
-                <!-- Modal Body: 2 Cột (16:9) -->
+                <!-- Modal Body: 2 Cột (16:9) Chiều cao cân bằng -->
                 <div class="py-3 overflow-y-auto pr-1 flex-1">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
                         <!-- CỘT TRÁI: Form Thêm / Cập nhật tài khoản & Danh sách tài khoản đã liên kết -->
-                        <div class="space-y-3.5">
+                        <div class="flex flex-col space-y-3.5 h-full">
                             <!-- Form Thêm / Cập nhật Tài Khoản Drive (Chỉ Admin / Super Admin) -->
-                            <div id="driveAccountManageFormWrap" class="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3">
+                            <div id="driveAccountManageFormWrap" class="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3 shrink-0">
                                 <div class="flex items-center justify-between">
                                     <h4 class="text-xs font-bold text-zinc-900 uppercase tracking-wide flex items-center gap-1.5">
                                         <i class="fa-solid fa-plus-circle text-rose-600"></i>
@@ -339,8 +339,8 @@
                             </div>
 
                             <!-- Danh Sách Các Tài Khoản Google Drive Đã Kết Nối -->
-                            <div class="space-y-2.5">
-                                <div class="flex items-center justify-between">
+                            <div class="space-y-2 flex-1 flex flex-col min-h-0">
+                                <div class="flex items-center justify-between shrink-0">
                                     <span class="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
                                         <i class="fa-solid fa-server text-emerald-600"></i>
                                         <span>Tài khoản Drive đã liên kết</span>
@@ -348,16 +348,16 @@
                                     <span id="driveAccountsCountBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700 font-semibold">1 tài khoản</span>
                                 </div>
 
-                                <div id="driveAccountsListContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                <div id="driveAccountsListContainer" class="space-y-2 overflow-y-auto pr-1 flex-1">
                                     <!-- Rendered dynamically by AdminModule.renderDriveAccountsList() -->
                                 </div>
                             </div>
                         </div>
 
                         <!-- CỘT PHẢI: Hướng dẫn chi tiết cách lấy mã kết nối -->
-                        <div class="space-y-3.5">
-                            <div class="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 space-y-3 text-xs">
-                                <div class="flex items-center justify-between">
+                        <div class="h-full flex flex-col">
+                            <div class="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 space-y-3 text-xs flex-1 flex flex-col h-full">
+                                <div class="flex items-center justify-between shrink-0">
                                     <span class="font-bold text-zinc-800 uppercase tracking-wide flex items-center gap-1.5">
                                         <i class="fa-solid fa-book-open text-sky-600"></i>
                                         <span>Hướng dẫn lấy Mã kết nối</span>
@@ -365,17 +365,23 @@
                                 </div>
 
                                 <!-- Google Apps Script Web App -->
-                                <div class="bg-white rounded-xl p-3.5 border border-zinc-200 space-y-2.5">
-                                    <h5 class="font-bold text-zinc-900 flex items-center gap-1.5">
-                                        <span>Google Apps Script</span>
-                                    </h5>
-                                    <ol class="list-decimal list-inside space-y-1.5 text-zinc-600 text-[11.5px] leading-relaxed pl-1">
-                                        <li>Mở tài khoản Google cần kết nối, truy cập <a href="https://script.google.com" target="_blank" rel="noopener noreferrer" class="text-sky-600 font-semibold underline">script.google.com</a> rồi nhấn <strong>Dự án mới (New Project)</strong>.</li>
-                                        <li>Dán toàn bộ mã Google Apps Script vào trình soạn thảo.</li>
-                                        <li>Bấm <strong>Triển khai (Deploy)</strong> &rarr; <strong>Tùy chọn triển khai mới (New deployment)</strong> &rarr; Chọn biểu tượng bánh răng loại <strong>Ứng dụng web (Web app)</strong>.</li>
-                                        <li>Mục <em>"Người có quyền truy cập (Who has access)"</em>: Chọn <strong>Bất kỳ ai (Anyone)</strong> &rarr; Bấm <strong>Triển khai</strong> và cấp quyền.</li>
-                                        <li>Sao chép đường dẫn <strong>URL ứng dụng web</strong> (dạng <code class="bg-zinc-100 px-1 py-0.5 rounded text-[10.5px] text-rose-600 font-mono">https://script.google.com/.../exec</code>) dán vào ô <em>Mã kết nối</em> và bấm <strong>Lưu Tài Khoản</strong>.</li>
-                                    </ol>
+                                <div class="bg-white rounded-xl p-4 border border-zinc-200 space-y-3 flex-1 flex flex-col justify-between">
+                                    <div>
+                                        <h5 class="font-bold text-zinc-900 mb-2">
+                                            <span>Google Apps Script</span>
+                                        </h5>
+                                        <ol class="list-decimal list-inside space-y-2 text-zinc-600 text-[11.5px] leading-relaxed pl-1">
+                                            <li>Mở tài khoản Google cần kết nối, truy cập <a href="https://script.google.com" target="_blank" rel="noopener noreferrer" class="text-sky-600 font-semibold underline">script.google.com</a> rồi nhấn <strong>Dự án mới (New Project)</strong>.</li>
+                                            <li>Dán toàn bộ mã Google Apps Script vào trình soạn thảo.</li>
+                                            <li>Bấm <strong>Triển khai (Deploy)</strong> &rarr; <strong>Tùy chọn triển khai mới (New deployment)</strong> &rarr; Chọn biểu tượng bánh răng loại <strong>Ứng dụng web (Web app)</strong>.</li>
+                                            <li>Mục <em>"Người có quyền truy cập (Who has access)"</em>: Chọn <strong>Bất kỳ ai (Anyone)</strong> &rarr; Bấm <strong>Triển khai</strong> và cấp quyền.</li>
+                                            <li>Sao chép đường dẫn <strong>URL ứng dụng web</strong> (dạng <code class="bg-zinc-100 px-1 py-0.5 rounded text-[10.5px] text-rose-600 font-mono">https://script.google.com/.../exec</code>) dán vào ô <em>Mã kết nối</em> và bấm <strong>Lưu Tài Khoản</strong>.</li>
+                                        </ol>
+                                    </div>
+                                    <div class="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-400">
+                                        <span><i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i>Bảo mật &amp; Mã hóa tự động</span>
+                                        <span>Google Cloud Ready</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
