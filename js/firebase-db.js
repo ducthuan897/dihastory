@@ -31,6 +31,7 @@ const FirebaseModule = (function () {
                 listenToCloudAlbums();
                 listenToCloudUsers();
                 listenToCloudSelections();
+                listenToCloudDriveAccounts();
                 updateDatabaseStatusBadge(true);
             }
         } catch (e) {
@@ -174,6 +175,45 @@ const FirebaseModule = (function () {
         }
     }
 
+    // 4. GOOGLE DRIVE ACCOUNTS SYNC (ENCRYPTED / SECURED)
+    function listenToCloudDriveAccounts() {
+        if (!database) return;
+        const driveRef = database.ref('driveAccounts');
+        driveRef.on('value', snapshot => {
+            const val = snapshot.val();
+            if (val && typeof AdminModule !== 'undefined' && typeof AdminModule.applyLatestCloudDriveAccounts === 'function') {
+                const list = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+                AdminModule.applyLatestCloudDriveAccounts(list);
+            }
+        });
+    }
+
+    async function saveDriveAccounts(accountsList) {
+        if (!database) return false;
+        try {
+            await database.ref('driveAccounts').set(accountsList);
+            return true;
+        } catch (e) {
+            console.error("Firebase saveDriveAccounts error:", e);
+            return false;
+        }
+    }
+
+    async function getDriveAccountsOnce() {
+        if (!database) return null;
+        try {
+            const snap = await database.ref('driveAccounts').once('value');
+            const val = snap.val();
+            if (val) {
+                return Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+            }
+            return null;
+        } catch (e) {
+            console.error("Firebase getDriveAccountsOnce error:", e);
+            return null;
+        }
+    }
+
     return {
         init,
         isReady,
@@ -182,7 +222,9 @@ const FirebaseModule = (function () {
         saveUsers,
         getUsersOnce,
         saveAlbumSelections,
-        getSelectionsOnce
+        getSelectionsOnce,
+        saveDriveAccounts,
+        getDriveAccountsOnce
     };
 })();
 

@@ -279,7 +279,6 @@
                         </div>
                         <div>
                             <h3 class="text-base sm:text-lg font-bold text-zinc-900 leading-tight">Quản Lý Tài Khoản Google Drive</h3>
-                            <p class="text-[11px] text-zinc-500">Mọi tài khoản liên kết đều tự động kích hoạt để quét ảnh và trích xuất EXIF/GPS</p>
                         </div>
                     </div>
                     <button type="button" onclick="AdminModule.closeDriveApiKeyModal()"
@@ -355,7 +354,7 @@
                             </div>
                         </div>
 
-                        <!-- CỘT PHẢI: Hướng dẫn chi tiết cách lấy mã kết nối (3 bước) -->
+                        <!-- CỘT PHẢI: Hướng dẫn chi tiết cách lấy mã kết nối -->
                         <div class="space-y-3.5">
                             <div class="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 space-y-3 text-xs">
                                 <div class="flex items-center justify-between">
@@ -363,41 +362,20 @@
                                         <i class="fa-solid fa-book-open text-sky-600"></i>
                                         <span>Hướng dẫn lấy Mã kết nối</span>
                                     </span>
-                                    <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                                        Khuyên dùng Google Apps Script
-                                    </span>
                                 </div>
 
-                                <!-- Cách 1: Google Apps Script Web App -->
+                                <!-- Google Apps Script Web App -->
                                 <div class="bg-white rounded-xl p-3.5 border border-zinc-200 space-y-2.5">
-                                    <div class="flex items-center justify-between">
-                                        <h5 class="font-bold text-zinc-900 flex items-center gap-1.5">
-                                            <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 font-mono flex items-center justify-center text-[11px]">1</span>
-                                            <span>Cách 1: Google Apps Script (Tự trích xuất EXIF GPS + Ngày chụp)</span>
-                                        </h5>
-                                        <button type="button" onclick="AdminModule.copyAppsScriptCode()"
-                                            class="text-[11px] text-rose-600 hover:text-rose-700 font-semibold underline flex items-center gap-1">
-                                            <i class="fa-regular fa-copy"></i> Sao chép mã
-                                        </button>
-                                    </div>
+                                    <h5 class="font-bold text-zinc-900 flex items-center gap-1.5">
+                                        <span>Google Apps Script</span>
+                                    </h5>
                                     <ol class="list-decimal list-inside space-y-1.5 text-zinc-600 text-[11.5px] leading-relaxed pl-1">
                                         <li>Mở tài khoản Google cần kết nối, truy cập <a href="https://script.google.com" target="_blank" rel="noopener noreferrer" class="text-sky-600 font-semibold underline">script.google.com</a> rồi nhấn <strong>Dự án mới (New Project)</strong>.</li>
-                                        <li>Xoá code mặc định, nhấn nút <strong>Sao chép mã</strong> ở trên và dán toàn bộ mã vào trình soạn thảo.</li>
+                                        <li>Dán toàn bộ mã Google Apps Script vào trình soạn thảo.</li>
                                         <li>Bấm <strong>Triển khai (Deploy)</strong> &rarr; <strong>Tùy chọn triển khai mới (New deployment)</strong> &rarr; Chọn biểu tượng bánh răng loại <strong>Ứng dụng web (Web app)</strong>.</li>
                                         <li>Mục <em>"Người có quyền truy cập (Who has access)"</em>: Chọn <strong>Bất kỳ ai (Anyone)</strong> &rarr; Bấm <strong>Triển khai</strong> và cấp quyền.</li>
                                         <li>Sao chép đường dẫn <strong>URL ứng dụng web</strong> (dạng <code class="bg-zinc-100 px-1 py-0.5 rounded text-[10.5px] text-rose-600 font-mono">https://script.google.com/.../exec</code>) dán vào ô <em>Mã kết nối</em> và bấm <strong>Lưu Tài Khoản</strong>.</li>
                                     </ol>
-                                </div>
-
-                                <!-- Cách 2: Google Drive API Key -->
-                                <div class="bg-white rounded-xl p-3 border border-zinc-200 space-y-1.5">
-                                    <h5 class="font-bold text-zinc-900 flex items-center gap-1.5">
-                                        <span class="w-5 h-5 rounded-full bg-zinc-100 text-zinc-700 font-mono flex items-center justify-center text-[11px]">2</span>
-                                        <span>Cách 2: Google Cloud API Key (Tùy chọn phụ)</span>
-                                    </h5>
-                                    <p class="text-[11px] text-zinc-600 leading-relaxed pl-1">
-                                        Truy cập <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" class="text-sky-600 font-semibold underline">Google Cloud Console</a> &rarr; Bật thư viện <strong>Google Drive API v3</strong> &rarr; Vào mục <em>Credentials</em> tạo <strong>API Key</strong> (dạng <code class="bg-zinc-100 px-1 py-0.5 rounded text-[10.5px] font-mono text-zinc-800">AIzaSy...</code>) rồi dán vào ô <em>Mã kết nối</em>.
-                                    </p>
                                 </div>
                             </div>
                         </div>

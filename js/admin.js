@@ -16,6 +16,39 @@ const AdminModule = (function () {
 
     const DEFAULT_GOOGLE_DRIVE_API_KEY = "https://script.google.com/macros/s/AKfycbw2nwiPyK04c9V4dQKVPlAya8Z0FrwBG3McsT0swJjRulOjpwt06ytvSrMKAm7xZ9FL/exec";
 
+    // Hàm mã hóa & giải mã bảo mật dữ liệu tài khoản khi lưu vào Database
+    const DRIVE_SEC_SALT = 0x5a;
+    function encryptSecretStr(plain) {
+        if (!plain || typeof plain !== 'string') return "";
+        try {
+            const utf8 = unescape(encodeURIComponent(plain));
+            let res = "";
+            for (let i = 0; i < utf8.length; i++) {
+                const code = utf8.charCodeAt(i) ^ DRIVE_SEC_SALT;
+                res += code.toString(16).padStart(2, '0');
+            }
+            return "enc_" + res;
+        } catch (e) {
+            return plain;
+        }
+    }
+
+    function decryptSecretStr(cipher) {
+        if (!cipher || typeof cipher !== 'string') return "";
+        if (!cipher.startsWith("enc_")) return cipher;
+        try {
+            const hex = cipher.slice(4);
+            let utf8 = "";
+            for (let i = 0; i < hex.length; i += 2) {
+                const code = parseInt(hex.substr(i, 2), 16) ^ DRIVE_SEC_SALT;
+                utf8 += String.fromCharCode(code);
+            }
+            return decodeURIComponent(escape(utf8));
+        } catch (e) {
+            return cipher;
+        }
+    }
+
     function getDriveAccountsList() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY_DRIVE_ACCOUNTS);
@@ -39,7 +72,7 @@ const AdminModule = (function () {
         return initial;
     }
 
-    function saveDriveAccountsList(list) {
+    function saveDriveAccountsList(list, skipCloudSync = false) {
         try {
             localStorage.setItem(STORAGE_KEY_DRIVE_ACCOUNTS, JSON.stringify(list));
             const primary = list.find(a => a.active) || list[0];
@@ -48,6 +81,40 @@ const AdminModule = (function () {
             }
         } catch (e) {}
         updateDriveApiKeyBadge();
+
+        if (!skipCloudSync && typeof FirebaseModule !== 'undefined' && typeof FirebaseModule.saveDriveAccounts === 'function') {
+            const encryptedPayload = list.map(acc => ({
+                id: acc.id,
+                name: encryptSecretStr(acc.name || ""),
+                key: encryptSecretStr(acc.key || ""),
+                active: !!acc.active,
+                createdAt: acc.createdAt || ""
+            }));
+            FirebaseModule.saveDriveAccounts(encryptedPayload).catch(() => {});
+        }
+    }
+
+    function applyLatestCloudDriveAccounts(cloudAccounts) {
+        if (!Array.isArray(cloudAccounts) || !cloudAccounts.length) return;
+        const decryptedList = cloudAccounts.map(acc => ({
+            id: acc.id,
+            name: decryptSecretStr(acc.name || "") || "Tài khoản Drive",
+            key: decryptSecretStr(acc.key || ""),
+            active: !!acc.active,
+            createdAt: acc.createdAt || ""
+        })).filter(acc => acc.key);
+
+        if (!decryptedList.length) return;
+        localStorage.setItem(STORAGE_KEY_DRIVE_ACCOUNTS, JSON.stringify(decryptedList));
+        const primary = decryptedList.find(a => a.active) || decryptedList[0];
+        if (primary && primary.key) {
+            localStorage.setItem(STORAGE_KEY_GOOGLE_API_KEY, primary.key);
+        }
+        updateDriveApiKeyBadge();
+        const modal = document.getElementById('driveApiKeyModal');
+        if (modal && !modal.classList.contains('hidden')) {
+            renderDriveAccountsList();
+        }
     }
 
     function getGoogleDriveApiKey() {
@@ -5304,6 +5371,7 @@ function testRun() {
         quickChangeAlbumDate,
         applyLatestCloudAlbums,
         applyLatestCloudSelections,
+        applyLatestCloudDriveAccounts,
         mergeCloudAlbums: applyLatestCloudAlbums,
         getAlbumOldestCaptureDate,
         extractGoogleDriveFileId,
