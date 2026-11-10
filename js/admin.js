@@ -760,12 +760,12 @@ function testRun() {
             completeLockEnabled: true,
             isSelectionLockedBySubmit: false,
             youtubeId: "",
-            coverUrl: "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=s0",
+            coverUrl: "https://drive.google.com/thumbnail?id=1Q7miZsnzfuu4ShW_HMHXv3_3yDxC9SST&sz=s0",
             description: "Album Gian thần Đạt 09 của khách hàng Nguyễn Thành Đạt (Chụp tại Nhà thờ Phú Cường, Thủ Dầu Một).",
             photos: [
                 {
-                    id: "drv_1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7_1794052824913_1",
-                    driveFileId: "1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7",
+                    id: "drv_1Q7miZsnzfuu4ShW_HMHXv3_3yDxC9SST_1",
+                    driveFileId: "1Q7miZsnzfuu4ShW_HMHXv3_3yDxC9SST",
                     code: "DSC00346",
                     location: "Trường Sa, Bình Dương",
                     city: "Bình Dương",
@@ -773,24 +773,34 @@ function testRun() {
                     lon: 106.678424,
                     capturedAt: "2026-07-24T16:28",
                     title: "DSC00346.jpg",
-                    url: "https://drive.google.com/thumbnail?id=1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7&sz=s0",
+                    url: "https://drive.google.com/thumbnail?id=1Q7miZsnzfuu4ShW_HMHXv3_3yDxC9SST&sz=s0",
                     starred: true
                 },
                 {
-                    id: "drv_1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U_1794052824913_2",
-                    driveFileId: "1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U",
-                    code: "DSC01193",
+                    id: "drv_1UnmtUmMJIEaPZGGmxXWjJDOOUJMk66kP_2",
+                    driveFileId: "1UnmtUmMJIEaPZGGmxXWjJDOOUJMk66kP",
+                    code: "DSC00358",
+                    location: "Bình Dương",
+                    city: "Bình Dương",
+                    capturedAt: "2026-07-24T16:45",
+                    title: "DSC00358.jpg",
+                    url: "https://drive.google.com/thumbnail?id=1UnmtUmMJIEaPZGGmxXWjJDOOUJMk66kP&sz=s0"
+                },
+                {
+                    id: "drv_1hvt474Rn3H4Teg1tfp2PnngvgEFGRxRt_3",
+                    driveFileId: "1hvt474Rn3H4Teg1tfp2PnngvgEFGRxRt",
+                    code: "DSC01180",
                     location: "Nhà thờ Phú Cường, Thủ Dầu Một",
                     city: "Thủ Dầu Một",
                     lat: 10.980004,
                     lon: 106.654371,
-                    capturedAt: "2026-10-19T21:35",
-                    title: "DSC01193.jpg",
-                    url: "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=s0"
+                    capturedAt: "2026-10-19T21:15",
+                    title: "DSC01180.jpg",
+                    url: "https://drive.google.com/thumbnail?id=1hvt474Rn3H4Teg1tfp2PnngvgEFGRxRt&sz=s0"
                 },
                 {
-                    id: "drv_1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd_1794052824913_3",
-                    driveFileId: "1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd",
+                    id: "drv_1K0UH9LNmPKSppb7asxOgzQDCRiLFxJiH_4",
+                    driveFileId: "1K0UH9LNmPKSppb7asxOgzQDCRiLFxJiH",
                     code: "DSC01184",
                     location: "Nhà thờ Phú Cường, Thủ Dầu Một",
                     city: "Thủ Dầu Một",
@@ -798,7 +808,7 @@ function testRun() {
                     lon: 106.654377,
                     capturedAt: "2026-10-19T21:23",
                     title: "DSC01184.jpg",
-                    url: "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd&sz=s0"
+                    url: "https://drive.google.com/thumbnail?id=1K0UH9LNmPKSppb7asxOgzQDCRiLFxJiH&sz=s0"
                 }
             ]
         }
@@ -827,6 +837,12 @@ function testRun() {
                                     a.photos.forEach(p => {
                                         if (p.code === "DSC00346" && (!p.capturedAt || p.capturedAt.startsWith("2026-10-19"))) {
                                             p.capturedAt = "2026-07-24T16:28";
+                                        }
+                                        if (p.code === "DSC00358" && !p.capturedAt) {
+                                            p.capturedAt = "2026-07-24T16:45";
+                                        }
+                                        if (p.code === "DSC01180" && !p.capturedAt) {
+                                            p.capturedAt = "2026-10-19T21:15";
                                         }
                                         if (p.code === "DSC01193" && !p.capturedAt) {
                                             p.capturedAt = "2026-10-19T21:35";
