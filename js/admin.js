@@ -2837,42 +2837,42 @@ function testRun() {
                             : 'border-zinc-200 bg-white hover:border-zinc-300'
                     }"
                 >
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                         <!-- Album Info -->
-                        <div class="flex items-start sm:items-center gap-3.5 cursor-pointer" onclick="App.openAlbumPage('${album.id}')">
+                        <div class="flex items-start gap-3.5 cursor-pointer flex-1 min-w-0" onclick="App.openAlbumPage('${album.id}')">
                             <img src="${album.coverUrl}" alt="${album.title}" referrerpolicy="no-referrer" class="w-16 h-16 rounded-xl object-cover border border-zinc-200 shrink-0">
-                            <div>
+                            <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-1.5">
-                                    <h3 class="text-sm font-bold text-zinc-900">${album.title}</h3>
+                                    <h3 class="text-sm sm:text-base font-bold text-zinc-900">${album.title}</h3>
                                     ${
                                         album.sourceType === 'drive'
-                                            ? '<span class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-semibold"><i class="fa-brands fa-google-drive mr-1"></i>Google Drive</span>'
-                                            : '<span class="text-[10px] bg-zinc-100 text-zinc-700 border border-zinc-200 px-2 py-0.5 rounded-full font-semibold"><i class="fa-solid fa-hard-drive mr-1"></i>Local</span>'
+                                            ? '<span class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-brands fa-google-drive mr-1"></i>Google Drive</span>'
+                                            : '<span class="text-[10px] bg-zinc-100 text-zinc-700 border border-zinc-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-solid fa-hard-drive mr-1"></i>Local</span>'
                                     }
                                     ${
                                         album.isPublic
-                                            ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold"><i class="fa-solid fa-globe mr-1"></i>Đang chiếu Trang chủ</span>'
-                                            : '<span class="text-[10px] bg-zinc-100 text-zinc-600 border border-zinc-200 px-2 py-0.5 rounded-full font-semibold"><i class="fa-solid fa-lock mr-1"></i>Chỉ gửi Link riêng</span>'
+                                            ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-solid fa-globe mr-1"></i>Đang chiếu Trang chủ</span>'
+                                            : '<span class="text-[10px] bg-zinc-100 text-zinc-600 border border-zinc-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-solid fa-lock mr-1"></i>Chỉ gửi Link riêng</span>'
                                     }
                                     ${
                                         album.isSelectionLockedBySubmit
-                                            ? '<span class="text-[10px] bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-full font-bold"><i class="fa-solid fa-lock mr-1"></i>Đã khoá chọn (Khách đã hoàn tất)</span>'
+                                            ? '<span class="text-[10px] bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-full font-bold shrink-0"><i class="fa-solid fa-lock mr-1"></i>Đã khoá chọn (Khách đã hoàn tất)</span>'
                                             : ''
                                     }
                                 </div>
-                                <div class="flex flex-wrap items-center gap-3 text-xs text-zinc-500 mt-1">
-                                    <span><i class="fa-regular fa-calendar mr-1"></i>${album.date}</span>
-                                    <span><i class="fa-solid fa-location-dot mr-1 text-rose-500"></i>${album.city}</span>
-                                    <span><i class="fa-regular fa-images mr-1"></i>${album.photos.length} ảnh</span>
-                                    <span class="text-rose-600 font-semibold"><i class="fa-solid fa-heart mr-1"></i>Khách chọn: ${selectedCount}/${album.selectionLimit || '∞'}</span>
-                                    ${(album.deliveredPhotos && album.deliveredPhotos.length > 0) ? `<span class="text-emerald-700 font-semibold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Đã chỉnh: ${album.deliveredPhotos.length} ảnh</span>` : ''}
-                                    ${album.deadlineEnabled && album.deadlineAt ? `<span class="text-amber-700"><i class="fa-regular fa-clock mr-1"></i>Hạn: ${formatTimeShort(album.deadlineAt)}</span>` : ''}
+                                <div class="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs text-zinc-500 mt-1.5">
+                                    <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1"></i>${album.date}</span>
+                                    <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1 text-rose-500"></i>${album.city}</span>
+                                    <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1"></i>${album.photos.length} ảnh</span>
+                                    <span class="text-rose-600 font-semibold inline-flex items-center"><i class="fa-solid fa-heart mr-1"></i>Khách chọn: ${selectedCount}/${album.selectionLimit || '∞'}</span>
+                                    ${(album.deliveredPhotos && album.deliveredPhotos.length > 0) ? `<span class="text-emerald-700 font-semibold inline-flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Đã chỉnh: ${album.deliveredPhotos.length} ảnh</span>` : ''}
+                                    ${album.deadlineEnabled && album.deadlineAt ? `<span class="text-amber-700 inline-flex items-center"><i class="fa-regular fa-clock mr-1"></i>Hạn: ${formatTimeShort(album.deadlineAt)}</span>` : ''}
                                 </div>
                             </div>
                         </div>
 
                         <!-- Quick Actions -->
-                        <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <div class="flex flex-wrap items-center gap-2 xl:shrink-0 pt-2 xl:pt-0 border-t border-zinc-100 xl:border-t-0">
                             ${
                                 album.isSelectionLockedBySubmit
                                     ? `<button
