@@ -1405,20 +1405,34 @@ function testRun() {
             );
             if (resp.ok) {
                 const data = await resp.json();
-                const rawCity = (data.city || data.principalSubdivision || "").replace(/^(Tỉnh|Thành phố)\s+/i, "").trim();
-                const rawLocality = (data.locality || "").replace(/^(Phường|Xã|Thị trấn|Quận|Huyện)\s+/i, "").trim();
-                const city = rawCity || rawLocality || "";
-                const location =
-                    rawLocality && rawCity && rawLocality.toLowerCase() !== rawCity.toLowerCase()
-                        ? `${data.locality} - ${rawCity}`
-                        : (city || `${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}`);
+                let rawCity = (data.city || data.principalSubdivision || "").replace(/^(Tỉnh|Thành phố)\s+/i, "").trim();
+                let rawLocality = (data.locality || "").trim();
+
+                // Lấy thông tin xã/phường và quận/huyện từ administrative info nếu có
+                if (data.localityInfo && Array.isArray(data.localityInfo.administrative)) {
+                    const admins = data.localityInfo.administrative;
+                    const wardObj = admins.find(a => (a.adminLevel === 6 || a.adminLevel === 7) || /^(Phường|Xã|Thị trấn)/i.test(a.name || ''));
+                    if (wardObj && wardObj.name) {
+                        rawLocality = wardObj.name.trim();
+                    }
+                    const cityObj = admins.find(a => a.adminLevel === 4 || /^(Tỉnh|Thành phố)/i.test(a.name || ''));
+                    if (cityObj && cityObj.name) {
+                        rawCity = cityObj.name.replace(/^(Tỉnh|Thành phố)\s+/i, "").trim();
+                    }
+                }
+
+                const cleanWard = rawLocality ? (rawLocality.startsWith("Phường ") || rawLocality.startsWith("Xã ") || rawLocality.startsWith("Thị trấn ") ? rawLocality : `Phường ${rawLocality}`) : "";
+                const city = rawCity || (rawLocality.replace(/^(Phường|Xã|Thị trấn)\s+/i, "")) || "";
+                const location = cleanWard && rawCity && cleanWard.toLowerCase() !== rawCity.toLowerCase()
+                    ? `${cleanWard} - ${rawCity}`
+                    : (cleanWard || city || `${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}`);
                 const res = { city: city || location, location };
                 clientGeoCache[key] = res;
                 return res;
             }
         } catch (e) {}
 
-        // 2. Fallback to OpenStreetMap Nominatim
+        // 2. Fallback to OpenStreetMap Nominatim (format chuẩn: Xã/Phường - Tỉnh/Thành phố)
         try {
             const resp = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&accept-language=vi`
@@ -1426,9 +1440,13 @@ function testRun() {
             if (resp.ok) {
                 const data = await resp.json();
                 const addr = data.address || {};
-                const city = addr.city || addr.town || addr.province || addr.state || "";
-                const sub = addr.suburb || addr.quarter || addr.neighbourhood || addr.road || "";
-                const location = sub && city ? `${sub} - ${city}` : (city || data.display_name || "");
+                const rawCity = (addr.city || addr.town || addr.province || addr.state || "").replace(/^(Tỉnh|Thành phố)\s+/i, "").trim();
+                const ward = (addr.suburb || addr.quarter || addr.neighbourhood || addr.village || addr.hamlet || "").trim();
+                const city = rawCity || ward.replace(/^(Phường|Xã|Thị trấn)\s+/i, "") || "";
+                const cleanWard = ward ? (ward.startsWith("Phường ") || ward.startsWith("Xã ") || ward.startsWith("Thị trấn ") ? ward : `Phường ${ward}`) : "";
+                const location = cleanWard && rawCity && cleanWard.toLowerCase() !== rawCity.toLowerCase()
+                    ? `${cleanWard} - ${rawCity}`
+                    : (cleanWard || city || data.display_name || "");
                 const res = { city: city || location, location };
                 clientGeoCache[key] = res;
                 return res;
@@ -3681,6 +3699,16 @@ function testRun() {
                 return;
             }
 
+            // Xoá các cache preview cũ để đảm bảo lấy đúng danh sách mới nhất từ Drive
+            if (album.driveLinks && Array.isArray(album.driveLinks)) {
+                album.driveLinks.forEach(lnk => {
+                    const fid = extractGoogleDriveFolderId(lnk);
+                    if (fid && previewedDrivePhotosCache[fid]) {
+                        delete previewedDrivePhotosCache[fid];
+                    }
+                });
+            }
+
             App.showToast("Đang đồng bộ ảnh thực tế từ Google Drive...");
             const fetchedPhotos = await fetchRealPhotosFromDriveLinks(
                 album.driveLinks,
@@ -3696,60 +3724,108 @@ function testRun() {
 
             let addedCount = 0;
             let updatedCount = 0;
+            let removedCount = 0;
             let deliveredAddedCount = 0;
             if (!album.deliveredPhotos) album.deliveredPhotos = [];
+
+            // 1. Phân loại danh sách ảnh fetched từ Google Drive (ảnh thường & ảnh đã chỉnh)
+            const fetchedRegular = [];
+            const fetchedDelivered = [];
 
             fetchedPhotos.forEach(fp => {
                 const isDelivered = isDeliveredPhotoName(fp.code) || isDeliveredPhotoName(fp.title);
                 if (isDelivered) {
-                    const origCode = extractOriginalCodeFromDelivered(fp.code) || extractOriginalCodeFromDelivered(fp.title);
-                    const cleanTarget = (origCode || '').toUpperCase();
-                    const matchedOrig = album.photos.find(p => {
-                        const oc = (p.code || '').toUpperCase();
-                        return oc === cleanTarget || (cleanTarget && oc.includes(cleanTarget)) || (cleanTarget && cleanTarget.includes(oc));
+                    fetchedDelivered.push(fp);
+                } else {
+                    fetchedRegular.push(fp);
+                }
+            });
+
+            // 2. Những ảnh nào không còn trong Google Drive chia sẻ thì xóa đi
+            const isMatchPhoto = (p, fp) => {
+                if (fp.driveFileId && p.driveFileId && p.driveFileId === fp.driveFileId) return true;
+                if (p.url && fp.url && p.url === fp.url) return true;
+                if (p.code && fp.code && p.code.toUpperCase() === fp.code.toUpperCase()) return true;
+                if (p.title && fp.title && p.title.toLowerCase() === fp.title.toLowerCase()) return true;
+                return false;
+            };
+
+            const initialPhotosCount = album.photos.length;
+            album.photos = album.photos.filter(p => {
+                // Giữ lại ảnh nếu ảnh đó có trong danh sách vừa nạp từ Google Drive
+                const stillExists = fetchedRegular.some(fp => isMatchPhoto(p, fp));
+                return stillExists;
+            });
+            removedCount += Math.max(0, initialPhotosCount - album.photos.length);
+
+            // Tương tự lọc và xoá ảnh đã chỉnh nếu không còn trong Drive
+            const initialDelivCount = album.deliveredPhotos.length;
+            album.deliveredPhotos = album.deliveredPhotos.filter(dp => {
+                const stillExists = fetchedDelivered.some(fp => isMatchPhoto(dp, fp));
+                return stillExists;
+            });
+            removedCount += Math.max(0, initialDelivCount - album.deliveredPhotos.length);
+
+            // 3. Cập nhật và thêm mới ảnh có trong Drive theo đúng Điều 5
+            fetchedDelivered.forEach(fp => {
+                const origCode = extractOriginalCodeFromDelivered(fp.code) || extractOriginalCodeFromDelivered(fp.title);
+                const cleanTarget = (origCode || '').toUpperCase();
+                const matchedOrig = album.photos.find(p => {
+                    const oc = (p.code || '').toUpperCase();
+                    return oc === cleanTarget || (cleanTarget && oc.includes(cleanTarget)) || (cleanTarget && cleanTarget.includes(oc));
+                });
+
+                const existingDeliv = album.deliveredPhotos.find(d => isMatchPhoto(d, fp));
+
+                if (!existingDeliv) {
+                    album.deliveredPhotos.push({
+                        id: `deliv_drv_${Date.now()}_${album.deliveredPhotos.length}`,
+                        driveFileId: fp.driveFileId,
+                        originalPhotoId: matchedOrig ? matchedOrig.id : null,
+                        originalPhotoCode: origCode,
+                        code: fp.code,
+                        location: fp.location || (matchedOrig ? matchedOrig.location : ''),
+                        city: fp.city || (matchedOrig ? matchedOrig.city : ''),
+                        capturedAt: fp.capturedAt || (matchedOrig ? matchedOrig.capturedAt : ''),
+                        title: fp.title ? `${fp.title} (Ảnh đã chỉnh)` : `${fp.code} (Ảnh đã chỉnh)`,
+                        beforeUrl: matchedOrig ? matchedOrig.url : null,
+                        url: fp.url
                     });
-
-                    const existingDeliv = album.deliveredPhotos.find(
-                        d => (fp.driveFileId && d.driveFileId === fp.driveFileId) || d.url === fp.url || (d.code && d.code === fp.code)
-                    );
-
-                    if (!existingDeliv) {
-                        album.deliveredPhotos.push({
-                            id: `deliv_drv_${Date.now()}_${album.deliveredPhotos.length}`,
-                            driveFileId: fp.driveFileId,
-                            originalPhotoId: matchedOrig ? matchedOrig.id : null,
-                            originalPhotoCode: origCode,
-                            code: fp.code,
-                            location: matchedOrig ? matchedOrig.location : fp.location,
-                            city: matchedOrig ? matchedOrig.city : fp.city,
-                            capturedAt: matchedOrig ? matchedOrig.capturedAt : fp.capturedAt,
-                            title: fp.title ? `${fp.title} (Ảnh đã chỉnh)` : `${fp.code} (Ảnh đã chỉnh)`,
-                            beforeUrl: matchedOrig ? matchedOrig.url : null,
-                            url: fp.url
-                        });
-                        deliveredAddedCount++;
-                    } else if (matchedOrig && !existingDeliv.originalPhotoId) {
+                    deliveredAddedCount++;
+                } else {
+                    if (fp.location && existingDeliv.location !== fp.location) existingDeliv.location = fp.location;
+                    if (fp.city && existingDeliv.city !== fp.city) existingDeliv.city = fp.city;
+                    if (fp.capturedAt && existingDeliv.capturedAt !== fp.capturedAt) existingDeliv.capturedAt = fp.capturedAt;
+                    if (matchedOrig && !existingDeliv.originalPhotoId) {
                         existingDeliv.originalPhotoId = matchedOrig.id;
                         existingDeliv.beforeUrl = matchedOrig.url;
                     }
+                }
+            });
+
+            fetchedRegular.forEach(fp => {
+                const existing = album.photos.find(p => isMatchPhoto(p, fp));
+                if (!existing) {
+                    album.photos.push(fp);
+                    addedCount++;
                 } else {
-                    const existing = album.photos.find(
-                        p => (fp.driveFileId && p.driveFileId === fp.driveFileId) || p.url === fp.url || (p.code && p.code === fp.code)
-                    );
-                    if (!existing) {
-                        album.photos.push(fp);
-                        addedCount++;
-                    } else {
-                        if (fp.location && existing.location !== fp.location) {
-                            existing.location = fp.location;
-                            updatedCount++;
-                        }
-                        if (fp.city && existing.city !== fp.city) existing.city = fp.city;
-                        if (fp.capturedAt && existing.capturedAt !== fp.capturedAt) existing.capturedAt = fp.capturedAt;
-                        if (fp.lat != null) existing.lat = fp.lat;
-                        if (fp.lon != null) existing.lon = fp.lon;
-                        if (fp.title && !existing.title) existing.title = fp.title;
+                    let changed = false;
+                    if (fp.location && existing.location !== fp.location) {
+                        existing.location = fp.location;
+                        changed = true;
                     }
+                    if (fp.city && existing.city !== fp.city) {
+                        existing.city = fp.city;
+                        changed = true;
+                    }
+                    if (fp.capturedAt && existing.capturedAt !== fp.capturedAt) {
+                        existing.capturedAt = fp.capturedAt;
+                        changed = true;
+                    }
+                    if (fp.lat != null && existing.lat !== fp.lat) existing.lat = fp.lat;
+                    if (fp.lon != null && existing.lon !== fp.lon) existing.lon = fp.lon;
+                    if (fp.title && !existing.title) existing.title = fp.title;
+                    if (changed) updatedCount++;
                 }
             });
 
@@ -3792,10 +3868,13 @@ function testRun() {
                 if (typeof App.renderPublicAlbum === 'function') App.renderPublicAlbum();
             }
 
-            if (addedCount > 0) {
-                App.showToast(`Đã đồng bộ thêm ${addedCount} ảnh mới từ Google Drive!`);
-            } else if (updatedCount > 0) {
-                App.showToast(`Đã cập nhật vị trí & ngày chụp mới cho ${updatedCount} ảnh!`);
+            const msgParts = [];
+            if (addedCount > 0) msgParts.push(`thêm ${addedCount} ảnh mới`);
+            if (updatedCount > 0) msgParts.push(`cập nhật ${updatedCount} ảnh`);
+            if (removedCount > 0) msgParts.push(`xóa ${removedCount} ảnh không còn trên Drive`);
+
+            if (msgParts.length > 0) {
+                App.showToast(`Đã đồng bộ xong (${msgParts.join(', ')}). Tổng: ${album.photos.length} ảnh!`);
             } else {
                 App.showToast(`Album đã đồng bộ mới nhất với Google Drive (${album.photos.length} ảnh)!`);
             }
