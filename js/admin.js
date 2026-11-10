@@ -3246,14 +3246,14 @@ function testRun() {
                             </div>
                         </div>
 
-                        <!-- Quick Actions (Mobile: 4 nút / 1 hàng, icon trên text dưới; Desktop: hàng ngang linh hoạt) -->
-                        <div class="grid grid-cols-4 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-2 xl:shrink-0 pt-2.5 sm:pt-2 xl:pt-0 border-t border-zinc-100 xl:border-t-0 w-full xl:w-auto" onclick="event.stopPropagation()">
+                        <!-- Quick Actions: 4 nút đồng đều kích thước, cùng tone màu trên cả Mobile và Desktop -->
+                        <div class="grid grid-cols-4 sm:flex sm:items-center gap-1.5 sm:gap-2.5 xl:shrink-0 pt-2.5 sm:pt-2 xl:pt-0 border-t border-zinc-100 xl:border-t-0 w-full xl:w-auto" onclick="event.stopPropagation()">
                             ${
                                 album.isSelectionLockedBySubmit
                                     ? `<button
                                         type="button"
                                         onclick="AdminModule.unlockAlbumSelectionForClient('${album.id}')"
-                                        class="col-span-4 sm:col-auto px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-sm mb-1 sm:mb-0"
+                                        class="col-span-4 sm:col-auto px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-xs mb-1 sm:mb-0"
                                         title="Mở khoá lại cho khách chọn tiếp"
                                     >
                                         <i class="fa-solid fa-lock-open text-xs"></i>
@@ -3266,13 +3266,10 @@ function testRun() {
                             <button
                                 type="button"
                                 onclick="AdminModule.toggleAlbumPublic('${album.id}')"
-                                class="w-full sm:w-auto flex-col sm:flex-row p-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-semibold border transition flex items-center justify-center gap-1 sm:gap-2 shadow-2xs ${
-                                    album.isPublic
-                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
-                                        : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200'
-                                }"
+                                class="w-full sm:w-auto flex-col sm:flex-row h-12 sm:h-9 px-1.5 sm:px-3.5 rounded-xl bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-[10px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-2 shadow-2xs group"
+                                title="Chuyển chế độ hiển thị Album"
                             >
-                                <i class="fa-solid ${album.isPublic ? 'fa-toggle-on text-emerald-600' : 'fa-toggle-off text-zinc-400'} text-sm sm:text-base"></i>
+                                <i class="fa-solid ${album.isPublic ? 'fa-toggle-on text-emerald-600' : 'fa-toggle-off text-zinc-400'} text-xs sm:text-sm"></i>
                                 <span class="truncate leading-tight">${album.isPublic ? 'Công khai' : 'Riêng tư'}</span>
                             </button>
 
@@ -3283,13 +3280,13 @@ function testRun() {
                                         id="listSyncBtn_${album.id}"
                                         type="button"
                                         onclick="AdminModule.syncUpdateAlbumDrive('${album.id}')"
-                                        class="w-full sm:w-auto flex-col sm:flex-row p-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-200 text-[10px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-2 shadow-2xs"
+                                        class="w-full sm:w-auto flex-col sm:flex-row h-12 sm:h-9 px-1.5 sm:px-3.5 rounded-xl bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-[10px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-2 shadow-2xs group"
                                         title="Cập nhật nhanh ảnh và vị trí/ngày chụp từ Google Drive"
                                     >
-                                        <i id="listSyncIcon_${album.id}" class="fa-solid fa-rotate text-zinc-600 text-xs sm:text-sm"></i>
+                                        <i id="listSyncIcon_${album.id}" class="fa-solid fa-rotate text-zinc-600 group-hover:text-zinc-900 text-xs sm:text-sm"></i>
                                         <span id="listSyncText_${album.id}" class="truncate leading-tight">Cập nhật</span>
                                     </button>`
-                                    : `<div></div>`
+                                    : `<div class="hidden sm:block"></div>`
                             }
 
                             <!-- 3. Link album -->
@@ -3297,15 +3294,16 @@ function testRun() {
                                 <button
                                     type="button"
                                     onclick="event.stopPropagation(); AdminModule.toggleOpenAlbumDropdown('${album.id}')"
-                                    class="w-full sm:w-auto flex-col sm:flex-row p-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-2 shadow-2xs"
+                                    class="w-full sm:w-auto flex-col sm:flex-row h-12 sm:h-9 px-1.5 sm:px-3.5 rounded-xl bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-[10px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-2 shadow-2xs group"
+                                    title="Tùy chọn liên kết xem hoặc chọn ảnh"
                                 >
                                     <div class="flex items-center gap-0.5">
-                                        <i class="fa-solid fa-link text-xs"></i>
-                                        <i class="fa-solid fa-chevron-down text-[8px] sm:text-[10px] opacity-80 sm:hidden"></i>
+                                        <i class="fa-solid fa-link text-zinc-600 group-hover:text-zinc-900 text-xs sm:text-sm"></i>
+                                        <i class="fa-solid fa-chevron-down text-[8px] opacity-70 sm:hidden"></i>
                                     </div>
                                     <div class="flex items-center gap-1">
                                         <span class="truncate leading-tight">Link album</span>
-                                        <i class="fa-solid fa-chevron-down text-[10px] opacity-80 hidden sm:inline-block"></i>
+                                        <i class="fa-solid fa-chevron-down text-[9px] opacity-70 hidden sm:inline-block"></i>
                                     </div>
                                 </button>
                                 <div id="openAlbumDropdown_${album.id}"
@@ -3351,21 +3349,19 @@ function testRun() {
                             </div>
 
                             <!-- 4. Xóa -->
-                            <div class="w-full sm:w-auto flex items-center justify-center">
                             ${
                                 albums.length > 1
                                     ? `<button
                                         type="button"
                                         onclick="AdminModule.deleteAlbum('${album.id}')"
-                                        class="w-full sm:w-auto flex-col sm:flex-row p-1.5 sm:p-2 rounded-xl text-zinc-600 hover:text-rose-600 bg-white sm:bg-transparent hover:bg-rose-50 border border-zinc-200 sm:border-0 transition flex items-center justify-center gap-1 text-[10px] sm:text-sm shadow-2xs sm:shadow-none"
+                                        class="w-full sm:w-auto flex-col sm:flex-row h-12 sm:h-9 px-1.5 sm:px-3 rounded-xl bg-white hover:bg-rose-50 border border-zinc-200 hover:border-rose-300 text-zinc-800 hover:text-rose-600 text-[10px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs group"
                                         title="Xoá Album này"
                                     >
-                                        <i class="fa-solid fa-trash-can text-xs sm:text-sm text-zinc-400 group-hover:text-rose-600"></i>
-                                        <span class="sm:hidden font-semibold leading-tight">Xóa</span>
+                                        <i class="fa-solid fa-trash-can text-xs sm:text-sm text-zinc-500 group-hover:text-rose-600"></i>
+                                        <span class="leading-tight">Xóa</span>
                                     </button>`
                                     : `<div class="w-full sm:w-auto"></div>`
                             }
-                            </div>
                         </div>
                     </div>
                 </div>
