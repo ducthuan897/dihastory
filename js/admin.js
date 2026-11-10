@@ -3459,7 +3459,27 @@ function testRun() {
 
     function setManageSortOrder(order) {
         managePageSortOrder = order;
+        updateManageTimeSortButtonUI();
         renderAlbumManagePageGrid();
+    }
+
+    function toggleManageTimeSort() {
+        managePageSortOrder = managePageSortOrder === 'time_asc' ? 'time_desc' : 'time_asc';
+        updateManageTimeSortButtonUI();
+        renderAlbumManagePageGrid();
+    }
+
+    function updateManageTimeSortButtonUI() {
+        const label = document.getElementById('managePageSortLabel');
+        const icon = document.getElementById('managePageSortIcon');
+        if (label) {
+            label.innerText = managePageSortOrder === 'time_asc' ? 'Cũ nhất trước' : 'Mới nhất trước';
+        }
+        if (icon) {
+            icon.className = managePageSortOrder === 'time_asc'
+                ? "fa-solid fa-arrow-down-short-wide text-zinc-500 text-[11px]"
+                : "fa-solid fa-arrow-up-wide-short text-zinc-500 text-[11px]";
+        }
     }
 
     function toggleFaceFilterDropdown(forceVal) {
@@ -3761,6 +3781,7 @@ function testRun() {
             }).join('');
         }
 
+        updateManageTimeSortButtonUI();
         renderAlbumManagePageGrid();
     }
 
@@ -5311,6 +5332,8 @@ function testRun() {
         setManageStatFilter,
         setManageSubTab,
         setManageSortOrder,
+        toggleManageTimeSort,
+        updateManageTimeSortButtonUI,
         toggleFaceFilterDropdown,
         setManagePersonFilter,
         handleFaceSampleSearch,

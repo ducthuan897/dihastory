@@ -183,14 +183,14 @@
                     <!-- Rendered dynamically by AdminModule -->
                 </div>
 
-                <div class="flex items-center gap-1.5 text-xs text-zinc-500 pb-1">
-                    <span class="text-zinc-400">↓↑</span>
-                    <span>Sắp xếp:</span>
-                    <select id="managePageSortSelect" onchange="AdminModule.setManageSortOrder(this.value)"
-                        class="bg-transparent font-semibold text-zinc-800 outline-none cursor-pointer">
-                        <option value="time_asc">Thời gian: Cũ -&gt; Mới</option>
-                        <option value="time_desc">Thời gian: Mới -&gt; Cũ</option>
-                    </select>
+                <div class="flex items-center gap-1.5 pb-1">
+                    <button id="managePageSortToggleBtn" type="button"
+                        onclick="AdminModule.toggleManageTimeSort()"
+                        class="h-8 px-2.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        title="Bấm để đảo chiều sắp xếp theo thời gian">
+                        <i id="managePageSortIcon" class="fa-solid fa-arrow-down-short-wide text-zinc-500 text-[11px]"></i>
+                        <span id="managePageSortLabel">Cũ nhất trước</span>
+                    </button>
                 </div>
             </div>
         </div>
