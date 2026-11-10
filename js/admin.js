@@ -2925,15 +2925,25 @@ function testRun() {
                                     <i class="fa-solid fa-chevron-down text-[11px] ml-0.5 opacity-80"></i>
                                 </button>
                                 <div id="openAlbumDropdown_${album.id}"
-                                    class="hidden absolute right-0 sm:left-0 mt-1.5 w-64 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
-                                    <button type="button"
-                                        onclick="App.openAlbumPage('${album.id}', false); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
-                                        class="w-full text-left px-3.5 py-2 hover:bg-zinc-100 flex items-center gap-2.5 text-zinc-800 transition">
-                                        <div class="w-7 h-7 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center shrink-0">
-                                            <i class="fa-regular fa-eye"></i>
-                                        </div>
-                                        <span class="font-bold text-zinc-900">1. Trang chỉ xem</span>
-                                    </button>
+                                    class="hidden absolute right-0 sm:left-0 mt-1.5 w-72 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                                    <div class="px-3.5 py-2 hover:bg-zinc-100 transition flex items-center justify-between gap-2 group">
+                                        <button type="button"
+                                            onclick="App.openAlbumPage('${album.id}', false); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
+                                            class="flex items-center gap-2.5 text-left flex-1 min-w-0">
+                                            <div class="w-7 h-7 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center shrink-0">
+                                                <i class="fa-regular fa-eye"></i>
+                                            </div>
+                                            <span class="font-bold text-zinc-900 truncate">Chỉ xem</span>
+                                        </button>
+                                        <button type="button"
+                                            onclick="event.stopPropagation(); AdminModule.copyAlbumPublicLink('${album.id}'); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
+                                            class="px-2.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-200 text-[11px] font-semibold transition flex items-center gap-1 shrink-0 shadow-2xs"
+                                            title="Sao chép link xem album"
+                                        >
+                                            <i class="fa-solid fa-link text-[10px]"></i>
+                                            <span>Copy link xem</span>
+                                        </button>
+                                    </div>
                                     <div class="border-t border-zinc-100 my-1"></div>
                                     <div class="px-3.5 py-2 hover:bg-rose-50/70 transition flex items-center justify-between gap-2 group">
                                         <button type="button"
@@ -4015,6 +4025,26 @@ function testRun() {
         App.showToast("Đã xoá Album khỏi hệ thống.");
     }
 
+    function getPublicShareUrl(albumId) {
+        const id = albumId || activeAdminAlbumId;
+        let base = window.location.origin + window.location.pathname;
+        base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+        if (window.location.hostname.includes('github.io')) {
+            return `https://ducthuan897.github.io/dihastory/${encodeURIComponent(id)}`;
+        }
+        return `${base}/${encodeURIComponent(id)}`;
+    }
+
+    function copyAlbumPublicLink(albumId) {
+        const id = albumId || activeAdminAlbumId;
+        const link = getPublicShareUrl(id);
+        navigator.clipboard.writeText(link).then(() => {
+            App.showToast(`Đã sao chép link xem album: ${link}`);
+        }).catch(() => {
+            App.showToast(`Link xem album: ${link}`);
+        });
+    }
+
     function copyAlbumClientLink(albumId) {
         const id = albumId || activeAdminAlbumId;
         const link = getClientShareUrl(id);
@@ -4830,6 +4860,7 @@ function testRun() {
         lockAlbumAfterClientSubmit,
         toggleAlbumPublic,
         deleteAlbum,
+        copyAlbumPublicLink,
         copyAlbumClientLink,
         saveAlbumSettings,
         addPhotoByUrl,
