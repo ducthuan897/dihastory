@@ -192,22 +192,24 @@ const App = (function () {
             }
         });
 
-        // 2. Tự động kiểm tra và đồng bộ bản DB mới nhất khi người dùng chuyển lại tab hoặc mở màn hình điện thoại
+        // 2. Tự động kiểm tra và đồng bộ khi người dùng quay lại tab (chỉ khi Firebase chưa kết nối realtime)
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState === 'visible' && (!window.FirebaseModule || !FirebaseModule.isReady())) {
                 AdminModule.fetchCloudOrStaticAlbums();
             }
         });
         window.addEventListener('focus', () => {
-            AdminModule.fetchCloudOrStaticAlbums();
-        });
-
-        // 3. Tự động đồng bộ ngầm định kỳ mỗi 15 giây để mọi thiết bị luôn luôn có bản DB mới nhất
-        setInterval(() => {
-            if (document.visibilityState === 'visible') {
+            if (!window.FirebaseModule || !FirebaseModule.isReady()) {
                 AdminModule.fetchCloudOrStaticAlbums();
             }
-        }, 15000);
+        });
+
+        // 3. Tự động đồng bộ dự phòng định kỳ chỉ khi Firebase chưa sẵn sàng (tránh lãng phí request khi đã có socket realtime)
+        setInterval(() => {
+            if (document.visibilityState === 'visible' && (!window.FirebaseModule || !FirebaseModule.isReady())) {
+                AdminModule.fetchCloudOrStaticAlbums();
+            }
+        }, 30000);
     }
 
     function getAppBasePath() {

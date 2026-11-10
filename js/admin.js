@@ -1206,12 +1206,17 @@ function testRun() {
             }
         }
 
-        // 2. Lấy từ Google Apps Script Cloud Database
+        // 2. Nếu Firebase đã kết nối thì không cần thực hiện thêm các request fetch tĩnh dư thừa
+        if (typeof FirebaseModule !== 'undefined' && FirebaseModule.isReady()) {
+            return false;
+        }
+
+        // 3. Dự phòng qua Google Apps Script Cloud Database khi không có Firebase
         const cloudUrl = getGoogleDriveApiKey();
         if (cloudUrl && cloudUrl.startsWith('https://script.google.com/')) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
                 const resp = await fetch(`${cloudUrl}?action=getAlbums&_t=${Date.now()}`, {
                     signal: controller.signal,
                     cache: 'no-store'
@@ -1229,7 +1234,7 @@ function testRun() {
             }
         }
 
-        // 2. Dự phòng qua data/albums.json từ repository (với timestamp chống lưu cache cũ)
+        // 4. Dự phòng offline cuối cùng qua data/albums.json khi hoàn toàn mất mạng
         try {
             let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
             if (window.location.hostname.includes('github.io')) {
@@ -1237,7 +1242,7 @@ function testRun() {
             }
             const staticUrl = `${base}/data/albums.json?v=${Date.now()}`;
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
             const staticResp = await fetch(staticUrl, {
                 signal: controller.signal,
                 cache: 'no-store'
