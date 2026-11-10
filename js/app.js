@@ -688,7 +688,6 @@ const App = (function () {
                 <div class="text-center py-16 bg-white rounded-3xl border border-zinc-200">
                     <i class="fa-regular fa-folder-open text-3xl text-zinc-300 mb-3 block"></i>
                     <h3 class="text-base font-bold text-zinc-800">Chưa có dự án công khai nào</h3>
-                    <p class="text-xs text-zinc-500 mt-1">Nhiếp ảnh gia có thể bật trạng thái "Công khai" cho Album trong Trang Quản Trị.</p>
                 </div>
             `;
             return;
