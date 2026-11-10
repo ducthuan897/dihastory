@@ -363,6 +363,16 @@ const App = (function () {
                     }
                 }
             }
+            // Fallback khi F5: nếu không có param trên URL, khôi phục từ sessionStorage của phiên hiện tại
+            if (!albumParam) {
+                const savedAlbumId = sessionStorage.getItem('dihastory_current_album_id');
+                if (savedAlbumId && AdminModule.getAlbumById(savedAlbumId)) {
+                    albumParam = savedAlbumId;
+                    if (sessionStorage.getItem('dihastory_is_client_mode') === '1') {
+                        isClientMode = true;
+                    }
+                }
+            }
         }
 
         if (albumParam) {
@@ -496,6 +506,12 @@ const App = (function () {
             AdminModule.populateAdminDashboard();
         } else if (viewName === 'album') {
             currentView = 'album';
+            try {
+                if (currentAlbumId) {
+                    sessionStorage.setItem('dihastory_current_album_id', currentAlbumId);
+                    sessionStorage.setItem('dihastory_is_client_mode', isClientMode ? '1' : '0');
+                }
+            } catch (e) {}
             if (homeView) homeView.classList.add('hidden');
             if (publicView) publicView.classList.remove('hidden');
             if (adminView) adminView.classList.add('hidden');
@@ -523,6 +539,10 @@ const App = (function () {
             }
         } else {
             currentView = 'home';
+            try {
+                sessionStorage.removeItem('dihastory_current_album_id');
+                sessionStorage.removeItem('dihastory_is_client_mode');
+            } catch (e) {}
             if (homeView) homeView.classList.remove('hidden');
             if (publicView) publicView.classList.add('hidden');
             if (adminView) adminView.classList.add('hidden');
@@ -570,6 +590,10 @@ const App = (function () {
             currentAlbumId = albumId;
             activeCategory = 'ALL';
             searchQuery = '';
+            try {
+                sessionStorage.setItem('dihastory_current_album_id', currentAlbumId);
+                sessionStorage.setItem('dihastory_is_client_mode', isClient ? '1' : '0');
+            } catch (e) {}
         }
         isClientMode = !!isClient;
         if (fromView) {
@@ -805,6 +829,7 @@ const App = (function () {
         const lockBanner = document.getElementById('albumSelectionLockedBanner');
         const lockReasonText = document.getElementById('albumSelectionLockedReasonText');
         const unlockBtnAdmin = document.getElementById('albumLockedAdminUnlockBtn');
+        const heroSubmitBtn = document.getElementById('heroClientSubmitBtn');
 
         const lockedBySubmit = !!album.isSelectionLockedBySubmit;
         const hasDeadline = !!(album.deadlineEnabled && album.deadlineAt);

@@ -1032,11 +1032,12 @@ function testRun() {
 
     function getAlbumById(albumId) {
         const albums = getAllAlbums();
-        return albums.find(a => a.id === albumId) || albums[0];
+        if (!albumId) return albums[0] || null;
+        return albums.find(a => a.id === albumId) || null;
     }
 
     function getActiveAdminAlbum() {
-        return getAlbumById(activeAdminAlbumId);
+        return getAlbumById(activeAdminAlbumId) || getAllAlbums()[0];
     }
 
     function getClientShareUrl(albumId) {
@@ -4314,10 +4315,6 @@ function testRun() {
         if (album) {
             album.isSelectionLockedBySubmit = true;
             saveAllAlbums(albums);
-            // Đồng bộ lên Cloud DB nếu đã cài đặt
-            if (hasCloudDatabase()) {
-                syncSingleAlbumToCloud(album);
-            }
         }
     }
 
