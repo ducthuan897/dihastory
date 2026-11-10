@@ -3827,6 +3827,10 @@ function testRun() {
                 if (p.url && fp.url && p.url === fp.url) return true;
                 if (p.code && fp.code && p.code.toUpperCase() === fp.code.toUpperCase()) return true;
                 if (p.title && fp.title && p.title.toLowerCase() === fp.title.toLowerCase()) return true;
+                // Nếu tên code chứa nhau (ví dụ DSC00346.jpg vs DSC00346)
+                const cP = (p.code || '').replace(/\.[^/.]+$/, '').toUpperCase();
+                const cFp = (fp.code || fp.name || '').replace(/\.[^/.]+$/, '').toUpperCase();
+                if (cP && cFp && (cP === cFp || cP.includes(cFp) || cFp.includes(cP))) return true;
                 return false;
             };
 
@@ -3886,10 +3890,14 @@ function testRun() {
             fetchedRegular.forEach(fp => {
                 const existing = album.photos.find(p => isMatchPhoto(p, fp));
                 if (!existing) {
+                    // TUÂN THỦ ĐIỀU 5: Nếu ảnh mới chưa có capturedAt từ Drive thì thử trích xuất từ tên file hoặc giữ rỗng, tuyệt đối không gán ngày của ảnh khác
+                    if (!fp.capturedAt && fp.title) fp.capturedAt = extractDateFromText(fp.title) || "";
                     album.photos.push(fp);
                     addedCount++;
                 } else {
                     let changed = false;
+                    // Bảo toàn id nội bộ và driveFileId
+                    if (fp.driveFileId && !existing.driveFileId) existing.driveFileId = fp.driveFileId;
                     if (fp.location && existing.location !== fp.location) {
                         existing.location = fp.location;
                         changed = true;
@@ -3899,9 +3907,11 @@ function testRun() {
                         changed = true;
                     }
                     // TUÂN THỦ ĐIỀU 5: Chỉ cập nhật capturedAt khi Drive thực sự đọc được EXIF mới; không ghi đè giá trị rỗng/mặc định lên dữ liệu ảnh đã có
-                    if (fp.capturedAt && existing.capturedAt !== fp.capturedAt) {
-                        existing.capturedAt = fp.capturedAt;
-                        changed = true;
+                    if (fp.capturedAt && fp.capturedAt.trim()) {
+                        if (existing.capturedAt !== fp.capturedAt) {
+                            existing.capturedAt = fp.capturedAt;
+                            changed = true;
+                        }
                     }
                     if (fp.lat != null && existing.lat !== fp.lat) existing.lat = fp.lat;
                     if (fp.lon != null && existing.lon !== fp.lon) existing.lon = fp.lon;
@@ -3943,8 +3953,13 @@ function testRun() {
             }
 
             // Update album Date & Location from the extracted photo metadata
-            const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title, album.city, album.date);
-            if (derived.date) album.date = derived.date;
+            const oldestCaptureDate = getAlbumOldestCaptureDate(album);
+            const derived = deriveAlbumDateAndLocation(album.photos, album.tags, album.title, album.city, oldestCaptureDate || album.date);
+            if (oldestCaptureDate) {
+                album.date = oldestCaptureDate;
+            } else if (derived.date) {
+                album.date = derived.date;
+            }
             if (derived.city && derived.city !== "Việt Nam") album.city = derived.city;
             if (derived.location) album.location = derived.location;
 
@@ -4183,8 +4198,8 @@ function testRun() {
 
         const nextNum = 1001 + album.photos.length;
         const code = (codeInput && codeInput.value.trim()) || `IMG_${nextNum}`;
-        const location = (locInput && locInput.value.trim()) || `${album.location || album.city}`;
-        const capturedAt = (timeInput && timeInput.value.trim()) || `${album.date}T09:00`;
+        const location = (locInput && locInput.value.trim()) || "";
+        const capturedAt = (timeInput && timeInput.value.trim()) || "";
         const title = (titleInput && titleInput.value.trim()) || `Ảnh ${code}`;
 
         album.photos.push({
@@ -4256,7 +4271,7 @@ function testRun() {
                     code: cleanName,
                     location: matchedOrig ? matchedOrig.location : (meta.location || manualLoc || album.city || ""),
                     city: matchedOrig ? matchedOrig.city : (meta.city || album.city || ""),
-                    capturedAt: matchedOrig ? matchedOrig.capturedAt : (meta.capturedAt || `${album.date || '2026-11-07'}T08:00`),
+                    capturedAt: matchedOrig ? matchedOrig.capturedAt : (meta.capturedAt || ""),
                     title: `${file.name} (Ảnh đã chỉnh)`,
                     beforeUrl: matchedOrig ? matchedOrig.url : null,
                     url: dataUrl
@@ -4266,7 +4281,7 @@ function testRun() {
                 const code = cleanName.length <= 20 ? cleanName : `IMG_${1001 + album.photos.length}`;
                 const photoLocation = meta.location || manualLoc || (album.location || album.city || "");
                 const photoCity = meta.city || album.city || "";
-                const capturedAt = meta.capturedAt || `${album.date || '2026-11-07'}T08:00`;
+                const capturedAt = meta.capturedAt || "";
 
                 album.photos.push({
                     id: "local_" + Date.now() + "_" + idx,
@@ -4777,8 +4792,8 @@ function testRun() {
                 originalPhotoId: matchedOrig ? matchedOrig.id : null,
                 originalPhotoCode: origCode || (matchedOrig ? matchedOrig.code : null),
                 code: cleanName,
-                location: matchedOrig ? matchedOrig.location : album.city,
-                capturedAt: matchedOrig ? matchedOrig.capturedAt : `${album.date}T10:00`,
+                location: matchedOrig ? matchedOrig.location : "",
+                capturedAt: matchedOrig ? matchedOrig.capturedAt : "",
                 title: `${file.name} (Ảnh đã chỉnh)`,
                 beforeUrl: matchedOrig ? matchedOrig.url : null,
                 url: dataUrl
