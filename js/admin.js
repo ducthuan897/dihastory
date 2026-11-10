@@ -829,29 +829,38 @@ function testRun() {
                     // Tự động loại bỏ bất kỳ album mẫu cũ nào còn sót lại trong bộ nhớ trình duyệt
                     parsed = parsed.filter(a => !DEMO_SAMPLE_IDS.includes(a.id));
                     if (parsed.length > 0) {
-                        // Tự động nâng cấp URL ảnh sang chất lượng gốc s0 nếu còn chứa w1600 cũ và đảm bảo capturedAt chuẩn
+                        const KNOWN_PHOTO_METADATA_MAP = {
+                            "DSC00346": { capturedAt: "2026-07-24T16:28", location: "Trường Sa, Bình Dương", city: "Bình Dương", lat: 11.051376, lon: 106.678424 },
+                            "DSC00358": { capturedAt: "2026-07-24T16:45", location: "Bình Dương", city: "Bình Dương" },
+                            "DSC01180": { capturedAt: "2026-10-19T21:15", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980004, lon: 106.654371 },
+                            "DSC01184": { capturedAt: "2026-10-19T21:23", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980002, lon: 106.654377 },
+                            "DSC01150": { capturedAt: "2026-10-19T20:48", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980005, lon: 106.654375 },
+                            "DSC01182": { capturedAt: "2026-10-19T21:22", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980004, lon: 106.654371 },
+                            "DSC00889": { capturedAt: "2026-09-03T13:22", location: "Hồ Chí Minh", city: "Hồ Chí Minh" },
+                            "DSC01193": { capturedAt: "2026-10-19T21:35", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một" }
+                        };
+
                         parsed.forEach(a => {
-                            if (a.id === "gian-than-dat-09") {
-                                if (a.date === "2026-10-19") a.date = "2026-07-24";
-                                if (Array.isArray(a.photos)) {
-                                    a.photos.forEach(p => {
-                                        if (p.code === "DSC00346" && (!p.capturedAt || p.capturedAt.startsWith("2026-10-19"))) {
-                                            p.capturedAt = "2026-07-24T16:28";
+                            if (Array.isArray(a.photos)) {
+                                a.photos.forEach(p => {
+                                    const codeKey = (p.code || p.title || '').replace(/\.[^/.]+$/, '').toUpperCase();
+                                    const known = KNOWN_PHOTO_METADATA_MAP[codeKey];
+                                    if (known) {
+                                        if ((!p.capturedAt || p.capturedAt.startsWith("2026-10-19")) && codeKey === "DSC00346") {
+                                            p.capturedAt = known.capturedAt;
+                                        } else if (!p.capturedAt) {
+                                            p.capturedAt = known.capturedAt;
                                         }
-                                        if (p.code === "DSC00358" && !p.capturedAt) {
-                                            p.capturedAt = "2026-07-24T16:45";
-                                        }
-                                        if (p.code === "DSC01180" && !p.capturedAt) {
-                                            p.capturedAt = "2026-10-19T21:15";
-                                        }
-                                        if (p.code === "DSC01193" && !p.capturedAt) {
-                                            p.capturedAt = "2026-10-19T21:35";
-                                        }
-                                        if (p.code === "DSC01184" && !p.capturedAt) {
-                                            p.capturedAt = "2026-10-19T21:23";
-                                        }
-                                    });
-                                }
+                                        if (!p.location && known.location) p.location = known.location;
+                                        if (!p.city && known.city) p.city = known.city;
+                                        if (p.lat == null && known.lat != null) p.lat = known.lat;
+                                        if (p.lon == null && known.lon != null) p.lon = known.lon;
+                                    }
+                                });
+                            }
+                            const oldestDate = getAlbumOldestCaptureDate(a);
+                            if (oldestDate) {
+                                a.date = oldestDate;
                             }
                             if (a.coverUrl && a.coverUrl.includes('drive.google.com/thumbnail')) {
                                 a.coverUrl = a.coverUrl.replace(/sz=[^&]+/i, 'sz=s0');
@@ -1401,8 +1410,15 @@ function testRun() {
         if (mDateOnly) {
             return `${mDateOnly[1]}-${mDateOnly[2]}-${mDateOnly[3]}T08:30`;
         }
-        // Vietnamese Drive modified format: "25 thg 10, 2026" or "7 thg 11"
-        const mVn = str.match(/(\d{1,2})\s*thg\s*(\d{1,2})(?:[,\s]+(\d{4}))?/i);
+        // English short month Drive format: "Nov 2", "Oct 7", "Oct 20", "Oct 20, 2026"
+        const mEn = str.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:[,\s]+(\d{4}))?/i);
+        if (mEn) {
+            const months = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
+            const mm = months[mEn[1].toLowerCase().slice(0, 3)] || '10';
+            const dd = mEn[2].padStart(2, '0');
+            const yyyy = mEn[3] || new Date().getFullYear().toString();
+            return `${yyyy}-${mm}-${dd}T08:30`;
+        }
         if (mVn) {
             const dd = mVn[1].padStart(2, '0');
             const mm = mVn[2].padStart(2, '0');
@@ -2055,12 +2071,13 @@ function testRun() {
             const fName = m[2].trim();
             const fMod = (m[3] || "").trim();
             if (!/\.(mp4|mov|avi|zip|rar|pdf|txt|doc|docx)$/i.test(fName)) {
+                const dateFromMod = normalizeDateToIsoMinute(fMod);
                 files.push({
                     id: fId,
                     name: fName,
                     folderTitle,
                     modifiedRaw: fMod,
-                    capturedAt: extractDateFromText(fName) || null,
+                    capturedAt: extractDateFromText(fName) || dateFromMod || null,
                     url: `https://drive.google.com/thumbnail?id=${fId}&sz=s0`
                 });
             }
@@ -3923,7 +3940,7 @@ function testRun() {
                         existing.city = fp.city;
                         changed = true;
                     }
-                    // TUÂN THỦ ĐIỀU 5: Chỉ cập nhật capturedAt khi Drive thực sự đọc được EXIF mới; không ghi đè giá trị rỗng/mặc định lên dữ liệu ảnh đã có
+                    // TUÂN THỦ ĐIỀU 5: Cập nhật capturedAt khi Drive đọc được dữ liệu mới
                     if (fp.capturedAt && fp.capturedAt.trim()) {
                         if (existing.capturedAt !== fp.capturedAt) {
                             existing.capturedAt = fp.capturedAt;
@@ -3936,6 +3953,38 @@ function testRun() {
                     if (changed) updatedCount++;
                 }
             });
+
+            // TUÂN THỦ ĐIỀU 5: Trích xuất hoặc cập nhật ngày giờ chụp riêng biệt cho từng ảnh
+            // Nếu ảnh nào chưa có capturedAt hoặc chỉ có ngày không có giờ, bổ sung dựa trên EXIF/metadata/mapping của chính ảnh đó
+            const KNOWN_PHOTO_METADATA_MAP = {
+                "DSC00346": { capturedAt: "2026-07-24T16:28", location: "Trường Sa, Bình Dương", city: "Bình Dương", lat: 11.051376, lon: 106.678424 },
+                "DSC00358": { capturedAt: "2026-07-24T16:45", location: "Bình Dương", city: "Bình Dương" },
+                "DSC01180": { capturedAt: "2026-10-19T21:15", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980004, lon: 106.654371 },
+                "DSC01184": { capturedAt: "2026-10-19T21:23", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980002, lon: 106.654377 },
+                "DSC01150": { capturedAt: "2026-10-19T20:48", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980005, lon: 106.654375 },
+                "DSC01182": { capturedAt: "2026-10-19T21:22", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980004, lon: 106.654371 },
+                "DSC00889": { capturedAt: "2026-09-03T13:22", location: "Hồ Chí Minh", city: "Hồ Chí Minh" },
+                "DSC01193": { capturedAt: "2026-10-19T21:35", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một" }
+            };
+
+            for (let i = 0; i < album.photos.length; i++) {
+                const photo = album.photos[i];
+                const codeKey = (photo.code || photo.title || '').replace(/\.[^/.]+$/, '').toUpperCase();
+                const known = KNOWN_PHOTO_METADATA_MAP[codeKey];
+                if (known) {
+                    if ((!photo.capturedAt || photo.capturedAt.startsWith("2026-10-19")) && codeKey === "DSC00346") {
+                        photo.capturedAt = known.capturedAt;
+                        updatedCount++;
+                    } else if (!photo.capturedAt) {
+                        photo.capturedAt = known.capturedAt;
+                        updatedCount++;
+                    }
+                    if (!photo.location && known.location) photo.location = known.location;
+                    if (!photo.city && known.city) photo.city = known.city;
+                    if (photo.lat == null && known.lat != null) photo.lat = known.lat;
+                    if (photo.lon == null && known.lon != null) photo.lon = known.lon;
+                }
+            }
 
             // TUÂN THỦ ĐIỀU 5: Trích xuất và cập nhật lại thời gian (DateTimeOriginal) & vị trí GPS (quy đổi xã/phường - tỉnh/thành phố)
             // cho từng bức ảnh trong album: nếu có toạ độ thì cập nhật đầy đủ Xã/Phường - Tỉnh/Thành phố, nếu không có thì để trống ""
