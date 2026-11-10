@@ -1569,10 +1569,24 @@ const App = (function () {
         if (!photo) return;
 
         try {
-            showToast(`Đang nạp và đóng dấu Watermark cho ảnh ${photo.code || 'IMG'}...`);
             const dlUrl = getFullResPhotoUrl(photo.url);
 
-            // Tải ảnh có đóng watermark DIHA STORY
+            // Nếu studio bật tuỳ chọn cho khách tải ảnh gốc không watermark
+            if (album.allowOriginalDownload) {
+                showToast(`Đang tải ảnh gốc ${photo.code || 'IMG'}...`);
+                const a = document.createElement('a');
+                a.href = dlUrl;
+                a.target = '_blank';
+                a.download = `${photo.code || 'photo'}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                return;
+            }
+
+            showToast(`Đang nạp và đóng dấu Watermark cho ảnh ${photo.code || 'IMG'}...`);
+
+            // Mặc định: tải ảnh có đóng watermark DIHA STORY
             const watermarkedBlob = await createWatermarkedImageBlob(dlUrl).catch(() => null);
             if (watermarkedBlob) {
                 const blobUrl = URL.createObjectURL(watermarkedBlob);

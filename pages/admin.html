@@ -542,7 +542,7 @@
                             </div>
 
                             <!-- Bảo mật, Watermark & Chiếu Trang chủ -->
-                            <div class="grid grid-cols-2 gap-2.5">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                 <label class="flex items-center justify-between p-2.5 rounded-xl bg-zinc-50 border border-zinc-200 cursor-pointer">
                                     <div>
                                         <span class="text-xs font-bold text-zinc-800 block">Watermark</span>
@@ -550,6 +550,15 @@
                                     </div>
                                     <input type="checkbox" id="adminWatermarkCheckbox"
                                         class="w-4 h-4 accent-zinc-900 rounded cursor-pointer shrink-0 ml-1">
+                                </label>
+
+                                <label class="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 cursor-pointer">
+                                    <div>
+                                        <span class="text-xs font-bold text-amber-950 block">Tải ảnh gốc</span>
+                                        <span class="text-[10px] text-amber-700">Không watermark</span>
+                                    </div>
+                                    <input type="checkbox" id="adminAllowOriginalDownloadCheckbox"
+                                        class="w-4 h-4 accent-amber-600 rounded cursor-pointer shrink-0 ml-1">
                                 </label>
 
                                 <label class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 cursor-pointer">

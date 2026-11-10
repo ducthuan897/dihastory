@@ -3987,6 +3987,7 @@ function testRun() {
         setChk('adminCompleteLockCheckbox', album.completeLockEnabled);
         setChk('adminMultiSelectorCheckbox', !!album.multiSelectorEnabled);
         setChk('adminWatermarkCheckbox', !!album.watermarkEnabled);
+        setChk('adminAllowOriginalDownloadCheckbox', !!album.allowOriginalDownload);
 
         renderModalCoverPhotoPicker();
         renderAdminClientSelections();
@@ -4082,6 +4083,7 @@ function testRun() {
         album.completeLockEnabled = !!document.getElementById('adminCompleteLockCheckbox')?.checked;
         album.multiSelectorEnabled = !!document.getElementById('adminMultiSelectorCheckbox')?.checked;
         album.watermarkEnabled = !!document.getElementById('adminWatermarkCheckbox')?.checked;
+        album.allowOriginalDownload = !!document.getElementById('adminAllowOriginalDownloadCheckbox')?.checked;
 
         const ytInput = document.getElementById('adminYoutubeUrl').value.trim();
         album.youtubeId = ytInput ? (extractYouTubeID(ytInput) || album.youtubeId) : "";
