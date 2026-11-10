@@ -1435,7 +1435,34 @@ const App = (function () {
         });
     }
 
+    function clampLightboxPan() {
+        if (_lbScale <= 1) {
+            _lbPanX = 0;
+            _lbPanY = 0;
+            return;
+        }
+        const stage = document.getElementById('lightboxStage');
+        const container = document.getElementById('lightboxImageContainer');
+        if (!stage || !container) return;
+
+        const stageRect = stage.getBoundingClientRect();
+        const baseWidth = container.offsetWidth || 1;
+        const baseHeight = container.offsetHeight || 1;
+
+        // Chiều rộng và chiều cao ảnh sau khi scale
+        const scaledWidth = baseWidth * _lbScale;
+        const scaledHeight = baseHeight * _lbScale;
+
+        // Giới hạn pan: không để mép ảnh rời xa khỏi khung nhìn stage
+        const maxPanX = Math.max(0, (scaledWidth - stageRect.width) / 2) + stageRect.width * 0.15;
+        const maxPanY = Math.max(0, (scaledHeight - stageRect.height) / 2) + stageRect.height * 0.15;
+
+        _lbPanX = Math.max(-maxPanX, Math.min(maxPanX, _lbPanX));
+        _lbPanY = Math.max(-maxPanY, Math.min(maxPanY, _lbPanY));
+    }
+
     function applyLightboxTransform() {
+        clampLightboxPan();
         const container = document.getElementById('lightboxImageContainer');
         if (container) {
             container.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px) scale(${_lbScale})`;
