@@ -726,7 +726,7 @@ function testRun() {
                     ${
                         isPrivileged
                             ? `<div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-                                <button type="button" onclick="AdminModule.testDriveAccountKey('${acc.key}')"
+                                <button type="button" onclick="AdminModule.testDriveAccountKey('${acc.key}', '${(acc.name || '').replace(/'/g, "\\'")}')"
                                     class="px-2.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-[11px] font-medium transition flex items-center gap-1"
                                     title="Kiểm tra kết nối">
                                     <i class="fa-solid fa-bolt text-amber-500"></i>
@@ -877,24 +877,41 @@ function testRun() {
     }
 
     async function testCurrentInputDriveAccount() {
+        const nameInput = document.getElementById('driveAccountNameInput');
         const keyInput = document.getElementById('driveAccountKeyInput');
         const key = keyInput ? keyInput.value.trim() : "";
+        const name = nameInput ? nameInput.value.trim() : "";
         if (!key) {
             App.showToast("Vui lòng nhập mã kết nối trước khi kiểm tra!", "error");
             return;
         }
-        await testDriveAccountKey(key);
+        await testDriveAccountKey(key, name);
     }
 
-    async function testDriveAccountKey(key) {
+    async function testDriveAccountKey(key, accountName) {
         const alert = document.getElementById('driveApiKeyAlert');
         if (!key) return;
 
+        // Xác định tên tài khoản cần hiển thị
+        let displayName = (accountName || "").trim();
+        if (!displayName) {
+            const accounts = getDriveAccountsList();
+            const found = accounts.find(a => a.key === key);
+            if (found && found.name) {
+                displayName = found.name;
+            } else {
+                const nameInput = document.getElementById('driveAccountNameInput');
+                displayName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Google Drive";
+            }
+        }
+
         if (alert) {
             alert.className = "p-3 rounded-xl bg-zinc-100 text-zinc-700 text-xs border border-zinc-200";
-            alert.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang kiểm tra kết nối tài khoản Drive...`;
+            alert.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang kiểm tra kết nối tài khoản "${displayName}"...`;
             alert.classList.remove('hidden');
         }
+
+        const successText = `Kết nối tài khoản "${displayName}" thành công`;
 
         if (key.startsWith("https://script.google.com/")) {
             try {
@@ -902,17 +919,17 @@ function testRun() {
                 if (res.ok) {
                     if (alert) {
                         alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
-                        alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Kết nối Google Apps Script thành công! Sẵn sàng đọc toàn bộ ảnh từ Google Drive.`;
+                        alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> ${successText}`;
                     }
-                    App.showToast("Kết nối tài khoản Google Drive thành công!");
+                    App.showToast(successText);
                     return;
                 }
             } catch (e) {
                 if (alert) {
                     alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
-                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Đã kết nối Google Apps Script Web App thành công!`;
+                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> ${successText}`;
                 }
-                App.showToast("Kết nối Google Apps Script thành công!");
+                App.showToast(successText);
                 return;
             }
         }
@@ -922,9 +939,9 @@ function testRun() {
             if (res.ok) {
                 if (alert) {
                     alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
-                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Google Drive API Key hợp lệ!`;
+                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> ${successText}`;
                 }
-                App.showToast("Google Drive API Key hợp lệ!");
+                App.showToast(successText);
             } else {
                 if (alert) {
                     alert.className = "p-3 rounded-xl bg-amber-50 text-amber-900 text-xs border border-amber-200";
