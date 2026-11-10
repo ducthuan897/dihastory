@@ -4295,9 +4295,60 @@ function testRun() {
         }
     }
 
+    let lastEditClientName = "";
+    let lastCreateClientName = "";
+
+    function handleEditClientNameInput(newVal) {
+        const reminderEl = document.getElementById('adminReminderTextInput');
+        const descEl = document.getElementById('adminDescription');
+        const albumTitle = (document.getElementById('adminAlbumTitle')?.value || '').trim() || 'Album';
+
+        const oldName = lastEditClientName;
+        const newName = (newVal || '').trim();
+
+        if (reminderEl) {
+            let currentReminder = reminderEl.value;
+            if (oldName && currentReminder.includes(oldName)) {
+                reminderEl.value = currentReminder.split(oldName).join(newName || "Bạn");
+            } else if (!currentReminder.trim() || currentReminder.includes("Chào ") || currentReminder.includes("Mời bạn xem")) {
+                reminderEl.value = `Chào ${newName || "Bạn"}! Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé.`;
+            }
+        }
+
+        if (descEl) {
+            let currentDesc = descEl.value;
+            if (oldName && currentDesc.includes(oldName)) {
+                descEl.value = currentDesc.split(oldName).join(newName || "Khách Hàng");
+            } else if (!currentDesc.trim() || currentDesc.startsWith("Album ")) {
+                descEl.value = `Album ${albumTitle} của khách hàng ${newName || "Khách Hàng"}.`;
+            }
+        }
+
+        lastEditClientName = newVal;
+    }
+
+    function handleCreateClientNameInput(newVal) {
+        const reminderEl = document.getElementById('createAlbumReminderText');
+        const oldName = lastCreateClientName;
+        const newName = (newVal || '').trim();
+
+        if (reminderEl) {
+            let currentReminder = reminderEl.value;
+            if (oldName && currentReminder.includes(oldName)) {
+                reminderEl.value = currentReminder.split(oldName).join(newName || "Bạn");
+            } else if (!currentReminder.trim() || currentReminder.includes("Chào ") || currentReminder.includes("Mời bạn xem")) {
+                reminderEl.value = `Chào ${newName || "Bạn"}! Mời bạn xem và thả tim chọn những bức ảnh ưng ý nhất trong Album nhé.`;
+            }
+        }
+
+        lastCreateClientName = newVal;
+    }
+
     function populateSelectedAlbumEditor() {
         const album = getActiveAdminAlbum();
         if (!album) return;
+
+        lastEditClientName = album.clientName || "";
 
         const setVal = (id, val) => {
             const el = document.getElementById(id);
@@ -5214,6 +5265,8 @@ function testRun() {
         closeCreateAlbumModal,
         switchCreateAlbumTab,
         handleCreateTitleInput,
+        handleEditClientNameInput,
+        handleCreateClientNameInput,
         addDriveLinkToCreateModal,
         removeDriveLinkFromCreateModal,
         handleCreateModalLocalFiles,
