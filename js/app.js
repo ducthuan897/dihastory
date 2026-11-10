@@ -1575,6 +1575,7 @@ const App = (function () {
     function applyLightboxTransform() {
         const container = document.getElementById('lightboxImageContainer');
         const img = document.getElementById('lightboxImage');
+        const watermark = document.getElementById('lightboxWatermarkOverlay');
         if (!container || !img) return;
 
         if (_lbScale > 1) {
@@ -1594,6 +1595,15 @@ const App = (function () {
             container.style.width = `${w}px`;
             container.style.height = `${h}px`;
 
+            // Đồng bộ kích thước watermark pattern để phóng to theo đúng tỷ lệ ảnh
+            if (watermark) {
+                const basePatternW = 160;
+                const basePatternH = 90;
+                const scaledPatW = Math.round(basePatternW * _lbScale);
+                const scaledPatH = Math.round(basePatternH * _lbScale);
+                watermark.style.backgroundSize = `${scaledPatW}px ${scaledPatH}px`;
+            }
+
             container.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px)`;
             container.style.cursor = 'grab';
             img.style.cursor = 'grab';
@@ -1608,6 +1618,9 @@ const App = (function () {
             container.style.maxHeight = '';
             container.style.width = '';
             container.style.height = '';
+            if (watermark) {
+                watermark.style.backgroundSize = '';
+            }
             container.style.transform = 'none';
             container.style.cursor = 'zoom-in';
             img.style.cursor = 'zoom-in';
