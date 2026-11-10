@@ -2885,6 +2885,21 @@ function testRun() {
                                     : ''
                             }
 
+                            ${
+                                album.sourceType === 'drive' || (album.driveLinks && album.driveLinks.length > 0)
+                                    ? `<button
+                                        id="listSyncBtn_${album.id}"
+                                        type="button"
+                                        onclick="AdminModule.syncUpdateAlbumDrive('${album.id}')"
+                                        class="px-3.5 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-200 text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-xs"
+                                        title="Cập nhật nhanh ảnh và vị trí/ngày chụp từ Google Drive"
+                                    >
+                                        <i id="listSyncIcon_${album.id}" class="fa-solid fa-rotate text-zinc-600 text-sm"></i>
+                                        <span id="listSyncText_${album.id}">Cập nhật album</span>
+                                    </button>`
+                                    : ''
+                            }
+
                             <button
                                 type="button"
                                 onclick="AdminModule.toggleAlbumPublic('${album.id}')"
@@ -3680,22 +3695,36 @@ function testRun() {
         renderEditAlbumDriveLinks();
     }
 
-    async function syncUpdateAlbumDrive() {
+    async function syncUpdateAlbumDrive(targetAlbumId) {
         const albums = getAllAlbums();
-        const album = albums.find(a => a.id === activeAdminAlbumId);
+        const effectiveId = targetAlbumId || activeAdminAlbumId;
+        const album = albums.find(a => a.id === effectiveId);
         if (!album) return;
+
+        // Nếu gọi từ danh sách bên ngoài trang quản lý, cập nhật activeAdminAlbumId tương ứng
+        if (targetAlbumId) {
+            activeAdminAlbumId = targetAlbumId;
+        }
 
         const syncBtn = document.getElementById('managePageSyncBtn');
         const syncIcon = document.getElementById('managePageSyncBtnIcon');
         const syncLabel = document.getElementById('managePageSyncBtnLabel');
 
+        const listSyncBtn = document.getElementById(`listSyncBtn_${album.id}`);
+        const listSyncIcon = document.getElementById(`listSyncIcon_${album.id}`);
+        const listSyncText = document.getElementById(`listSyncText_${album.id}`);
+
         if (syncIcon) syncIcon.classList.add('fa-spin');
         if (syncLabel) syncLabel.innerText = 'Đang cập nhật...';
         if (syncBtn) syncBtn.disabled = true;
 
+        if (listSyncIcon) listSyncIcon.classList.add('fa-spin');
+        if (listSyncText) listSyncText.innerText = 'Đang cập nhật...';
+        if (listSyncBtn) listSyncBtn.disabled = true;
+
         try {
             const pendingLinkInput = document.getElementById('editAlbumNewDriveLinkInput');
-            if (pendingLinkInput && pendingLinkInput.value.trim()) {
+            if (pendingLinkInput && pendingLinkInput.value.trim() && activeAdminAlbumId === album.id) {
                 if (!album.driveLinks) album.driveLinks = [];
                 const val = pendingLinkInput.value.trim();
                 if (!album.driveLinks.includes(val)) {
@@ -3907,6 +3936,10 @@ function testRun() {
             if (syncIcon) syncIcon.classList.remove('fa-spin');
             if (syncLabel) syncLabel.innerText = 'Cập nhật album';
             if (syncBtn) syncBtn.disabled = false;
+
+            if (listSyncIcon) listSyncIcon.classList.remove('fa-spin');
+            if (listSyncText) listSyncText.innerText = 'Cập nhật album';
+            if (listSyncBtn) listSyncBtn.disabled = false;
         }
     }
 
