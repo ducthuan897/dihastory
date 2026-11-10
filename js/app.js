@@ -1129,7 +1129,9 @@ const App = (function () {
         const indexInFiltered = currentFilteredPhotos.findIndex(p => p.id === photo.id);
         const isLocked = isAlbumSelectionLocked(album);
 
-        const timeLabel = formatTimeShort(photo.capturedAt);
+        const timeLabel = (typeof AdminModule !== 'undefined' && typeof AdminModule.formatTimeShort === 'function')
+            ? AdminModule.formatTimeShort(photo.capturedAt)
+            : (photo.capturedAt ? photo.capturedAt.replace('T', ' ') : '');
 
         // NẾU Ở CHẾ ĐỘ CHỈ XEM (!isClientMode): Giao diện thẻ ảnh tràn viền 72/80h chuẩn Trang Quản Lý Album
         if (!isClientMode) {
