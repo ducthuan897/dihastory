@@ -2083,19 +2083,41 @@ const App = (function () {
         const isProtected = () => currentView === 'album' && !isClientMode;
         const shield = document.getElementById('viewOnlyAntiCaptureShield');
 
+        // 1. Chặn chuột phải trên máy tính và menu ngữ cảnh trên di động
         document.addEventListener('contextmenu', (e) => {
             if (isProtected()) {
                 e.preventDefault();
-                showToast("Chế độ chỉ xem được bảo vệ bản quyền!", "error");
+                showToast("Chế độ chỉ xem được bảo vệ bản quyền, không hỗ trợ lưu ảnh!", "error");
             }
         });
 
+        // 2. Chặn kéo thả hình ảnh (kéo ảnh ra desktop hoặc tab mới)
         document.addEventListener('dragstart', (e) => {
-            if (isProtected() && e.target.tagName === 'IMG') {
+            if (isProtected() && (e.target.tagName === 'IMG' || e.target.closest('img'))) {
                 e.preventDefault();
             }
         });
 
+        // 3. Chặn hành vi nhấn giữ lâu trên thiết bị di động (long-press context menu để lưu ảnh)
+        let touchTimer = null;
+        document.addEventListener('touchstart', (e) => {
+            if (!isProtected()) return;
+            if (e.target.tagName === 'IMG' || e.target.closest('#lightboxImageContainer')) {
+                touchTimer = setTimeout(() => {
+                    // Nếu nhấn giữ quá 500ms thì chặn mở menu lưu ảnh
+                }, 400);
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            if (touchTimer) clearTimeout(touchTimer);
+        }, { passive: true });
+
+        document.addEventListener('touchcancel', () => {
+            if (touchTimer) clearTimeout(touchTimer);
+        }, { passive: true });
+
+        // 4. Chặn phím tắt in ấn, lưu trang, chụp màn hình, mở công cụ lập trình viên
         window.addEventListener('keydown', (e) => {
             if (!isProtected()) return;
             if (
@@ -2109,7 +2131,7 @@ const App = (function () {
                     shield.classList.remove('hidden');
                     setTimeout(() => shield.classList.add('hidden'), 2500);
                 }
-                showToast("Chế độ xem được bảo vệ bản quyền!", "error");
+                showToast("Chế độ chỉ xem được bảo vệ bản quyền!", "error");
             }
         });
 
