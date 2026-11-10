@@ -266,6 +266,12 @@ body.view-only-protected img {
     pointer-events: none !important; /* Triệt tiêu sự kiện chạm trực tiếp vào thẻ ảnh trên di động để trình duyệt không bắt sự kiện lưu */
 }
 
+/* Cho phép ảnh trong Lightbox nhận sự kiện chuột/touch để zoom, kéo di chuyển */
+body.view-only-protected #lightboxImage {
+    pointer-events: auto !important;
+    -webkit-touch-callout: none !important;
+}
+
 /* Cho phép click vào thẻ ảnh photo-card cha và container để mở xem Lightbox bình thường */
 body.view-only-protected .photo-card {
     pointer-events: auto !important;

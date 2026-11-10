@@ -45,6 +45,7 @@ const App = (function () {
     let _lbPinchScaleStart = 1;
     let _lbPinchPanStartX = 0;
     let _lbPinchPanStartY = 0;
+    let _lbZoomSetupDone = false;
     const LB_MIN_SCALE = 1;
     const LB_MAX_SCALE = 5;
     let slideshowTimer = null;
@@ -115,7 +116,6 @@ const App = (function () {
     function init() {
         AuthModule.checkAuthUI();
         setupKeyboardShortcuts();
-        setupLightboxZoom();
         handleUrlRouting();
 
         window.addEventListener('popstate', (e) => {
@@ -435,6 +435,10 @@ const App = (function () {
                 window.history.pushState({ view: 'album', albumId: currentAlbumId, isClientMode }, '', url);
             }
             renderPublicAlbum();
+            if (!_lbZoomSetupDone) {
+                setupLightboxZoom();
+                _lbZoomSetupDone = true;
+            }
             if (isClientMode) {
                 maybeShowClientReminderModal();
             }
@@ -1365,6 +1369,58 @@ const App = (function () {
                 applyLightboxTransform();
             }
         });
+
+        // Touch pinch-to-zoom và double-tap
+        img.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                _lbPinchDist = Math.hypot(
+                    e.touches[1].clientX - e.touches[0].clientX,
+                    e.touches[1].clientY - e.touches[0].clientY
+                );
+                _lbPinchScaleStart = _lbScale;
+                _lbPinchPanStartX = _lbPanX;
+                _lbPinchPanStartY = _lbPanY;
+            } else if (e.touches.length === 1) {
+                const now = Date.now();
+                if (now - _lbLastTap < 300) {
+                    e.preventDefault();
+                    if (_lbScale > 1) resetLightboxTransform();
+                    else { _lbScale = 2.5; applyLightboxTransform(); }
+                    _lbLastTap = 0;
+                } else {
+                    _lbLastTap = now;
+                }
+                if (_lbScale > 1) {
+                    _lbDragging = true;
+                    _lbDragStartX = e.touches[0].clientX;
+                    _lbDragStartY = e.touches[0].clientY;
+                    _lbPanStartX = _lbPanX;
+                    _lbPanStartY = _lbPanY;
+                }
+            }
+        }, { passive: false });
+
+        img.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 2 && _lbPinchDist > 0) {
+                const dist = Math.hypot(
+                    e.touches[1].clientX - e.touches[0].clientX,
+                    e.touches[1].clientY - e.touches[0].clientY
+                );
+                _lbScale = Math.min(LB_MAX_SCALE, Math.max(LB_MIN_SCALE, _lbPinchScaleStart * (dist / _lbPinchDist)));
+                applyLightboxTransform();
+            } else if (e.touches.length === 1 && _lbDragging) {
+                _lbPanX = _lbPanStartX + (e.touches[0].clientX - _lbDragStartX);
+                _lbPanY = _lbPanStartY + (e.touches[0].clientY - _lbDragStartY);
+                applyLightboxTransform();
+            }
+        }, { passive: false });
+
+        img.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) _lbPinchDist = 0;
+            if (e.touches.length === 0) _lbDragging = false;
+        });
     }
 
     function applyLightboxTransform() {
@@ -1379,6 +1435,16 @@ const App = (function () {
         _lbScale = 1;
         _lbPanX = 0;
         _lbPanY = 0;
+        applyLightboxTransform();
+    }
+
+    function zoomInLightbox() {
+        _lbScale = Math.min(LB_MAX_SCALE, _lbScale * 1.4);
+        applyLightboxTransform();
+    }
+
+    function zoomOutLightbox() {
+        _lbScale = Math.max(LB_MIN_SCALE, _lbScale / 1.4);
         applyLightboxTransform();
     }
 
@@ -1712,7 +1778,10 @@ const App = (function () {
         updateSelectionUI,
         getCurrentAlbumId,
         getCurrentView,
-        showToast
+        showToast,
+        zoomInLightbox,
+        zoomOutLightbox,
+        resetLightboxTransform
     };
 })();
 
