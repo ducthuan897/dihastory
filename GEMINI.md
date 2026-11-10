@@ -50,3 +50,9 @@ Các quy tắc bắt buộc phải luôn tuân thủ trong toàn bộ quá trìn
    - Mọi yêu cầu của người dùng phải được tiếp nhận, xử lý đồng bộ và hoàn thành dứt điểm ngay trong lượt phản hồi hiện tại.
    - Không đẩy tác vụ vào chế độ chạy nền (background task) kéo dài hoặc bắt người dùng phải chờ đợi tin nhắn phản hồi sau.
    - Đảm bảo thực thi nhanh chóng, trả lời ngay kết quả sau khi hoàn tất.
+
+11. **Quản lý nhiều tài khoản Google Drive & Phân quyền bảo mật**:
+   - Cho phép kết nối và quản lý danh sách nhiều tài khoản Google Drive (tên tài khoản / nhãn, URL Google Apps Script Web App hoặc Google API Key).
+   - Chỉ người dùng có vai trò `admin` hoặc `super_admin` mới có quyền xem đầy đủ mã kết nối, thêm mới, sửa, kích hoạt hoặc xóa tài khoản Google Drive. Người dùng có vai trò khác (như `editor`) hoặc khách chỉ thấy trạng thái ẩn/che mã kết nối (`••••••••`) và không có quyền thay đổi.
+   - Khi tạo hoặc cập nhật Album từ Google Drive, hệ thống tự động kiểm tra và quét qua các tài khoản Google Drive đã kết nối để lấy danh sách ảnh và trích xuất EXIF/GPS.
+

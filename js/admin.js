@@ -12,26 +12,56 @@ const AdminModule = (function () {
     const STORAGE_KEY_SUBMISSIONS_MAP = "shotpik_multi_submissions_v2";
     const STORAGE_KEY_REMOVED_BACKUP_MAP = "shotpik_removed_interactions_backup_v2";
     const STORAGE_KEY_GOOGLE_API_KEY = "shotpik_google_drive_api_key_v1";
+    const STORAGE_KEY_DRIVE_ACCOUNTS = "shotpik_google_drive_accounts_v1";
 
     const DEFAULT_GOOGLE_DRIVE_API_KEY = "https://script.google.com/macros/s/AKfycbw2nwiPyK04c9V4dQKVPlAya8Z0FrwBG3McsT0swJjRulOjpwt06ytvSrMKAm7xZ9FL/exec";
 
-    function getGoogleDriveApiKey() {
+    function getDriveAccountsList() {
         try {
-            return (localStorage.getItem(STORAGE_KEY_GOOGLE_API_KEY) || DEFAULT_GOOGLE_DRIVE_API_KEY || "").trim();
-        } catch (e) {
-            return DEFAULT_GOOGLE_DRIVE_API_KEY || "";
-        }
+            const raw = localStorage.getItem(STORAGE_KEY_DRIVE_ACCOUNTS);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            }
+        } catch (e) {}
+
+        const legacyKey = (localStorage.getItem(STORAGE_KEY_GOOGLE_API_KEY) || DEFAULT_GOOGLE_DRIVE_API_KEY || "").trim();
+        const initial = [
+            {
+                id: "drv_acc_primary",
+                name: "Tài khoản Drive chính",
+                key: legacyKey,
+                active: true,
+                createdAt: "2026-11-08T19:00"
+            }
+        ];
+        saveDriveAccountsList(initial);
+        return initial;
+    }
+
+    function saveDriveAccountsList(list) {
+        try {
+            localStorage.setItem(STORAGE_KEY_DRIVE_ACCOUNTS, JSON.stringify(list));
+            const primary = list.find(a => a.active) || list[0];
+            if (primary && primary.key) {
+                localStorage.setItem(STORAGE_KEY_GOOGLE_API_KEY, primary.key);
+            }
+        } catch (e) {}
+        updateDriveApiKeyBadge();
+    }
+
+    function getGoogleDriveApiKey() {
+        const accounts = getDriveAccountsList();
+        const active = accounts.find(a => a.active) || accounts[0];
+        return (active && active.key ? active.key : DEFAULT_GOOGLE_DRIVE_API_KEY).trim();
     }
 
     function setGoogleDriveApiKey(key) {
-        try {
-            if (key) {
-                localStorage.setItem(STORAGE_KEY_GOOGLE_API_KEY, key.trim());
-            } else {
-                localStorage.removeItem(STORAGE_KEY_GOOGLE_API_KEY);
-            }
-            updateDriveApiKeyBadge();
-        } catch (e) {}
+        const accounts = getDriveAccountsList();
+        if (accounts.length > 0) {
+            accounts[0].key = key ? key.trim() : "";
+            saveDriveAccountsList(accounts);
+        }
     }
 
     function updateDriveApiKeyBadge() {
@@ -55,14 +85,13 @@ const AdminModule = (function () {
 
     function openDriveApiKeyModal() {
         const modal = document.getElementById('driveApiKeyModal');
-        const input = document.getElementById('googleDriveApiKeyInput');
-        if (input) input.value = getGoogleDriveApiKey();
         const alert = document.getElementById('driveApiKeyAlert');
         if (alert) alert.classList.add('hidden');
         if (modal) {
+            renderDriveAccountsList();
+            resetDriveAccountForm();
             modal.classList.remove('hidden');
             modal.style.zIndex = '9999';
-            setTimeout(() => { if (input) input.focus(); }, 100);
         }
     }
 
@@ -580,60 +609,255 @@ function testRun() {
         }
     }
 
-    async function handleSaveDriveApiKey(event) {
-        if (event) event.preventDefault();
-        const input = document.getElementById('googleDriveApiKeyInput');
-        const key = input ? input.value.trim() : "";
-        setGoogleDriveApiKey(key);
-        closeDriveApiKeyModal();
-        if (key) {
-            App.showToast("Đã lưu Google Drive API Key! Hệ thống sẽ đọc EXIF GPS & Ngày chụp trực tiếp từ Google API.");
-        } else {
-            App.showToast("Đã xoá Google Drive API Key.");
-        }
+    function maskKeySecret(key) {
+        if (!key) return "";
+        const str = String(key).trim();
+        if (str.length <= 16) return "••••••••••••";
+        return str.slice(0, 15) + "••••••••" + str.slice(-8);
     }
 
-    async function testGoogleDriveApiKey() {
-        const input = document.getElementById('googleDriveApiKeyInput');
-        const key = input ? input.value.trim() : "";
-        const alert = document.getElementById('driveApiKeyAlert');
-        if (!key) {
-            if (alert) {
-                alert.className = "p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200";
-                alert.innerText = "Vui lòng nhập Google API Key trước khi kiểm tra!";
-                alert.classList.remove('hidden');
-            }
+    function canManageDriveAccounts() {
+        const curUser = (typeof AuthModule !== 'undefined' && typeof AuthModule.getCurrentUser === 'function')
+            ? AuthModule.getCurrentUser()
+            : null;
+        if (!curUser) return false;
+        return curUser.role === 'super_admin' || curUser.role === 'admin';
+    }
+
+    function renderDriveAccountsList() {
+        const container = document.getElementById('driveAccountsListContainer');
+        const badge = document.getElementById('driveAccountsCountBadge');
+        const formWrap = document.getElementById('driveAccountManageFormWrap');
+        const editorNotice = document.getElementById('driveAccountEditorNotice');
+        if (!container) return;
+
+        const isPrivileged = canManageDriveAccounts();
+        if (formWrap) formWrap.classList.toggle('hidden', !isPrivileged);
+        if (editorNotice) editorNotice.classList.toggle('hidden', isPrivileged);
+
+        const accounts = getDriveAccountsList();
+        if (badge) badge.innerText = `${accounts.length} tài khoản`;
+
+        if (!accounts.length) {
+            container.innerHTML = `<div class="p-4 rounded-xl bg-zinc-50 border border-zinc-200 text-center text-xs text-zinc-400">Chưa có tài khoản Google Drive nào được liên kết.</div>`;
             return;
         }
 
+        container.innerHTML = accounts.map((acc, idx) => {
+            const displayKey = isPrivileged ? acc.key : maskKeySecret(acc.key);
+            const isActive = !!acc.active;
+            return `
+                <div class="p-3 rounded-xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                    isActive ? 'bg-emerald-50/60 border-emerald-300' : 'bg-white border-zinc-200'
+                }">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-xs text-zinc-900 truncate">${acc.name}</span>
+                            ${
+                                isActive
+                                    ? `<span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold uppercase shadow-2xs">Đang kích hoạt</span>`
+                                    : `<button type="button" onclick="AdminModule.setActiveDriveAccount('${acc.id}')" class="px-2 py-0.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 text-[10px] font-medium transition" title="Đặt làm tài khoản chính">Kích hoạt</button>`
+                            }
+                        </div>
+                        <div class="text-[11px] font-mono text-zinc-500 truncate mt-0.5" title="${isPrivileged ? acc.key : ''}">
+                            ${displayKey}
+                        </div>
+                    </div>
+
+                    ${
+                        isPrivileged
+                            ? `<div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                                <button type="button" onclick="AdminModule.testDriveAccountKey('${acc.key}')"
+                                    class="px-2.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-[11px] font-medium transition flex items-center gap-1"
+                                    title="Kiểm tra kết nối">
+                                    <i class="fa-solid fa-bolt text-amber-500"></i>
+                                    <span class="hidden sm:inline">Kiểm tra</span>
+                                </button>
+                                <button type="button" onclick="AdminModule.editDriveAccount('${acc.id}')"
+                                    class="p-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs transition"
+                                    title="Chỉnh sửa tài khoản">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                ${
+                                    accounts.length > 1
+                                        ? `<button type="button" onclick="AdminModule.deleteDriveAccount('${acc.id}')"
+                                            class="p-1.5 rounded-lg bg-zinc-100 hover:bg-rose-100 text-zinc-400 hover:text-rose-600 text-xs transition"
+                                            title="Xóa tài khoản này">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>`
+                                        : ''
+                                }
+                            </div>`
+                            : ''
+                    }
+                </div>
+            `;
+        }).join('');
+    }
+
+    function resetDriveAccountForm() {
+        const idInput = document.getElementById('driveAccountEditId');
+        const nameInput = document.getElementById('driveAccountNameInput');
+        const keyInput = document.getElementById('driveAccountKeyInput');
+        const title = document.getElementById('driveAccountFormTitle');
+        const label = document.getElementById('driveAccountSubmitLabel');
+        const cancelBtn = document.getElementById('driveAccountCancelEditBtn');
+
+        if (idInput) idInput.value = "";
+        if (nameInput) nameInput.value = "";
+        if (keyInput) keyInput.value = "";
+        if (title) title.innerText = "Thêm Tài Khoản Google Drive Mới";
+        if (label) label.innerText = "Lưu Tài Khoản";
+        if (cancelBtn) cancelBtn.classList.add('hidden');
+    }
+
+    function editDriveAccount(accId) {
+        if (!canManageDriveAccounts()) {
+            App.showToast("Chỉ Admin hoặc Super Admin mới có quyền sửa tài khoản Drive!", "error");
+            return;
+        }
+        const accounts = getDriveAccountsList();
+        const acc = accounts.find(a => a.id === accId);
+        if (!acc) return;
+
+        const idInput = document.getElementById('driveAccountEditId');
+        const nameInput = document.getElementById('driveAccountNameInput');
+        const keyInput = document.getElementById('driveAccountKeyInput');
+        const title = document.getElementById('driveAccountFormTitle');
+        const label = document.getElementById('driveAccountSubmitLabel');
+        const cancelBtn = document.getElementById('driveAccountCancelEditBtn');
+
+        if (idInput) idInput.value = acc.id;
+        if (nameInput) nameInput.value = acc.name;
+        if (keyInput) keyInput.value = acc.key;
+        if (title) title.innerText = `Chỉnh Sửa: ${acc.name}`;
+        if (label) label.innerText = "Cập Nhật";
+        if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+        nameInput?.focus();
+    }
+
+    function setActiveDriveAccount(accId) {
+        if (!canManageDriveAccounts()) {
+            App.showToast("Chỉ Admin hoặc Super Admin mới có quyền đổi tài khoản kích hoạt!", "error");
+            return;
+        }
+        const accounts = getDriveAccountsList();
+        accounts.forEach(a => a.active = (a.id === accId));
+        saveDriveAccountsList(accounts);
+        renderDriveAccountsList();
+        App.showToast("Đã chuyển sang dùng tài khoản Drive được chọn!");
+    }
+
+    function deleteDriveAccount(accId) {
+        if (!canManageDriveAccounts()) {
+            App.showToast("Chỉ Admin hoặc Super Admin mới có quyền xóa tài khoản Drive!", "error");
+            return;
+        }
+        let accounts = getDriveAccountsList();
+        if (accounts.length <= 1) {
+            App.showToast("Cần giữ ít nhất 1 tài khoản Drive kết nối!", "error");
+            return;
+        }
+        const target = accounts.find(a => a.id === accId);
+        const confirmDelete = window.confirm(`Bạn có chắc muốn gỡ tài khoản "${target?.name || 'Google Drive'}"?`);
+        if (!confirmDelete) return;
+
+        accounts = accounts.filter(a => a.id !== accId);
+        if (!accounts.some(a => a.active)) {
+            accounts[0].active = true;
+        }
+        saveDriveAccountsList(accounts);
+        renderDriveAccountsList();
+        resetDriveAccountForm();
+        App.showToast("Đã gỡ tài khoản Google Drive thành công!");
+    }
+
+    async function handleSaveDriveAccount(event) {
+        if (event) event.preventDefault();
+        if (!canManageDriveAccounts()) {
+            App.showToast("Bạn không có quyền thực hiện thao tác này!", "error");
+            return;
+        }
+
+        const idInput = document.getElementById('driveAccountEditId');
+        const nameInput = document.getElementById('driveAccountNameInput');
+        const keyInput = document.getElementById('driveAccountKeyInput');
+
+        const editId = idInput ? idInput.value.trim() : "";
+        const name = nameInput ? nameInput.value.trim() : "";
+        const key = keyInput ? keyInput.value.trim() : "";
+
+        if (!name || !key) {
+            App.showToast("Vui lòng nhập đầy đủ tên và mã kết nối!", "error");
+            return;
+        }
+
+        const accounts = getDriveAccountsList();
+        if (editId) {
+            const acc = accounts.find(a => a.id === editId);
+            if (acc) {
+                acc.name = name;
+                acc.key = key;
+                App.showToast(`Đã cập nhật tài khoản "${name}"!`);
+            }
+        } else {
+            accounts.push({
+                id: `drv_acc_${Date.now()}`,
+                name: name,
+                key: key,
+                active: accounts.length === 0,
+                createdAt: new Date().toISOString().slice(0, 16)
+            });
+            App.showToast(`Đã thêm tài khoản "${name}" thành công!`);
+        }
+
+        saveDriveAccountsList(accounts);
+        renderDriveAccountsList();
+        resetDriveAccountForm();
+    }
+
+    async function testCurrentInputDriveAccount() {
+        const keyInput = document.getElementById('driveAccountKeyInput');
+        const key = keyInput ? keyInput.value.trim() : "";
+        if (!key) {
+            App.showToast("Vui lòng nhập mã kết nối trước khi kiểm tra!", "error");
+            return;
+        }
+        await testDriveAccountKey(key);
+    }
+
+    async function testDriveAccountKey(key) {
+        const alert = document.getElementById('driveApiKeyAlert');
+        if (!key) return;
+
         if (alert) {
             alert.className = "p-3 rounded-xl bg-zinc-100 text-zinc-700 text-xs border border-zinc-200";
-            alert.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang kiểm tra kết nối...`;
+            alert.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang kiểm tra kết nối tài khoản Drive...`;
             alert.classList.remove('hidden');
         }
 
-        // Case 1: Google Apps Script Web App URL
         if (key.startsWith("https://script.google.com/")) {
             try {
                 const res = await fetch(`${key}?id=test`);
                 if (res.ok) {
                     if (alert) {
                         alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
-                        alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Kết nối Google Apps Script thành công! Sẵn sàng đọc toàn bộ ảnh từ Google Drive trên GitHub Pages.`;
+                        alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Kết nối Google Apps Script thành công! Sẵn sàng đọc toàn bộ ảnh từ Google Drive.`;
                     }
+                    App.showToast("Kết nối tài khoản Google Drive thành công!");
                     return;
                 }
             } catch (e) {
-                // Apps script redirect is normal, treat ok if it responds
                 if (alert) {
                     alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
                     alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Đã kết nối Google Apps Script Web App thành công!`;
                 }
+                App.showToast("Kết nối Google Apps Script thành công!");
                 return;
             }
         }
 
-        // Case 2: Google API Key
         try {
             const res = await fetch(`https://www.googleapis.com/drive/v3/about?fields=kind&key=${encodeURIComponent(key)}`);
             if (res.ok) {
@@ -641,28 +865,28 @@ function testRun() {
                     alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
                     alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Google Drive API Key hợp lệ!`;
                 }
+                App.showToast("Google Drive API Key hợp lệ!");
             } else {
-                const errData = await res.json().catch(() => ({}));
-                const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}`;
                 if (alert) {
-                    alert.className = "p-3 rounded-xl bg-amber-50 text-amber-900 text-xs border border-amber-200 space-y-1.5";
-                    alert.innerHTML = `
-                        <div class="font-bold flex items-center gap-1 text-amber-800">
-                            <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Google chặn lệnh liệt kê thư mục bằng API Key thường:
-                        </div>
-                        <p class="text-[11px] text-zinc-700">${errMsg}</p>
-                        <p class="text-[11px] text-zinc-700 font-medium pt-1">
-                            &rarr; <strong>Giải pháp chuẩn:</strong> Bạn hãy dùng <strong>Google Apps Script Web App</strong> (xem hướng dẫn bên dưới) và dán link vào ô này để đọc toàn bộ ảnh Google Drive 100% không bị chặn.
-                        </p>
-                    `;
+                    alert.className = "p-3 rounded-xl bg-amber-50 text-amber-900 text-xs border border-amber-200";
+                    alert.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-600 mr-1"></i> Khuyến khích dùng URL Google Apps Script Web App để không bị Google giới hạn quyền đọc thư mục.`;
                 }
             }
         } catch (e) {
             if (alert) {
                 alert.className = "p-3 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200";
-                alert.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600 mr-1"></i> Không thể kết nối tới Google API: ${e.message}`;
+                alert.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600 mr-1"></i> Lỗi kiểm tra kết nối: ${e.message}`;
             }
         }
+    }
+
+    async function handleSaveDriveApiKey(event) {
+        if (event) event.preventDefault();
+        handleSaveDriveAccount(event);
+    }
+
+    async function testGoogleDriveApiKey() {
+        testCurrentInputDriveAccount();
     }
 
     // State for Shotpik "Tạo album" Modal & "Quản lý / Sửa album" Modal
@@ -2216,138 +2440,144 @@ function testRun() {
     }
 
     async function fetchGoogleDriveFolderFiles(folderId) {
-        const apiKey = getGoogleDriveApiKey();
+        const driveAccounts = getDriveAccountsList();
+        const activeDriveAccount = driveAccounts.find(a => a.active) || driveAccounts[0];
+        // Sắp xếp ưu tiên tài khoản active lên đầu, sau đó thử các tài khoản kết nối khác nếu có
+        const prioritizedKeys = [
+            activeDriveAccount ? activeDriveAccount.key : "",
+            ...driveAccounts.filter(a => a !== activeDriveAccount).map(a => a.key)
+        ].filter(k => k && typeof k === 'string' && k.trim());
 
-        // 0. If Google Apps Script Web App URL is configured (Best for GitHub Pages, 100% bypasses Google Drive CORS & files.list restriction)
-        if (apiKey && apiKey.startsWith("https://script.google.com/")) {
-            try {
-                const resp = await fetch(`${apiKey}?id=${encodeURIComponent(folderId)}`);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data && Array.isArray(data.files) && data.files.length > 0) {
-                        const folderTitle = data.folderTitle || "";
-                        const processedFiles = await Promise.all(data.files.map(async (f) => {
-                            let photoLoc = f.location || "";
-                            let photoCity = f.city || "";
-                            // Strict EXIF capture date (DateTimeOriginal) or photo filename (never Drive upload date)
-                            let capturedAt = normalizeDateToIsoMinute(f.capturedAt) || extractDateFromText(f.name);
-                            if (f.lat != null && f.lon != null) {
-                                const geo = await reverseGeocodeCoords(f.lat, f.lon);
-                                if (geo) {
-                                    photoLoc = geo.location;
-                                    photoCity = geo.city;
+        if (!prioritizedKeys.length) {
+            prioritizedKeys.push(DEFAULT_GOOGLE_DRIVE_API_KEY);
+        }
+
+        // 0. Duyệt qua các tài khoản Google Apps Script Web App đã kết nối
+        for (const currentKey of prioritizedKeys) {
+            if (currentKey.startsWith("https://script.google.com/")) {
+                try {
+                    const resp = await fetch(`${currentKey}?id=${encodeURIComponent(folderId)}`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data && Array.isArray(data.files) && data.files.length > 0) {
+                            const folderTitle = data.folderTitle || "";
+                            const processedFiles = await Promise.all(data.files.map(async (f) => {
+                                let photoLoc = f.location || "";
+                                let photoCity = f.city || "";
+                                let capturedAt = normalizeDateToIsoMinute(f.capturedAt) || extractDateFromText(f.name);
+                                if (f.lat != null && f.lon != null) {
+                                    const geo = await reverseGeocodeCoords(f.lat, f.lon);
+                                    if (geo) {
+                                        photoLoc = geo.location;
+                                        photoCity = geo.city;
+                                    }
+                                }
+                                if (!photoLoc && f.name) {
+                                    const nameLoc = extractLocationFromText(f.name);
+                                    if (nameLoc) {
+                                        photoLoc = nameLoc.location;
+                                        photoCity = nameLoc.city;
+                                    }
+                                }
+                                return {
+                                    id: f.id,
+                                    name: f.name,
+                                    folderTitle,
+                                    capturedAt,
+                                    location: photoLoc,
+                                    city: photoCity,
+                                    lat: f.lat,
+                                    lon: f.lon,
+                                    url: `https://drive.google.com/thumbnail?id=${f.id}&sz=s0`
+                                };
+                            }));
+
+                            return {
+                                folderTitle,
+                                folderCity: data.folderCity || "",
+                                folderLocation: data.folderLocation || "",
+                                folderDate: data.folderDate || "",
+                                files: processedFiles
+                            };
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Google Apps Script fetch error for account:", e);
+                }
+            } else if (!currentKey.startsWith("https://")) {
+                // 1. Thử Google Drive API v3 nếu dùng API Key
+                try {
+                    const apiUrl = `https://www.googleapis.com/drive/v3/files?q='${encodeURIComponent(folderId)}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,imageMediaMetadata,createdTime,modifiedTime)&pageSize=100&key=${encodeURIComponent(currentKey)}`;
+                    const folderInfoUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?fields=name&key=${encodeURIComponent(currentKey)}`;
+
+                    const [filesResp, folderResp] = await Promise.all([
+                        fetch(apiUrl),
+                        fetch(folderInfoUrl).catch(() => null)
+                    ]);
+
+                    if (filesResp.ok) {
+                        const data = await filesResp.json();
+                        let folderTitle = "";
+                        if (folderResp && folderResp.ok) {
+                            const folderData = await folderResp.json();
+                            folderTitle = folderData.name || "";
+                        }
+
+                        const rawFiles = (data && Array.isArray(data.files)) ? data.files : [];
+                        const imageFiles = rawFiles.filter(f => !f.mimeType || f.mimeType.startsWith('image/') || /\.(jpe?g|png|webp|heic|tiff?)$/i.test(f.name || ''));
+
+                        const processedFiles = await Promise.all(imageFiles.map(async (f) => {
+                            let capturedAt = null;
+                            let lat = null;
+                            let lon = null;
+                            let city = null;
+                            let location = null;
+
+                            const imm = f.imageMediaMetadata;
+                            if (imm) {
+                                if (imm.time) {
+                                    capturedAt = normalizeDateToIsoMinute(imm.time);
+                                }
+                                if (imm.location && typeof imm.location.latitude === 'number' && typeof imm.location.longitude === 'number') {
+                                    lat = imm.location.latitude;
+                                    lon = imm.location.longitude;
+                                    const geo = await reverseGeocodeCoords(lat, lon);
+                                    if (geo) {
+                                        location = geo.location;
+                                        city = geo.city;
+                                    }
                                 }
                             }
-                            if (!photoLoc && f.name) {
+
+                            if (!capturedAt) capturedAt = extractDateFromText(f.name);
+                            if (!location) {
                                 const nameLoc = extractLocationFromText(f.name);
                                 if (nameLoc) {
-                                    photoLoc = nameLoc.location;
-                                    photoCity = nameLoc.city;
+                                    location = nameLoc.location;
+                                    city = nameLoc.city;
                                 }
                             }
+
                             return {
                                 id: f.id,
                                 name: f.name,
                                 folderTitle,
                                 capturedAt,
-                                location: photoLoc,
-                                city: photoCity,
-                                lat: f.lat,
-                                lon: f.lon,
+                                location,
+                                city,
+                                lat,
+                                lon,
                                 url: `https://drive.google.com/thumbnail?id=${f.id}&sz=s0`
                             };
                         }));
 
-                        return {
-                            folderTitle,
-                            folderCity: data.folderCity || "",
-                            folderLocation: data.folderLocation || "",
-                            folderDate: data.folderDate || "",
-                            files: processedFiles
-                        };
+                        if (processedFiles.length > 0) {
+                            return { folderTitle, files: processedFiles };
+                        }
                     }
+                } catch (e) {
+                    console.warn("Google Drive API v3 query failed for key:", e);
                 }
-            } catch (e) {
-                console.warn("Google Apps Script fetch error:", e);
-            }
-        }
-
-        // 1. If Google Drive API Key is configured, use official Google Drive API v3 (100% reliable CORS support on GitHub Pages)
-        if (apiKey && !apiKey.startsWith("https://")) {
-            try {
-                const apiUrl = `https://www.googleapis.com/drive/v3/files?q='${encodeURIComponent(folderId)}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,imageMediaMetadata,createdTime,modifiedTime)&pageSize=100&key=${encodeURIComponent(apiKey)}`;
-                const folderInfoUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?fields=name&key=${encodeURIComponent(apiKey)}`;
-
-                const [filesResp, folderResp] = await Promise.all([
-                    fetch(apiUrl),
-                    fetch(folderInfoUrl).catch(() => null)
-                ]);
-
-                if (filesResp.ok) {
-                    const data = await filesResp.json();
-                    let folderTitle = "";
-                    if (folderResp && folderResp.ok) {
-                        const folderData = await folderResp.json();
-                        folderTitle = folderData.name || "";
-                    }
-
-                    const rawFiles = (data && Array.isArray(data.files)) ? data.files : [];
-                    const imageFiles = rawFiles.filter(f => !f.mimeType || f.mimeType.startsWith('image/') || /\.(jpe?g|png|webp|heic|tiff?)$/i.test(f.name || ''));
-
-                    const processedFiles = await Promise.all(imageFiles.map(async (f) => {
-                        let capturedAt = null;
-                        let lat = null;
-                        let lon = null;
-                        let city = null;
-                        let location = null;
-
-                        const imm = f.imageMediaMetadata;
-                        if (imm) {
-                            if (imm.time) {
-                                capturedAt = normalizeDateToIsoMinute(imm.time);
-                            }
-                            if (imm.location && typeof imm.location.latitude === 'number' && typeof imm.location.longitude === 'number') {
-                                lat = imm.location.latitude;
-                                lon = imm.location.longitude;
-                                const geo = await reverseGeocodeCoords(lat, lon);
-                                if (geo) {
-                                    location = geo.location;
-                                    city = geo.city;
-                                }
-                            }
-                        }
-
-                        if (!capturedAt) {
-                            capturedAt = extractDateFromText(f.name);
-                        }
-
-                        if (!location) {
-                            const nameLoc = extractLocationFromText(f.name);
-                            if (nameLoc) {
-                                location = nameLoc.location;
-                                city = nameLoc.city;
-                            }
-                        }
-
-                        return {
-                            id: f.id,
-                            name: f.name,
-                            folderTitle,
-                            capturedAt,
-                            location,
-                            city,
-                            lat,
-                            lon,
-                            url: `https://drive.google.com/thumbnail?id=${f.id}&sz=s0`
-                        };
-                    }));
-
-                    if (processedFiles.length > 0) {
-                        return { folderTitle, files: processedFiles };
-                    }
-                }
-            } catch (e) {
-                console.warn("Google Drive API v3 query failed, falling back:", e);
             }
         }
 
@@ -5008,6 +5238,15 @@ function testRun() {
         closeDriveApiKeyModal,
         handleSaveDriveApiKey,
         testGoogleDriveApiKey,
+        getDriveAccountsList,
+        renderDriveAccountsList,
+        handleSaveDriveAccount,
+        editDriveAccount,
+        setActiveDriveAccount,
+        deleteDriveAccount,
+        resetDriveAccountForm,
+        testDriveAccountKey,
+        testCurrentInputDriveAccount,
         copyAppsScriptCode,
         fetchCloudOrStaticAlbums,
         quickPickCreateCity,
