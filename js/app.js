@@ -1453,12 +1453,20 @@ const App = (function () {
     }
 
     function downloadLightboxCurrentPhoto() {
+        if (!isClientMode) {
+            showToast("Trang chỉ xem được bảo vệ bản quyền, không hỗ trợ tải ảnh!", "error");
+            return;
+        }
         const photo = currentFilteredPhotos[currentLightboxIndex];
         if (!photo) return;
         downloadSinglePhoto(photo.id);
     }
 
     async function downloadSinglePhoto(photoId) {
+        if (!isClientMode) {
+            showToast("Trang chỉ xem được bảo vệ bản quyền, không hỗ trợ tải ảnh!", "error");
+            return;
+        }
         const album = AdminModule.getAlbumById(currentAlbumId);
         if (!album) return;
         const photo = album.photos.find(p => p.id === photoId);
@@ -1894,6 +1902,10 @@ const App = (function () {
     }
 
     function openDownloadModal() {
+        if (!isClientMode) {
+            showToast("Trang chỉ xem được bảo vệ bản quyền, không hỗ trợ tải ảnh!", "error");
+            return;
+        }
         const modal = document.getElementById('downloadModal');
         if (modal) modal.classList.remove('hidden');
     }
@@ -1905,6 +1917,10 @@ const App = (function () {
 
     function handleBatchDownload(e) {
         if (e && e.preventDefault) e.preventDefault();
+        if (!isClientMode) {
+            showToast("Trang chỉ xem được bảo vệ bản quyền, không hỗ trợ tải ảnh!", "error");
+            return;
+        }
         const album = AdminModule.getAlbumById(currentAlbumId);
         if (!album) return;
 
