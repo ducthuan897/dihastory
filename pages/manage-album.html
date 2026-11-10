@@ -105,19 +105,19 @@
 
             <!-- Row 3: Interactive Stats Filter Pills & Grouped Action Buttons -->
             <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
-                <!-- Left Stats Filter Pills -->
-                <div class="flex flex-wrap items-center gap-2">
+                <!-- Left Stats Filter Pills (Clean style: no border, no background) -->
+                <div class="flex items-center gap-3 text-xs sm:text-sm font-semibold">
                     <button id="manageFilterPill_ALL" type="button"
                         onclick="AdminModule.setManageStatFilter('ALL')"
-                        class="px-3 py-1.5 rounded-full bg-zinc-900 text-white text-xs font-semibold flex items-center gap-1.5 transition"
+                        class="px-1.5 py-1 text-zinc-800 hover:text-black flex items-center gap-1.5 transition cursor-pointer"
                         title="Xem tất cả ảnh trong Album">
-                        <i class="fa-regular fa-image"></i>
+                        <i class="fa-regular fa-image text-zinc-600"></i>
                         <span id="manageStatTotalCount">0</span>
                     </button>
 
                     <button id="manageFilterPill_STARRED" type="button"
                         onclick="AdminModule.setManageStatFilter('STARRED')"
-                        class="px-2.5 py-1.5 rounded-full bg-zinc-100/80 hover:bg-zinc-200/70 text-zinc-700 text-xs font-semibold flex items-center gap-1 transition"
+                        class="px-1.5 py-1 text-zinc-800 hover:text-black flex items-center gap-1.5 transition cursor-pointer"
                         title="Lọc các ảnh đã gắn dấu Sao nổi bật">
                         <i class="fa-solid fa-star text-amber-400"></i>
                         <span id="manageStatStarCount">0</span>
@@ -125,7 +125,7 @@
 
                     <button id="manageFilterPill_SELECTED" type="button"
                         onclick="AdminModule.setManageStatFilter('SELECTED')"
-                        class="px-2.5 py-1.5 rounded-full bg-zinc-100/80 hover:bg-zinc-200/70 text-zinc-700 text-xs font-semibold flex items-center gap-1 transition"
+                        class="px-1.5 py-1 text-zinc-800 hover:text-black flex items-center gap-1.5 transition cursor-pointer"
                         title="Lọc các ảnh khách đã thả tim chọn">
                         <i class="fa-solid fa-heart text-red-500"></i>
                         <span id="manageStatHeartCount">0</span>
@@ -133,7 +133,7 @@
 
                     <button id="manageFilterPill_NOTED" type="button"
                         onclick="AdminModule.setManageStatFilter('NOTED')"
-                        class="px-2.5 py-1.5 rounded-full bg-zinc-100/80 hover:bg-zinc-200/70 text-zinc-700 text-xs font-semibold flex items-center gap-1 transition"
+                        class="px-1.5 py-1 text-zinc-800 hover:text-black flex items-center gap-1.5 transition cursor-pointer"
                         title="Lọc các ảnh có ghi chú chỉnh sửa của khách">
                         <i class="fa-regular fa-comment text-blue-600"></i>
                         <span id="manageStatNoteCount">0</span>

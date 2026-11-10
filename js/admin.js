@@ -3684,7 +3684,7 @@ function testRun() {
         setTxt('manageStatHeartCount', heartCount);
         setTxt('manageStatNoteCount', noteCount);
 
-        // Update active state on the 4 stat pills
+        // Update active state on the 4 stat buttons (Clean style: no border, no background)
         const statPillMap = {
             ALL: document.getElementById('manageFilterPill_ALL'),
             STARRED: document.getElementById('manageFilterPill_STARRED'),
@@ -3695,9 +3695,9 @@ function testRun() {
             const btn = statPillMap[k];
             if (!btn) return;
             if (k === managePageStatFilter) {
-                btn.className = "px-3 py-1.5 rounded-full bg-zinc-900 text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-xs";
+                btn.className = "px-1.5 py-1 font-bold text-black flex items-center gap-1.5 transition cursor-pointer";
             } else {
-                btn.className = "px-2.5 py-1.5 rounded-full bg-transparent hover:bg-zinc-100 text-zinc-700 text-xs font-semibold flex items-center gap-1 transition";
+                btn.className = "px-1.5 py-1 text-zinc-500 hover:text-black flex items-center gap-1.5 transition cursor-pointer";
             }
         });
 
