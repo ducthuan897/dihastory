@@ -742,7 +742,7 @@ function testRun() {
             id: "gian-than-dat-09",
             title: "Gian thần Đạt 09",
             clientName: "Nguyễn Thành Đạt",
-            date: "2026-10-19",
+            date: "2026-07-24",
             city: "Thủ Dầu Một",
             location: "Nhà thờ Phú Cường, Thủ Dầu Một",
             photographer: "Diha Story",
@@ -819,8 +819,24 @@ function testRun() {
                     // Tự động loại bỏ bất kỳ album mẫu cũ nào còn sót lại trong bộ nhớ trình duyệt
                     parsed = parsed.filter(a => !DEMO_SAMPLE_IDS.includes(a.id));
                     if (parsed.length > 0) {
-                        // Tự động nâng cấp URL ảnh sang chất lượng gốc s0 nếu còn chứa w1600 cũ
+                        // Tự động nâng cấp URL ảnh sang chất lượng gốc s0 nếu còn chứa w1600 cũ và đảm bảo capturedAt chuẩn
                         parsed.forEach(a => {
+                            if (a.id === "gian-than-dat-09") {
+                                if (a.date === "2026-10-19") a.date = "2026-07-24";
+                                if (Array.isArray(a.photos)) {
+                                    a.photos.forEach(p => {
+                                        if (p.code === "DSC00346" && (!p.capturedAt || p.capturedAt.startsWith("2026-10-19"))) {
+                                            p.capturedAt = "2026-07-24T16:28";
+                                        }
+                                        if (p.code === "DSC01193" && !p.capturedAt) {
+                                            p.capturedAt = "2026-10-19T21:35";
+                                        }
+                                        if (p.code === "DSC01184" && !p.capturedAt) {
+                                            p.capturedAt = "2026-10-19T21:23";
+                                        }
+                                    });
+                                }
+                            }
                             if (a.coverUrl && a.coverUrl.includes('drive.google.com/thumbnail')) {
                                 a.coverUrl = a.coverUrl.replace(/sz=[^&]+/i, 'sz=s0');
                             }

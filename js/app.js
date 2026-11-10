@@ -941,7 +941,13 @@ const App = (function () {
         if (heroCover) heroCover.src = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
         if (heroClient) heroClient.innerText = album.clientName || 'Khách hàng';
         if (heroTitle) heroTitle.innerText = album.title || 'Album';
-        if (heroDate) heroDate.innerText = album.date ? album.date.split('-').reverse().join('.') : '';
+        if (heroDate) {
+            const oldestTime = getAlbumOldestPhotoTime(album);
+            const formattedDate = oldestTime && oldestTime !== '9999-99-99'
+                ? oldestTime.split('T')[0].split('-').reverse().join('.')
+                : (album.date ? album.date.split('-').reverse().join('.') : '');
+            heroDate.innerText = formattedDate;
+        }
         if (heroLoc) heroLoc.innerText = album.location || album.city || 'Việt Nam';
         if (heroCount) heroCount.innerText = `${album.photos.length} Ảnh`;
 
