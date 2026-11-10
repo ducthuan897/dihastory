@@ -232,6 +232,13 @@ body {
     image-rendering: -webkit-optimize-contrast;
 }
 
+/* Khi đang phóng to (100% pixel thực tế hoặc zoom), loại bỏ giới hạn max-h/max-w để trình duyệt bung trọn vẹn số điểm ảnh thực tế thay vì phóng to một bitmap đã bị thu nhỏ */
+#lightboxImageContainer.lb-zoomed-mode,
+#lightboxImageContainer.lb-zoomed-mode #lightboxImage {
+    max-height: none !important;
+    max-width: none !important;
+}
+
 /* Container bọc ảnh + watermark — transform áp lên đây để watermark bám theo ảnh khi zoom */
 #lightboxImageContainer {
     transform-origin: center center;
