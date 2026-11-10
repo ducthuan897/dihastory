@@ -72,14 +72,26 @@ const App = (function () {
         return url;
     }
 
-    // Helper: Lấy ảnh ở độ phân giải gốc cao nhất (Full High-Resolution) cho trình xem ảnh Lightbox
+    // Helper: Trích xuất Google Drive file ID
+    function getDriveIdFromUrl(url) {
+        if (!url || typeof url !== 'string') return null;
+        const match = url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/) ||
+                      url.match(/\/file\/d\/([a-zA-Z0-9_-]{15,})/) ||
+                      url.match(/\/d\/([a-zA-Z0-9_-]{15,})/);
+        return match ? match[1] : null;
+    }
+
+    // Helper: Lấy ảnh ở độ phân giải gốc cao nhất (Full High-Resolution) trực tiếp từ Google Drive CDN
     function getFullResPhotoUrl(url) {
         if (!url || typeof url !== 'string') return url || '';
+        const driveId = getDriveIdFromUrl(url);
+        if (driveId) {
+            // Liên kết trực tiếp qua Google User Content CDN với =s0 đảm bảo 100% không bị nén, sắc nét tuyệt đối
+            return `https://lh3.googleusercontent.com/d/${driveId}=s0`;
+        }
         if (url.includes('drive.google.com/thumbnail')) {
-            // sz=s0 chỉ định Google Drive trả về ảnh gốc ở độ phân giải tối đa 100%
             return getOptimizedThumbnailUrl(url, 's0');
         }
-        // Trường hợp Google User Content trực tiếp (=s... hoặc =w...)
         if (url.includes('googleusercontent.com')) {
             if (/=[sw]\d+/i.test(url)) {
                 return url.replace(/=[sw]\d+/i, '=s0');
@@ -91,6 +103,11 @@ const App = (function () {
     // Helper: Lấy ảnh độ nét cao nhanh chóng cho màn hình lớn (2560px 2K) để hiển thị tức thì không bị chờ
     function getLightboxDisplayUrl(url) {
         if (!url || typeof url !== 'string') return url || '';
+        const driveId = getDriveIdFromUrl(url);
+        if (driveId) {
+            // Nạp trực tiếp từ CDN lh3.googleusercontent.com tốc độ cao
+            return `https://lh3.googleusercontent.com/d/${driveId}=w2560`;
+        }
         if (url.includes('drive.google.com/thumbnail')) {
             return getOptimizedThumbnailUrl(url, 'w2560');
         }
