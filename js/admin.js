@@ -2972,7 +2972,7 @@ function testRun() {
                                 class="px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-xs"
                             >
                                 <i class="fa-solid fa-gear text-sm mr-0.5"></i>
-                                <span>Cài đặt album</span>
+                                <span>Quản lí album</span>
                             </button>
 
                             ${
