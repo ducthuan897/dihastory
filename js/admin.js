@@ -2952,15 +2952,15 @@ function testRun() {
                                             <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
                                                 <i class="fa-solid fa-heart"></i>
                                             </div>
-                                            <span class="font-bold text-rose-700 truncate">2. Trang chọn ảnh của khách</span>
+                                            <span class="font-bold text-rose-700 truncate">Chọn ảnh</span>
                                         </button>
                                         <button type="button"
                                             onclick="event.stopPropagation(); AdminModule.copyAlbumClientLink('${album.id}'); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
                                             class="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-semibold transition flex items-center gap-1 shrink-0 shadow-2xs"
-                                            title="Sao chép link gửi cho khách"
+                                            title="Sao chép link chọn ảnh gửi cho khách"
                                         >
                                             <i class="fa-solid fa-link text-[10px]"></i>
-                                            <span>Gửi khách</span>
+                                            <span>Copy link chọn</span>
                                         </button>
                                     </div>
                                 </div>
