@@ -1052,6 +1052,22 @@ function testRun() {
         return albums.find(a => a.id === albumId) || null;
     }
 
+    function getAlbumOldestCaptureDate(album) {
+        if (!album || !Array.isArray(album.photos) || !album.photos.length) {
+            return album && album.date ? album.date : '';
+        }
+        let oldest = null;
+        album.photos.forEach(p => {
+            const t = p.capturedAt || '';
+            if (t && /^\d{4}-\d{2}-\d{2}/.test(t)) {
+                const d = t.slice(0, 10);
+                if (!oldest || d.localeCompare(oldest) < 0) {
+                    oldest = d;
+                }
+            }
+        });
+        return oldest || album.date || '';
+    }
     function getActiveAdminAlbum() {
         return getAlbumById(activeAdminAlbumId) || getAllAlbums()[0];
     }
@@ -2477,11 +2493,11 @@ function testRun() {
                     // Nếu không có thông tin toạ độ/vị trí EXIF thì để trống "", tuyệt đối không fallback gán địa điểm chung của album/thư mục
 
                     // 2. Resolve Capture Date/Time strictly from EXIF DateTimeOriginal / photo filename
+                    // TUÂN THỦ ĐIỀU 5: Tuyệt đối không lấy ngày tạo của album gán cho ảnh nếu ảnh không có metadata
                     let capturedAt =
                         normalizeDateToIsoMinute(f.capturedAt) ||
                         extractDateFromText(f.name) ||
-                        (folderData && folderData.folderDate ? normalizeDateToIsoMinute(folderData.folderDate) : null) ||
-                        (fallbackDate ? `${fallbackDate}T09:00` : "");
+                        "";
 
                     photos.push({
                         id: `drv_${f.id}_${Date.now()}_${counter}`,
@@ -2524,12 +2540,10 @@ function testRun() {
                 // Nếu không có thông tin vị trí thì để trống ""
 
                 const cleanCode = fName ? fName.replace(/\.[^/.]+$/, "").toUpperCase() : `DRV_${1000 + counter}`;
-                const min = ((counter * 5) % 60).toString().padStart(2, '0');
-                const baseD = fallbackDate || new Date().toISOString().slice(0, 10);
                 const capturedAt =
                     (meta && normalizeDateToIsoMinute(meta.capturedAt)) ||
                     extractDateFromText(fName) ||
-                    `${baseD}T09:${min}`;
+                    "";
 
                 photos.push({
                     id: `drv_file_${fileId}_${Date.now()}_${counter}`,
@@ -2567,16 +2581,17 @@ function testRun() {
     }
 
     function deriveAlbumDateAndLocation(photos, tags, title, hintCity = "", hintDate = "") {
-        // 1. Find earliest or primary capture date from the photos' EXIF metadata or user input
+        // 1. Tự động lấy thời gian của bức ảnh cũ nhất (sớm nhất) trong album theo chuẩn Điều 5
         let detectedDate = "";
         const validDates = photos
             .map(p => (p.capturedAt ? p.capturedAt.slice(0, 10) : ""))
             .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d))
             .sort();
-        if (hintDate && hintDate.trim()) {
-            detectedDate = hintDate.trim();
-        } else if (validDates.length > 0) {
+        if (validDates.length > 0) {
+            // Luôn ưu tiên ngày chụp của bức ảnh sớm nhất trong danh sách ảnh thực tế
             detectedDate = validDates[0];
+        } else if (hintDate && hintDate.trim()) {
+            detectedDate = hintDate.trim();
         } else {
             const titleDate = extractDateFromText(title);
             if (titleDate) {
@@ -3283,7 +3298,8 @@ function testRun() {
 
         const dateBadge = document.getElementById('managePageDateBadge');
         if (dateBadge) {
-            dateBadge.innerText = album.date ? album.date.split('-').reverse().join('/') : 'Chưa đặt';
+            const displayDate = getAlbumOldestCaptureDate(album);
+            dateBadge.innerText = displayDate ? displayDate.split('-').reverse().join('/') : (album.date ? album.date.split('-').reverse().join('/') : 'Chưa đặt');
         }
 
         const bellBadge = document.getElementById('managePageBellBadge');
@@ -3882,6 +3898,7 @@ function testRun() {
                         existing.city = fp.city;
                         changed = true;
                     }
+                    // TUÂN THỦ ĐIỀU 5: Chỉ cập nhật capturedAt khi Drive thực sự đọc được EXIF mới; không ghi đè giá trị rỗng/mặc định lên dữ liệu ảnh đã có
                     if (fp.capturedAt && existing.capturedAt !== fp.capturedAt) {
                         existing.capturedAt = fp.capturedAt;
                         changed = true;
@@ -4909,6 +4926,7 @@ function testRun() {
         applyLatestCloudAlbums,
         applyLatestCloudSelections,
         mergeCloudAlbums: applyLatestCloudAlbums,
+        getAlbumOldestCaptureDate,
         extractGoogleDriveFileId,
         extractGoogleDriveFolderId,
         exportAlbumsJsonFile
