@@ -90,45 +90,40 @@
         </div>
     </div>
 
-    <!-- GALLERY FILTER, SORT BY TIME & GROUP BY LOCATION TOOLBAR -->
+    <!-- GALLERY FILTER, SORT BY TIME & GRID DENSITY TOOLBAR -->
     <section class="w-full px-4 sm:px-6 lg:px-10 xl:px-12 pt-6 pb-4">
-        <div class="flex flex-col gap-4 pb-4 border-b border-zinc-200">
-            <!-- Row 1: Location Filter Tabs (Đồng bộ kiểu underline tabs như trang quản lý khi ở chế độ xem) -->
-            <div id="categoryTabsContainer" class="flex items-center gap-5 overflow-x-auto no-scrollbar pb-1 text-xs sm:text-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-zinc-200">
+            <!-- Left: Location Filter Tabs (Đồng bộ kiểu underline tabs phẳng tinh tế) -->
+            <div id="categoryTabsContainer" class="flex items-center gap-5 overflow-x-auto no-scrollbar pb-1 md:pb-0 text-xs sm:text-sm flex-1 min-w-0">
                 <!-- Rendered dynamically by App.js -->
             </div>
 
-            <!-- Row 2: Sort by Time & Grid Density -->
-            <div class="flex flex-wrap items-center justify-end gap-2.5">
-                <div class="flex flex-wrap items-center gap-2">
-                    <!-- Sort by Captured Time (thay thế vị trí ô tìm kiếm) -->
-                    <div
-                        class="flex items-center bg-white border border-zinc-200 hover:border-zinc-300 rounded-full px-3 py-1.5 text-xs transition shadow-2xs">
-                        <span class="text-zinc-400 mr-1.5 text-xs">↓↑</span>
-                        <select onchange="App.setAlbumTimeSort(this.value)"
-                            class="bg-transparent font-medium text-zinc-800 outline-none cursor-pointer text-xs pr-1">
-                            <option value="asc">Thời gian chụp: Cũ -&gt; Mới</option>
-                            <option value="desc">Thời gian chụp: Mới -&gt; Cũ</option>
-                        </select>
-                    </div>
+            <!-- Right: Sort by Time Button & Grid Density Switcher -->
+            <div class="flex items-center justify-between md:justify-end gap-2.5 shrink-0 self-end md:self-auto pt-1 md:pt-0">
+                <!-- Nút bấm chuyển đổi nhanh Thời gian chụp: Cũ -> Mới / Mới -> Cũ (không cần dropdown) -->
+                <button id="albumTimeSortToggleBtn" type="button" onclick="App.toggleAlbumTimeSort()"
+                    class="px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-xs font-medium transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                    title="Bấm để đảo chiều sắp xếp theo thời gian chụp">
+                    <span id="albumTimeSortIcon" class="text-zinc-500 font-mono text-xs">↑</span>
+                    <span id="albumTimeSortLabel">Thời gian: Cũ → Mới</span>
+                </button>
 
-                    <div class="hidden sm:flex items-center bg-white border border-zinc-200 rounded-full p-1">
-                        <button id="gridBtn_cols-4" type="button" onclick="App.setGridCols('cols-4')"
-                            class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-900 text-white transition"
-                            title="Lưới 4 cột">
-                            <i class="fa-solid fa-grip"></i>
-                        </button>
-                        <button id="gridBtn_cols-3" type="button" onclick="App.setGridCols('cols-3')"
-                            class="px-2.5 py-1 rounded-full text-xs font-medium text-slate-500 hover:text-slate-800 transition"
-                            title="Lưới 3 cột">
-                            <i class="fa-solid fa-table-cells"></i>
-                        </button>
-                        <button id="gridBtn_cols-2" type="button" onclick="App.setGridCols('cols-2')"
-                            class="px-2.5 py-1 rounded-full text-xs font-medium text-slate-500 hover:text-slate-800 transition"
-                            title="Lưới 2 cột lớn">
-                            <i class="fa-solid fa-table-cells-large"></i>
-                        </button>
-                    </div>
+                <div class="hidden sm:flex items-center bg-white border border-zinc-200 rounded-full p-1">
+                    <button id="gridBtn_cols-4" type="button" onclick="App.setGridCols('cols-4')"
+                        class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-900 text-white transition"
+                        title="Lưới 4 cột">
+                        <i class="fa-solid fa-grip"></i>
+                    </button>
+                    <button id="gridBtn_cols-3" type="button" onclick="App.setGridCols('cols-3')"
+                        class="px-2.5 py-1 rounded-full text-xs font-medium text-slate-500 hover:text-slate-800 transition"
+                        title="Lưới 3 cột">
+                        <i class="fa-solid fa-table-cells"></i>
+                    </button>
+                    <button id="gridBtn_cols-2" type="button" onclick="App.setGridCols('cols-2')"
+                        class="px-2.5 py-1 rounded-full text-xs font-medium text-slate-500 hover:text-slate-800 transition"
+                        title="Lưới 2 cột lớn">
+                        <i class="fa-solid fa-table-cells-large"></i>
+                    </button>
                 </div>
             </div>
         </div>

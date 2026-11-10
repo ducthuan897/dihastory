@@ -986,6 +986,7 @@ const App = (function () {
         }
 
         renderCategoryTabs(album);
+        updateTimeSortButtonUI();
         filterAndRenderPhotos(album);
         updateSelectionUI();
     }
@@ -1282,8 +1283,27 @@ const App = (function () {
         }
     }
 
+    function updateTimeSortButtonUI() {
+        const label = document.getElementById('albumTimeSortLabel');
+        const icon = document.getElementById('albumTimeSortIcon');
+        if (label) {
+            label.innerText = albumTimeSort === 'asc' ? 'Thời gian: Cũ → Mới' : 'Thời gian: Mới → Cũ';
+        }
+        if (icon) {
+            icon.innerText = albumTimeSort === 'asc' ? '↑' : '↓';
+        }
+    }
+
+    function toggleAlbumTimeSort() {
+        albumTimeSort = albumTimeSort === 'asc' ? 'desc' : 'asc';
+        updateTimeSortButtonUI();
+        const album = AdminModule.getAlbumById(currentAlbumId);
+        if (album) filterAndRenderPhotos(album);
+    }
+
     function setAlbumTimeSort(sort) {
         albumTimeSort = sort;
+        updateTimeSortButtonUI();
         const album = AdminModule.getAlbumById(currentAlbumId);
         if (album) filterAndRenderPhotos(album);
     }
@@ -2292,6 +2312,7 @@ const App = (function () {
         renderPublicAlbum,
         setCategoryFilter,
         setAlbumTimeSort,
+        toggleAlbumTimeSort,
         toggleAlbumGroupByLocation,
         handleSearchInput,
         setGridCols,
