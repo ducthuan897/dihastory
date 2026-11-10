@@ -1462,6 +1462,102 @@ const App = (function () {
         downloadSinglePhoto(photo.id);
     }
 
+    // Helper: Vẽ watermark DIHA STORY chìm lặp lại lên canvas trước khi tải ảnh
+    function applyWatermarkPatternToCanvas(ctx, width, height) {
+        // Tỷ lệ font và khoảng cách dựa trên độ phân giải thực tế của ảnh
+        // (Trên màn hình: pattern 160x90 với font size 13px)
+        const scale = Math.max(1, Math.min(width, height) / 800);
+        const tileW = Math.round(180 * scale);
+        const tileH = Math.round(100 * scale);
+        const fontSize = Math.max(12, Math.round(14 * scale));
+
+        ctx.save();
+        ctx.font = `800 ${fontSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Lặp watermark dạng lưới nghiêng 22 độ khắp ảnh
+        for (let y = -tileH; y < height + tileH * 2; y += tileH) {
+            for (let x = -tileW; x < width + tileW * 2; x += tileW) {
+                ctx.save();
+                ctx.translate(x + tileW / 2, y + tileH / 2);
+                ctx.rotate((-22 * Math.PI) / 180);
+
+                // Viền chữ bóng đổ đen mờ
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+                ctx.lineWidth = Math.max(1.5, Math.round(1.5 * scale));
+                ctx.strokeText('DIHA STORY', 0, 0);
+
+                // Chữ trắng mờ
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+                ctx.fillText('DIHA STORY', 0, 0);
+
+                ctx.restore();
+            }
+        }
+        ctx.restore();
+    }
+
+    // Helper: Tạo blob ảnh có đóng watermark từ ảnh gốc
+    async function createWatermarkedImageBlob(photoUrl) {
+        return new Promise(async (resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+
+            // Thử nạp blob qua fetch trước để tránh tainted canvas nếu có thể
+            let objectUrl = null;
+            try {
+                const proxyUrls = [
+                    photoUrl,
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(photoUrl)}`,
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(photoUrl)}`
+                ];
+                for (const pUrl of proxyUrls) {
+                    try {
+                        const resp = await fetch(pUrl);
+                        if (resp.ok) {
+                            const b = await resp.blob();
+                            objectUrl = URL.createObjectURL(b);
+                            break;
+                        }
+                    } catch (e) {}
+                }
+            } catch (e) {}
+
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || img.width;
+                    canvas.height = img.naturalHeight || img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    // Vẽ watermark DIHA STORY bám chặt lên toàn ảnh
+                    applyWatermarkPatternToCanvas(ctx, canvas.width, canvas.height);
+
+                    canvas.toBlob((blob) => {
+                        if (objectUrl) URL.revokeObjectURL(objectUrl);
+                        if (blob) {
+                            resolve(blob);
+                        } else {
+                            reject(new Error("Canvas toBlob failed"));
+                        }
+                    }, 'image/jpeg', 0.92);
+                } catch (err) {
+                    if (objectUrl) URL.revokeObjectURL(objectUrl);
+                    reject(err);
+                }
+            };
+
+            img.onerror = () => {
+                if (objectUrl) URL.revokeObjectURL(objectUrl);
+                reject(new Error("Failed to load image for watermarking"));
+            };
+
+            img.src = objectUrl || photoUrl;
+        });
+    }
+
     async function downloadSinglePhoto(photoId) {
         if (!isClientMode) {
             showToast("Trang chỉ xem được bảo vệ bản quyền, không hỗ trợ tải ảnh!", "error");
@@ -1473,8 +1569,25 @@ const App = (function () {
         if (!photo) return;
 
         try {
-            showToast(`Đang tải ảnh ${photo.code || 'IMG'}...`);
+            showToast(`Đang nạp và đóng dấu Watermark cho ảnh ${photo.code || 'IMG'}...`);
             const dlUrl = getFullResPhotoUrl(photo.url);
+
+            // Tải ảnh có đóng watermark DIHA STORY
+            const watermarkedBlob = await createWatermarkedImageBlob(dlUrl).catch(() => null);
+            if (watermarkedBlob) {
+                const blobUrl = URL.createObjectURL(watermarkedBlob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `${photo.code || 'photo'}_watermarked.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+                showToast(`Đã tải ảnh ${photo.code || 'IMG'} (Có Watermark)!`);
+                return;
+            }
+
+            // Fallback nếu không đóng được watermark
             const a = document.createElement('a');
             a.href = dlUrl;
             a.target = '_blank';
