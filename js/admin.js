@@ -3373,7 +3373,7 @@ function testRun() {
 
     let managePageStatFilter = 'ALL'; // 'ALL' | 'STARRED' | 'SELECTED' | 'NOTED'
     let managePageSubTab = 'ALL'; // 'ALL' | 'DELIVERED' | 'LOC:<name>'
-    let managePageSortOrder = 'name_asc'; // 'name_asc' | 'name_desc' | 'time_asc' | 'time_desc'
+    let managePageSortOrder = 'time_asc'; // 'time_asc' | 'time_desc'
     let managePagePersonFilter = 'ALL';
     let isCoverSelectMode = false;
     let manageDownloadSelectedMap = {};
@@ -3796,11 +3796,7 @@ function testRun() {
         });
 
         filtered = [...filtered].sort((a, b) => {
-            if (managePageSortOrder === 'name_asc') {
-                return (a.code || '').localeCompare(b.code || '');
-            } else if (managePageSortOrder === 'name_desc') {
-                return (b.code || '').localeCompare(a.code || '');
-            } else if (managePageSortOrder === 'time_asc') {
+            if (managePageSortOrder === 'time_asc') {
                 return (a.capturedAt || '').localeCompare(b.capturedAt || '');
             } else {
                 return (b.capturedAt || '').localeCompare(a.capturedAt || '');
