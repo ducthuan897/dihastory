@@ -3357,11 +3357,11 @@ function testRun() {
                                     ? `<button
                                         type="button"
                                         onclick="AdminModule.deleteAlbum('${album.id}')"
-                                        class="w-full sm:w-auto flex-col sm:flex-row p-1.5 sm:p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent sm:border-0 transition flex items-center justify-center gap-1 text-[10px] sm:text-sm"
+                                        class="w-full sm:w-auto flex-col sm:flex-row p-1.5 sm:p-2 rounded-xl text-zinc-600 hover:text-rose-600 bg-white sm:bg-transparent hover:bg-rose-50 border border-zinc-200 sm:border-0 transition flex items-center justify-center gap-1 text-[10px] sm:text-sm shadow-2xs sm:shadow-none"
                                         title="Xoá Album này"
                                     >
-                                        <i class="fa-solid fa-trash-can text-sm"></i>
-                                        <span class="sm:hidden leading-tight">Xóa</span>
+                                        <i class="fa-solid fa-trash-can text-xs sm:text-sm text-zinc-400 group-hover:text-rose-600"></i>
+                                        <span class="sm:hidden font-semibold leading-tight">Xóa</span>
                                     </button>`
                                     : `<div class="w-full sm:w-auto"></div>`
                             }
