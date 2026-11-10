@@ -47,7 +47,7 @@ const App = (function () {
     let _lbPinchPanStartY = 0;
     let _lbZoomSetupDone = false;
     const LB_MIN_SCALE = 1;
-    const LB_MAX_SCALE = 5;
+    const LB_MAX_SCALE = 16;
     let slideshowTimer = null;
     let countdownInterval = null;
     let unlockedPinMap = {};
@@ -1416,8 +1416,17 @@ const App = (function () {
             if (!_lbFitWidth || !_lbFitHeight) {
                 recordLightboxFitDimensions();
             }
-            const zoomFactor = e.deltaY < 0 ? 1.25 : 0.8;
-            _lbScale = Math.min(LB_MAX_SCALE, Math.max(LB_MIN_SCALE, _lbScale * zoomFactor));
+            // Hỗ trợ cả chuột thông thường lẫn trackpad: tính toán tỉ lệ mượt mà theo deltaY
+            let zoomFactor = 1.15;
+            if (e.deltaY < 0) {
+                // Cuộn lên phóng to
+                zoomFactor = Math.min(1.4, 1 + Math.abs(e.deltaY) * 0.0025);
+                _lbScale = Math.min(LB_MAX_SCALE, _lbScale * zoomFactor);
+            } else {
+                // Cuộn xuống thu nhỏ
+                zoomFactor = Math.max(0.7, 1 - Math.abs(e.deltaY) * 0.0025);
+                _lbScale = Math.max(LB_MIN_SCALE, _lbScale * zoomFactor);
+            }
             // Nếu thu nhỏ về gần 1 thì trả hẳn về 1
             if (_lbScale < 1.05) _lbScale = 1;
             applyLightboxTransform();
@@ -1607,8 +1616,6 @@ const App = (function () {
         _lbScale = 1;
         _lbPanX = 0;
         _lbPanY = 0;
-        const label = document.getElementById('lightboxZoom100Label');
-        if (label) label.innerText = "100%";
         applyLightboxTransform();
     }
 
