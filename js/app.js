@@ -1413,6 +1413,9 @@ const App = (function () {
         // Scroll wheel zoom (trên stage)
         stage.addEventListener('wheel', (e) => {
             e.preventDefault();
+            if (!_lbFitWidth || !_lbFitHeight) {
+                recordLightboxFitDimensions();
+            }
             // Hệ số phóng to/thu nhỏ mỗi nấc cuộn chuột
             const factor = e.deltaY < 0 ? 1.25 : 0.8;
             _lbScale = Math.min(LB_MAX_SCALE, Math.max(LB_MIN_SCALE, _lbScale * factor));
@@ -1446,7 +1449,6 @@ const App = (function () {
         window.addEventListener('mouseup', () => {
             if (_lbDragging) {
                 _lbDragging = false;
-                container.style.transition = 'transform 0.08s ease-out';
             }
         });
 
@@ -1559,15 +1561,12 @@ const App = (function () {
         if (!stage || !container) return;
 
         const stageRect = stage.getBoundingClientRect();
-        const baseWidth = container.offsetWidth || 1;
-        const baseHeight = container.offsetHeight || 1;
-
-        const scaledW = baseWidth * _lbScale;
-        const scaledH = baseHeight * _lbScale;
+        const baseW = Math.round((_lbFitWidth || container.offsetWidth) * _lbScale);
+        const baseH = Math.round((_lbFitHeight || container.offsetHeight) * _lbScale);
 
         // Giới hạn pan: cho phép kéo tự do khi ảnh to hơn khung hình
-        const maxPanX = Math.max(0, (scaledW - stageRect.width) / 2) + 200;
-        const maxPanY = Math.max(0, (scaledH - stageRect.height) / 2) + 200;
+        const maxPanX = Math.max(0, (baseW - stageRect.width) / 2) + 200;
+        const maxPanY = Math.max(0, (baseH - stageRect.height) / 2) + 200;
 
         _lbPanX = Math.max(-maxPanX, Math.min(maxPanX, _lbPanX));
         _lbPanY = Math.max(-maxPanY, Math.min(maxPanY, _lbPanY));
@@ -1580,12 +1579,35 @@ const App = (function () {
 
         if (_lbScale > 1) {
             clampLightboxPan();
-            container.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px) scale(${_lbScale})`;
+            // Điều chỉnh trực tiếp width/height của thẻ ảnh theo tỷ lệ zoom
+            // Nhờ đó trình duyệt KHÔNG phóng to một bitmap thu nhỏ (raster buffer bị mờ),
+            // mà buộc phải giải mã (re-rasterize) ảnh gốc 7008x3944 theo đúng số điểm ảnh thực tế!
+            const w = Math.round((_lbFitWidth || container.offsetWidth) * _lbScale);
+            const h = Math.round((_lbFitHeight || container.offsetHeight) * _lbScale);
+
+            img.style.maxWidth = 'none';
+            img.style.maxHeight = 'none';
+            img.style.width = `${w}px`;
+            img.style.height = `${h}px`;
+            container.style.maxWidth = 'none';
+            container.style.maxHeight = 'none';
+            container.style.width = `${w}px`;
+            container.style.height = `${h}px`;
+
+            container.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px)`;
             container.style.cursor = 'grab';
             img.style.cursor = 'grab';
         } else {
             _lbPanX = 0;
             _lbPanY = 0;
+            img.style.maxWidth = '';
+            img.style.maxHeight = '';
+            img.style.width = '';
+            img.style.height = '';
+            container.style.maxWidth = '';
+            container.style.maxHeight = '';
+            container.style.width = '';
+            container.style.height = '';
             container.style.transform = 'none';
             container.style.cursor = 'zoom-in';
             img.style.cursor = 'zoom-in';

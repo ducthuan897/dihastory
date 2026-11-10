@@ -230,8 +230,6 @@ body {
     display: block;
     image-rendering: auto;
     image-rendering: -webkit-optimize-contrast;
-    transform: translateZ(0);
-    backface-visibility: hidden;
 }
 
 /* Lightbox Image Container */
@@ -241,10 +239,8 @@ body {
     align-items: center;
     justify-content: center;
     transform-origin: center center;
-    will-change: transform;
     touch-action: none;
     cursor: zoom-in;
-    transition: transform 0.08s ease-out;
 }
 
 #lightboxImage.lightbox-dragging {
