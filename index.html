@@ -42,7 +42,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS File -->
-    <link rel="stylesheet" href="css/style.css?v=20261110_07">
+    <link rel="stylesheet" href="css/style.css?v=20261110_08">
 </head>
 
 <body class="bg-zinc-50 text-zinc-900 font-sans min-h-screen flex flex-col antialiased">
@@ -495,10 +495,10 @@
 
     <!-- SHARED GLOBAL LIGHTBOX MODAL (TRÌNH XEM ẢNH DÙNG CHUNG CHO MỌI TRANG) -->
     <div id="lightboxModal"
-        class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-md flex flex-col justify-between select-none">
+        class="fixed inset-0 z-50 hidden bg-black select-none overflow-hidden">
         <!-- Top Bar -->
         <div
-            class="flex items-center justify-between px-4 sm:px-6 py-3.5 bg-gradient-to-b from-black/80 to-transparent text-white z-20">
+            class="absolute top-0 left-0 right-0 flex items-center justify-between px-4 sm:px-6 py-3.5 bg-gradient-to-b from-black/80 to-transparent text-white z-30 pointer-events-auto">
             <div class="flex items-center gap-3">
                 <span id="lightboxCode"
                     class="font-mono font-bold text-sm bg-white/15 px-3 py-1 rounded-full">IMG_1001</span>
@@ -539,16 +539,16 @@
             </div>
         </div>
 
-        <!-- Center Image & Prev/Next Arrows -->
+        <!-- Center Image Stage (Toàn màn hình như Google Drive viewer) -->
         <div id="lightboxStage"
-            class="relative flex-1 flex items-center justify-center overflow-hidden px-4 sm:px-16 select-none">
+            class="absolute inset-0 flex items-center justify-center overflow-hidden select-none">
             <button type="button" onclick="App.prevLightboxPhoto()"
-                class="absolute left-3 sm:left-6 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-white hover:text-black text-white border border-white/20 flex items-center justify-center transition">
+                class="absolute left-3 sm:left-6 z-30 w-11 h-11 rounded-full bg-black/60 hover:bg-white hover:text-black text-white border border-white/20 flex items-center justify-center transition">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
 
             <!-- Khung bao ảnh & Watermark lặp lại toàn màn hình -->
-            <div id="lightboxImageContainer" class="relative inline-flex items-center justify-center max-h-[82vh] max-w-full">
+            <div id="lightboxImageContainer" class="relative inline-flex items-center justify-center max-h-screen max-w-screen">
                 <!-- Spinner hiệu ứng loading mượt mà trong lúc tải ảnh phân giải cao -->
                 <div id="lightboxSpinner" class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-xs rounded z-10 transition-opacity duration-300 pointer-events-none hidden">
                     <div class="flex flex-col items-center gap-2 text-white/90">
@@ -557,19 +557,19 @@
                     </div>
                 </div>
                 <img id="lightboxImage" src="" alt="Lightbox Preview" referrerpolicy="no-referrer" draggable="false"
-                    class="max-h-[82vh] max-w-full object-contain rounded shadow-2xl pointer-events-auto transition-opacity duration-300">
-                <div id="lightboxWatermarkOverlay" class="watermark-pattern-overlay rounded hidden"></div>
+                    class="max-h-screen max-w-screen object-contain pointer-events-auto transition-opacity duration-300">
+                <div id="lightboxWatermarkOverlay" class="watermark-pattern-overlay hidden"></div>
             </div>
 
             <button type="button" onclick="App.nextLightboxPhoto()"
-                class="absolute right-3 sm:right-6 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-white hover:text-black text-white border border-white/20 flex items-center justify-center transition">
+                class="absolute right-3 sm:right-6 z-30 w-11 h-11 rounded-full bg-black/60 hover:bg-white hover:text-black text-white border border-white/20 flex items-center justify-center transition">
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
         </div>
 
         <!-- Bottom Proofing Bar -->
         <div
-            class="px-4 sm:px-6 py-4 bg-gradient-to-t from-black/90 to-transparent text-white z-20 flex flex-col sm:flex-row items-center justify-between gap-3">
+            class="absolute bottom-0 left-0 right-0 px-4 sm:px-6 py-4 bg-gradient-to-t from-black/90 to-transparent text-white z-30 flex flex-col sm:flex-row items-center justify-between gap-3 pointer-events-auto">
             <div id="lightboxNotePreview"
                 class="hidden text-xs bg-amber-500/20 border border-amber-400/40 text-amber-200 px-3.5 py-1.5 rounded-full">
             </div>
@@ -595,9 +595,9 @@
     <script src="js/firebase-db.js?v=20261108_25"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261110_13"></script>
-    <script src="js/admin.js?v=20261110_13"></script>
-    <script src="js/app.js?v=20261110_13"></script>
+    <script src="js/auth.js?v=20261110_14"></script>
+    <script src="js/admin.js?v=20261110_14"></script>
+    <script src="js/app.js?v=20261110_14"></script>
 </body>
 
 </html>

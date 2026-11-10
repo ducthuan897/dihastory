@@ -1526,7 +1526,7 @@ const App = (function () {
         if (!img || !stage) return;
 
         // Nếu container đang có kích thước layout tự nhiên
-        if (container && container.offsetWidth && container.offsetHeight && !container.classList.contains('lb-zoomed-mode')) {
+        if (container && container.offsetWidth && container.offsetHeight && container.style.width === '') {
             _lbFitWidth = container.offsetWidth;
             _lbFitHeight = container.offsetHeight;
             return;
@@ -1535,8 +1535,8 @@ const App = (function () {
         // Tính theo tỷ lệ naturalWidth / naturalHeight
         const nw = img.naturalWidth || 1920;
         const nh = img.naturalHeight || 1080;
-        const maxStageW = (stage.clientWidth || window.innerWidth) - (window.innerWidth < 640 ? 32 : 128);
-        const maxStageH = (stage.clientHeight || window.innerHeight) * 0.82;
+        const maxStageW = (stage.clientWidth || window.innerWidth);
+        const maxStageH = (stage.clientHeight || window.innerHeight);
 
         const imgRatio = nw / nh;
         const stageRatio = maxStageW / maxStageH;
