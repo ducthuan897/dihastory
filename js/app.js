@@ -67,6 +67,15 @@ const App = (function () {
         return url;
     }
 
+    // Helper: Watermark chỉ hiển thị trên Trang chỉ xem và Trang chọn ảnh; nếu Quản trị viên đã đăng nhập thì tự động tắt watermark
+    function shouldShowWatermark(album) {
+        if (!album || !album.watermarkEnabled) return false;
+        const isAdmin = (typeof AuthModule !== 'undefined' && typeof AuthModule.isLoggedIn === 'function' && AuthModule.isLoggedIn());
+        if (isAdmin) return false;
+        // Chỉ hiện ở trang chỉ xem và trang chọn ảnh (view album)
+        return currentView === 'album';
+    }
+
     async function loadPageContent(pageName) {
         if (pageHtmlCache[pageName]) {
             return pageHtmlCache[pageName];
@@ -116,6 +125,8 @@ const App = (function () {
     function init() {
         AuthModule.checkAuthUI();
         setupKeyboardShortcuts();
+        setupLightboxZoom();
+        _lbZoomSetupDone = true;
         handleUrlRouting();
 
         window.addEventListener('popstate', (e) => {
@@ -435,10 +446,6 @@ const App = (function () {
                 window.history.pushState({ view: 'album', albumId: currentAlbumId, isClientMode }, '', url);
             }
             renderPublicAlbum();
-            if (!_lbZoomSetupDone) {
-                setupLightboxZoom();
-                _lbZoomSetupDone = true;
-            }
             if (isClientMode) {
                 maybeShowClientReminderModal();
             }
@@ -1017,7 +1024,7 @@ const App = (function () {
                         referrerpolicy="no-referrer"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     >
-                    ${album && album.watermarkEnabled ? '<div class="watermark-pattern-overlay rounded"></div>' : ''}
+                    ${shouldShowWatermark(album) ? '<div class="watermark-pattern-overlay rounded"></div>' : ''}
                     <div class="absolute inset-0 bg-black/15 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-[10px] font-mono text-white">
                         ${photo.code || 'IMG'}
@@ -1146,16 +1153,8 @@ const App = (function () {
         if (anchor) anchor.scrollIntoView({ behavior: 'smooth' });
     }
 
-    async function openLightbox(index) {
+    function openLightbox(index) {
         if (!currentFilteredPhotos.length || index < 0 || index >= currentFilteredPhotos.length) return;
-        // Đảm bảo DOM trang album (chứa lightboxModal) đã được nạp kể cả khi gọi từ trang quản trị
-        if (!document.getElementById('lightboxModal')) {
-            await ensurePageMounted('album');
-        }
-        if (!_lbZoomSetupDone) {
-            setupLightboxZoom();
-            _lbZoomSetupDone = true;
-        }
         currentLightboxIndex = index;
         updateLightboxContent();
         const modal = document.getElementById('lightboxModal');
@@ -1163,10 +1162,10 @@ const App = (function () {
         resetLightboxTransform();
     }
 
-    async function openLightboxWithPhotos(photos, index, albumId) {
+    function openLightboxWithPhotos(photos, index, albumId) {
         if (albumId) currentAlbumId = albumId;
         currentFilteredPhotos = photos || [];
-        await openLightbox(index);
+        openLightbox(index);
     }
 
     function closeLightbox() {
@@ -1251,7 +1250,7 @@ const App = (function () {
 
         const watermarkOverlay = document.getElementById('lightboxWatermarkOverlay');
         if (watermarkOverlay) {
-            if (album && album.watermarkEnabled) {
+            if (shouldShowWatermark(album)) {
                 watermarkOverlay.classList.remove('hidden');
             } else {
                 watermarkOverlay.classList.add('hidden');

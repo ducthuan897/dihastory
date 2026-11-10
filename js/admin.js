@@ -3400,7 +3400,7 @@ function testRun() {
                         loading="lazy"
                         class="w-full h-72 sm:h-80 object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
                     >
-                    ${album && album.watermarkEnabled ? '<div class="watermark-pattern-overlay rounded-xl"></div>' : ''}
+                    <!-- Watermark chỉ hiện ở trang chỉ xem/chọn ảnh cho khách; trong trang quản trị luôn tắt -->
 
                     <!-- Top-left: Star Badge & Cover Badge -->
                     <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10" onclick="event.stopPropagation()">
