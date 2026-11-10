@@ -1413,22 +1413,12 @@ const App = (function () {
         // Scroll wheel zoom (trên stage)
         stage.addEventListener('wheel', (e) => {
             e.preventDefault();
-            if (!_lbFitWidth || !_lbFitHeight) {
-                recordLightboxFitDimensions();
+            // Hệ số phóng to/thu nhỏ mỗi nấc cuộn chuột
+            const factor = e.deltaY < 0 ? 1.25 : 0.8;
+            _lbScale = Math.min(LB_MAX_SCALE, Math.max(LB_MIN_SCALE, _lbScale * factor));
+            if (_lbScale <= 1.05) {
+                _lbScale = 1;
             }
-            // Hỗ trợ cả chuột thông thường lẫn trackpad: tính toán tỉ lệ mượt mà theo deltaY
-            let zoomFactor = 1.15;
-            if (e.deltaY < 0) {
-                // Cuộn lên phóng to
-                zoomFactor = Math.min(1.4, 1 + Math.abs(e.deltaY) * 0.0025);
-                _lbScale = Math.min(LB_MAX_SCALE, _lbScale * zoomFactor);
-            } else {
-                // Cuộn xuống thu nhỏ
-                zoomFactor = Math.max(0.7, 1 - Math.abs(e.deltaY) * 0.0025);
-                _lbScale = Math.max(LB_MIN_SCALE, _lbScale * zoomFactor);
-            }
-            // Nếu thu nhỏ về gần 1 thì trả hẳn về 1
-            if (_lbScale < 1.05) _lbScale = 1;
             applyLightboxTransform();
         }, { passive: false });
 
@@ -1440,6 +1430,7 @@ const App = (function () {
                 _lbDragStartY = e.clientY;
                 _lbPanStartX = _lbPanX;
                 _lbPanStartY = _lbPanY;
+                container.style.transition = 'none';
                 e.preventDefault();
             }
         });
@@ -1453,7 +1444,10 @@ const App = (function () {
         });
 
         window.addEventListener('mouseup', () => {
-            _lbDragging = false;
+            if (_lbDragging) {
+                _lbDragging = false;
+                container.style.transition = 'transform 0.08s ease-out';
+            }
         });
 
         // Double-click để toggle zoom
@@ -1565,12 +1559,15 @@ const App = (function () {
         if (!stage || !container) return;
 
         const stageRect = stage.getBoundingClientRect();
-        const baseWidth = container.offsetWidth || _lbFitWidth || 1;
-        const baseHeight = container.offsetHeight || _lbFitHeight || 1;
+        const baseWidth = container.offsetWidth || 1;
+        const baseHeight = container.offsetHeight || 1;
 
-        // Giới hạn pan: không để mép ảnh rời xa khỏi khung nhìn stage
-        const maxPanX = Math.max(0, (baseWidth - stageRect.width) / 2) + stageRect.width * 0.2;
-        const maxPanY = Math.max(0, (baseHeight - stageRect.height) / 2) + stageRect.height * 0.2;
+        const scaledW = baseWidth * _lbScale;
+        const scaledH = baseHeight * _lbScale;
+
+        // Giới hạn pan: cho phép kéo tự do khi ảnh to hơn khung hình
+        const maxPanX = Math.max(0, (scaledW - stageRect.width) / 2) + 200;
+        const maxPanY = Math.max(0, (scaledH - stageRect.height) / 2) + 200;
 
         _lbPanX = Math.max(-maxPanX, Math.min(maxPanX, _lbPanX));
         _lbPanY = Math.max(-maxPanY, Math.min(maxPanY, _lbPanY));
@@ -1582,30 +1579,13 @@ const App = (function () {
         if (!container || !img) return;
 
         if (_lbScale > 1) {
-            if (!_lbFitWidth || !_lbFitHeight) {
-                recordLightboxFitDimensions();
-            }
-            container.classList.add('lb-zoomed-mode');
-
-            // Render theo kích thước thực tế trực tiếp lên thẻ DOM để trình duyệt decode đúng điểm ảnh gốc
-            const targetW = Math.round((_lbFitWidth || container.offsetWidth) * _lbScale);
-            const targetH = Math.round((_lbFitHeight || container.offsetHeight) * _lbScale);
-
-            container.style.width = `${targetW}px`;
-            container.style.height = `${targetH}px`;
-            img.style.width = `${targetW}px`;
-            img.style.height = `${targetH}px`;
-
             clampLightboxPan();
-            container.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px)`;
+            container.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px) scale(${_lbScale})`;
             container.style.cursor = 'grab';
             img.style.cursor = 'grab';
         } else {
-            container.classList.remove('lb-zoomed-mode');
-            container.style.width = '';
-            container.style.height = '';
-            img.style.width = '';
-            img.style.height = '';
+            _lbPanX = 0;
+            _lbPanY = 0;
             container.style.transform = 'none';
             container.style.cursor = 'zoom-in';
             img.style.cursor = 'zoom-in';

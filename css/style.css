@@ -241,18 +241,10 @@ body {
     align-items: center;
     justify-content: center;
     transform-origin: center center;
-    will-change: transform, width, height;
+    will-change: transform;
     touch-action: none;
     cursor: zoom-in;
-}
-
-/* Khi đang phóng to (100% pixel thực tế hoặc zoom), loại bỏ hoàn toàn các ràng buộc kích thước để trình duyệt render trực tiếp theo kích thước pixel thực tế */
-#lightboxImageContainer.lb-zoomed-mode,
-#lightboxImageContainer.lb-zoomed-mode #lightboxImage {
-    max-height: none !important;
-    max-width: none !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
+    transition: transform 0.08s ease-out;
 }
 
 #lightboxImage.lightbox-dragging {
