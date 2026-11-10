@@ -45,3 +45,8 @@ Các quy tắc bắt buộc phải luôn tuân thủ trong toàn bộ quá trìn
    - Nếu khách muốn yêu cầu chỉnh sửa thêm, khách nhập ghi chú vào bức ảnh đó.
    - Khi khách lưu hoặc gửi ghi chú, hệ thống tự động đồng bộ và hiển thị thông báo ghi chú của khách trên Trang Quản Trị của Studio (thông qua badge số lượng "Có ghi chú", danh sách thông báo và cập nhật tức thì).
    - Xóa bỏ nút "Đặt làm ảnh bìa" trong Lightbox của Trang Chọn Ảnh.
+
+10. **Xử lý trực tiếp, dứt điểm ngay lập tức (No Background Waiting)**:
+   - Mọi yêu cầu của người dùng phải được tiếp nhận, xử lý đồng bộ và hoàn thành dứt điểm ngay trong lượt phản hồi hiện tại.
+   - Không đẩy tác vụ vào chế độ chạy nền (background task) kéo dài hoặc bắt người dùng phải chờ đợi tin nhắn phản hồi sau.
+   - Đảm bảo thực thi nhanh chóng, trả lời ngay kết quả sau khi hoàn tất.
