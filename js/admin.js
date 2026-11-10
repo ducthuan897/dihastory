@@ -3027,7 +3027,10 @@ function testRun() {
     }
 
     // Opens the auxiliary customization modal when clicking "Tùy chỉnh album" / "Cập nhật album" on the Manage Page
-    function openCustomAlbumModal(initialTab = 'settings') {
+    async function openCustomAlbumModal(initialTab = 'settings') {
+        if (typeof App !== 'undefined' && typeof App.ensurePageMounted === 'function') {
+            await App.ensurePageMounted('admin');
+        }
         activeSelectorPersonFilter = 'ALL';
         populateSelectedAlbumEditor();
         renderModalCoverPhotoPicker();

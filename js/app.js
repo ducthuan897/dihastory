@@ -464,6 +464,8 @@ const App = (function () {
                 AuthModule.openLoginModal();
                 return;
             }
+            // Đảm bảo các modal quản trị (Tùy chỉnh album, Tạo album) trong pages/admin.html đã được tải vào DOM
+            await ensurePageMounted('admin');
             currentView = 'manage-album';
             if (homeView) homeView.classList.add('hidden');
             if (publicView) publicView.classList.add('hidden');
@@ -2283,6 +2285,7 @@ const App = (function () {
         getCurrentAlbumId,
         getCurrentView,
         showToast,
+        ensurePageMounted,
         zoomInLightbox,
         zoomOutLightbox,
         resetLightboxTransform
