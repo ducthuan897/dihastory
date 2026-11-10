@@ -1535,8 +1535,8 @@ const App = (function () {
         // Tính theo tỷ lệ naturalWidth / naturalHeight
         const nw = img.naturalWidth || 1920;
         const nh = img.naturalHeight || 1080;
-        const maxStageW = (stage.clientWidth || window.innerWidth);
-        const maxStageH = (stage.clientHeight || window.innerHeight);
+        const maxStageW = (stage.clientWidth || window.innerWidth) - (window.innerWidth < 640 ? 32 : 128);
+        const maxStageH = (stage.clientHeight || window.innerHeight) * 0.82;
 
         const imgRatio = nw / nh;
         const stageRatio = maxStageW / maxStageH;
