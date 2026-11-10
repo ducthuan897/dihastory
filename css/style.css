@@ -230,21 +230,29 @@ body {
     display: block;
     image-rendering: auto;
     image-rendering: -webkit-optimize-contrast;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
-/* Khi đang phóng to (100% pixel thực tế hoặc zoom), loại bỏ giới hạn max-h/max-w để trình duyệt bung trọn vẹn số điểm ảnh thực tế thay vì phóng to một bitmap đã bị thu nhỏ */
+/* Lightbox Image Container */
+#lightboxImageContainer {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center center;
+    will-change: transform, width, height;
+    touch-action: none;
+    cursor: zoom-in;
+}
+
+/* Khi đang phóng to (100% pixel thực tế hoặc zoom), loại bỏ hoàn toàn các ràng buộc kích thước để trình duyệt render trực tiếp theo kích thước pixel thực tế */
 #lightboxImageContainer.lb-zoomed-mode,
 #lightboxImageContainer.lb-zoomed-mode #lightboxImage {
     max-height: none !important;
     max-width: none !important;
-}
-
-/* Container bọc ảnh + watermark — transform áp lên đây để watermark bám theo ảnh khi zoom */
-#lightboxImageContainer {
-    transform-origin: center center;
-    will-change: transform;
-    touch-action: none;
-    cursor: zoom-in;
+    min-width: 0 !important;
+    min-height: 0 !important;
 }
 
 #lightboxImage.lightbox-dragging {
