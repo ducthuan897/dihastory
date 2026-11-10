@@ -6,6 +6,7 @@ const AuthModule = (function () {
     const STORAGE_KEY_CURRENT_USER = "site_admin_current_user";
     const STORAGE_KEY_PASSWORD = "site_admin_custom_password";
     const STORAGE_KEY_USERS = "site_admin_users_list_v1";
+    const STORAGE_KEY_REMEMBER = "site_admin_remembered_credentials_v1";
     const DEFAULT_PASS = "123456";
 
     // Chuỗi salt bí mật để băm mật khẩu bảo mật (SHA-256 + Salt)
@@ -275,6 +276,23 @@ const AuthModule = (function () {
 
                 localStorage.setItem(STORAGE_KEY_AUTH, 'true');
                 localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(matched));
+
+                // Xử lý lưu mật khẩu nếu người dùng tích chọn
+                const rememberCheckbox = document.getElementById('rememberPasswordCheckbox');
+                if (rememberCheckbox && rememberCheckbox.checked) {
+                    try {
+                        const creds = {
+                            username: matched.username,
+                            password: inputPass
+                        };
+                        localStorage.setItem(STORAGE_KEY_REMEMBER, JSON.stringify(creds));
+                    } catch (e) {}
+                } else {
+                    try {
+                        localStorage.removeItem(STORAGE_KEY_REMEMBER);
+                    } catch (e) {}
+                }
+
                 alertBox.classList.add('hidden');
                 closeLoginModal();
                 checkAuthUI();
@@ -295,16 +313,74 @@ const AuthModule = (function () {
         App.showToast('Đã đăng xuất tài khoản Quản trị.');
     }
 
+    function togglePasswordVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (!input) return;
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            if (icon) {
+                icon.className = 'fa-regular fa-eye-slash';
+            }
+        } else {
+            input.type = 'password';
+            if (icon) {
+                icon.className = 'fa-regular fa-eye';
+            }
+        }
+    }
+
     function openLoginModal() {
+        const userInput = document.getElementById('usernameInput');
         const passInput = document.getElementById('passwordInput');
-        if (passInput) passInput.value = '';
+        const rememberCheckbox = document.getElementById('rememberPasswordCheckbox');
+        const icon = document.getElementById('togglePasswordIcon');
+
+        if (passInput) {
+            passInput.type = 'password';
+            passInput.value = '';
+        }
+        if (icon) icon.className = 'fa-regular fa-eye';
+
+        // Khôi phục thông tin đăng nhập đã lưu (nếu có)
+        try {
+            const rememberedRaw = localStorage.getItem(STORAGE_KEY_REMEMBER);
+            if (rememberedRaw) {
+                const creds = JSON.parse(rememberedRaw);
+                if (creds && creds.username && userInput) {
+                    userInput.value = creds.username;
+                }
+                if (creds && creds.password && passInput) {
+                    passInput.value = creds.password;
+                }
+                if (rememberCheckbox) {
+                    rememberCheckbox.checked = true;
+                }
+            } else if (rememberCheckbox) {
+                rememberCheckbox.checked = false;
+            }
+        } catch (e) {}
+
         document.getElementById('loginModal').classList.remove('hidden');
-        document.getElementById('usernameInput').focus();
+        if (userInput && !userInput.value) {
+            userInput.focus();
+        } else if (passInput) {
+            passInput.focus();
+        }
     }
 
     function closeLoginModal() {
         const passInput = document.getElementById('passwordInput');
-        if (passInput) passInput.value = '';
+        const icon = document.getElementById('togglePasswordIcon');
+        if (passInput) {
+            passInput.type = 'password';
+            // Nếu không có lưu mật khẩu thì xóa trắng
+            if (!localStorage.getItem(STORAGE_KEY_REMEMBER)) {
+                passInput.value = '';
+            }
+        }
+        if (icon) icon.className = 'fa-regular fa-eye';
         document.getElementById('loginModal').classList.add('hidden');
         document.getElementById('loginAlert').classList.add('hidden');
     }
@@ -822,6 +898,7 @@ const AuthModule = (function () {
         logout,
         openLoginModal,
         closeLoginModal,
+        togglePasswordVisibility,
         openChangePasswordModal,
         closeChangePasswordModal,
         handleChangePasswordSubmit,
