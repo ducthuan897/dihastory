@@ -864,16 +864,11 @@ const App = (function () {
                 if (lockBanner) lockBanner.classList.remove('hidden');
                 if (lockReasonText) {
                     lockReasonText.innerText = lockedBySubmit
-                        ? "Phần chọn ảnh đã được hoàn tất và tự động khoá. Khách hàng vẫn xem và tải ảnh về máy bình thường."
+                        ? "Đã hoàn tất chọn ảnh. Khách hàng vẫn xem và tải ảnh (có bao gồm hình chìm của studio) bình thường. Để tải ảnh không có hình chìm hoặc chọn thêm ảnh. Vui lòng liên hệ studio"
                         : "Thời hạn chọn ảnh của Album này đã kết thúc. Phần chọn ảnh đã tự động khoá.";
                 }
                 if (unlockBtnAdmin) {
-                    const isAdmin = (typeof AuthModule !== 'undefined' && AuthModule.isLoggedIn());
-                    if (isAdmin) {
-                        unlockBtnAdmin.classList.remove('hidden');
-                    } else {
-                        unlockBtnAdmin.classList.add('hidden');
-                    }
+                    unlockBtnAdmin.classList.add('hidden');
                 }
             } else {
                 if (lockBanner) lockBanner.classList.add('hidden');
