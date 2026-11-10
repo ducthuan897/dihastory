@@ -232,11 +232,16 @@ const App = (function () {
         const token = (typeof AdminModule !== 'undefined' && typeof AdminModule.computeAlbumClientToken === 'function')
             ? AdminModule.computeAlbumClientToken(albumId)
             : '';
-        const tokenQuery = token ? `?k=${token}` : '?mode=client';
+        const tokenQuery = token ? `?k=${token}` : '';
         if (photoCodeParam) {
-            return `${base}/${encodeURIComponent(albumId)}/${encodeURIComponent(photoCodeParam)}${tokenQuery}`;
+            // Định dạng chuẩn theo yêu cầu: /<albumId>?k=<token>/<tên-ảnh.định-dạng>
+            // hoặc /<albumId>/<tên-ảnh.định-dạng>?k=<token>
+            if (token) {
+                return `${base}/${encodeURIComponent(albumId)}?k=${token}/${encodeURIComponent(photoCodeParam)}`;
+            }
+            return `${base}/${encodeURIComponent(albumId)}/${encodeURIComponent(photoCodeParam)}`;
         }
-        return `${base}/${encodeURIComponent(albumId)}${tokenQuery}`;
+        return token ? `${base}/${encodeURIComponent(albumId)}?k=${token}` : `${base}/${encodeURIComponent(albumId)}`;
     }
 
     function handleUrlRouting(skipPush) {
@@ -245,8 +250,17 @@ const App = (function () {
         let albumPathParam = params.get('album_path');
         const viewParam = params.get('view');
         const modeParam = params.get('mode');
-        const clientKeyParam = params.get('k') || params.get('key') || params.get('token');
+        let clientKeyParam = params.get('k') || params.get('key') || params.get('token');
         let photoCodeParam = params.get('photo');
+
+        // Hỗ trợ định dạng URL đặc biệt: ?k=5bf2f7fad7/DSC01150.jpg
+        if (clientKeyParam && clientKeyParam.includes('/')) {
+            const parts = clientKeyParam.split('/');
+            clientKeyParam = parts[0];
+            if (!photoCodeParam && parts[1]) {
+                photoCodeParam = decodeURIComponent(parts.slice(1).join('/'));
+            }
+        }
 
         // Phân biệt chế độ xem: Khách chọn ảnh qua mã bí mật token (?k=...) hoặc mode=client
         // Nếu có mã bí mật hợp lệ (?k=...) thì tự động mở chế độ Khách Chọn Ảnh (Client Mode)
@@ -294,7 +308,17 @@ const App = (function () {
                     showView('album', true);
                     const base = getAppBasePath();
                     if (photoCodeParam) {
-                        const targetPhotoIdx = found.photos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
+                        const targetPhotoIdx = found.photos.findIndex(p => {
+                            const pTitle = p.title || '';
+                            const pCode = p.code || '';
+                            return p.id === photoCodeParam ||
+                                   pCode === photoCodeParam ||
+                                   pTitle === photoCodeParam ||
+                                   pCode.toLowerCase() === photoCodeParam.toLowerCase() ||
+                                   pTitle.toLowerCase() === photoCodeParam.toLowerCase() ||
+                                   photoCodeParam.toLowerCase().startsWith(pCode.toLowerCase()) ||
+                                   (photoCodeParam.includes('.') && pCode.toLowerCase() === photoCodeParam.split('.')[0].toLowerCase());
+                        });
                         if (targetPhotoIdx >= 0) {
                             setTimeout(() => openLightbox(targetPhotoIdx), 150);
                         }
@@ -355,7 +379,17 @@ const App = (function () {
             }
             showView('album', skipPush);
             if (photoCodeParam && found) {
-                const targetPhotoIdx = found.photos.findIndex(p => p.code === photoCodeParam || p.id === photoCodeParam);
+                const targetPhotoIdx = found.photos.findIndex(p => {
+                    const pTitle = p.title || '';
+                    const pCode = p.code || '';
+                    return p.id === photoCodeParam ||
+                           pCode === photoCodeParam ||
+                           pTitle === photoCodeParam ||
+                           pCode.toLowerCase() === photoCodeParam.toLowerCase() ||
+                           pTitle.toLowerCase() === photoCodeParam.toLowerCase() ||
+                           photoCodeParam.toLowerCase().startsWith(pCode.toLowerCase()) ||
+                           (photoCodeParam.includes('.') && pCode.toLowerCase() === photoCodeParam.split('.')[0].toLowerCase());
+                });
                 if (targetPhotoIdx >= 0) {
                     setTimeout(() => openLightbox(targetPhotoIdx), 150);
                 }
@@ -1213,6 +1247,20 @@ const App = (function () {
         }
         const modal = document.getElementById('lightboxModal');
         if (modal) modal.classList.add('hidden');
+
+        // Khôi phục URL về trang album khi đóng Lightbox
+        try {
+            if (currentAlbumId) {
+                const albumUrl = isClientMode
+                    ? buildClientAlbumUrl(currentAlbumId)
+                    : `${getAppBasePath()}/${encodeURIComponent(currentAlbumId)}`;
+                window.history.replaceState({
+                    view: 'album',
+                    albumId: currentAlbumId,
+                    isClientMode
+                }, '', albumUrl);
+            }
+        } catch (e) {}
     }
 
     function prevLightboxPhoto() {
@@ -1325,6 +1373,21 @@ const App = (function () {
                 watermarkOverlay.classList.add('hidden');
             }
         }
+
+        // Cập nhật URL trình duyệt theo bức ảnh đang mở (Deep Linking)
+        // Khi F5 sẽ nạp lại đúng bức ảnh này
+        try {
+            const photoFileName = photo.title || (photo.code ? `${photo.code}.jpg` : 'photo.jpg');
+            const newUrl = isClientMode
+                ? buildClientAlbumUrl(currentAlbumId, photoFileName)
+                : `${getAppBasePath()}/${encodeURIComponent(currentAlbumId)}/${encodeURIComponent(photoFileName)}`;
+            window.history.replaceState({
+                view: 'album',
+                albumId: currentAlbumId,
+                isClientMode,
+                photoCode: photoFileName
+            }, '', newUrl);
+        } catch (e) {}
     }
 
     function toggleLightboxCurrentHeart() {
