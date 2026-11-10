@@ -521,6 +521,12 @@
                     <i class="fa-solid fa-image"></i>
                     <span>Đặt làm ảnh bìa</span>
                 </button>
+                <button id="lightboxZoom100Btn" type="button" onclick="App.toggleLightboxZoom100()"
+                    class="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-medium transition flex items-center gap-1.5"
+                    title="Phóng to 100% chi tiết ảnh thực tế">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    <span id="lightboxZoom100Label" class="hidden sm:inline">100%</span>
+                </button>
                 <button id="lightboxSlideshowBtn" type="button" onclick="App.toggleSlideshow()"
                     class="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-play"></i>
@@ -548,9 +554,16 @@
             </button>
 
             <!-- Khung bao ảnh & Watermark lặp lại toàn màn hình -->
-            <div id="lightboxImageContainer" class="relative inline-flex items-center justify-center max-h-[75vh] max-w-full">
+            <div id="lightboxImageContainer" class="relative inline-flex items-center justify-center max-h-[82vh] max-w-full">
+                <!-- Spinner hiệu ứng loading mượt mà trong lúc tải ảnh phân giải cao -->
+                <div id="lightboxSpinner" class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-xs rounded z-10 transition-opacity duration-300 pointer-events-none hidden">
+                    <div class="flex flex-col items-center gap-2 text-white/90">
+                        <i class="fa-solid fa-circle-notch fa-spin text-2xl text-amber-400"></i>
+                        <span class="text-[11px] font-mono tracking-wide">Đang nạp ảnh sắc nét...</span>
+                    </div>
+                </div>
                 <img id="lightboxImage" src="" alt="Lightbox Preview" referrerpolicy="no-referrer" draggable="false"
-                    class="max-h-[75vh] max-w-full object-contain rounded shadow-2xl pointer-events-auto">
+                    class="max-h-[82vh] max-w-full object-contain rounded shadow-2xl pointer-events-auto transition-opacity duration-300">
                 <div id="lightboxWatermarkOverlay" class="watermark-pattern-overlay rounded hidden"></div>
             </div>
 
@@ -588,9 +601,9 @@
     <script src="js/firebase-db.js?v=20261108_25"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-    <script src="js/auth.js?v=20261110_01"></script>
-    <script src="js/admin.js?v=20261110_01"></script>
-    <script src="js/app.js?v=20261110_01"></script>
+    <script src="js/auth.js?v=20261110_02"></script>
+    <script src="js/admin.js?v=20261110_02"></script>
+    <script src="js/app.js?v=20261110_02"></script>
 </body>
 
 </html>

@@ -88,6 +88,20 @@ const App = (function () {
         return url;
     }
 
+    // Helper: Lấy ảnh độ nét cao nhanh chóng cho màn hình lớn (2560px 2K) để hiển thị tức thì không bị chờ
+    function getLightboxDisplayUrl(url) {
+        if (!url || typeof url !== 'string') return url || '';
+        if (url.includes('drive.google.com/thumbnail')) {
+            return getOptimizedThumbnailUrl(url, 'w2560');
+        }
+        if (url.includes('googleusercontent.com')) {
+            if (/=[sw]\d+/i.test(url)) {
+                return url.replace(/=[sw]\d+/i, '=w2560');
+            }
+        }
+        return url;
+    }
+
     // Helper: Watermark chỉ hiển thị trên Trang chỉ xem và Trang chọn ảnh; nếu Quản trị viên đã đăng nhập thì tự động tắt watermark
     function shouldShowWatermark(album) {
         if (!album || !album.watermarkEnabled) return false;
@@ -1217,6 +1231,7 @@ const App = (function () {
         if (!photo) return;
 
         const img = document.getElementById('lightboxImage');
+        const spinner = document.getElementById('lightboxSpinner');
         const codeEl = document.getElementById('lightboxCode');
         const counterEl = document.getElementById('lightboxCounter');
         const titleEl = document.getElementById('lightboxTitle');
@@ -1226,7 +1241,34 @@ const App = (function () {
         const proofingControls = document.getElementById('lightboxProofingControls');
         const notePreview = document.getElementById('lightboxNotePreview');
 
-        if (img) img.src = getFullResPhotoUrl(photo.url);
+        // Hiển thị ảnh tức thì với độ phân giải cao 2560px (2K) sắc nét, không bị chờ đen màn hình
+        const displayUrl = getLightboxDisplayUrl(photo.url);
+        if (img) {
+            // Hiện spinner nạp mượt nếu ảnh chưa nạp xong
+            if (spinner) spinner.classList.remove('hidden');
+            img.style.opacity = '0.5';
+
+            img.onload = () => {
+                if (spinner) spinner.classList.add('hidden');
+                img.style.opacity = '1';
+            };
+            img.onerror = () => {
+                if (spinner) spinner.classList.add('hidden');
+                img.style.opacity = '1';
+                // Fallback nếu có lỗi mạng
+                if (img.src !== photo.url) img.src = photo.url;
+            };
+
+            img.src = displayUrl;
+        }
+
+        // Tự động tải ngầm bản gốc s0 vào bộ nhớ đệm
+        const fullUrl = getFullResPhotoUrl(photo.url);
+        if (fullUrl && fullUrl !== displayUrl) {
+            const preloader = new Image();
+            preloader.src = fullUrl;
+        }
+
         if (codeEl) codeEl.innerText = photo.code || photo.title || 'IMG';
         if (counterEl) counterEl.innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
         if (titleEl) titleEl.innerText = photo.location || photo.city || '';
@@ -1510,6 +1552,28 @@ const App = (function () {
     function zoomOutLightbox() {
         _lbScale = Math.max(LB_MIN_SCALE, _lbScale / 1.4);
         applyLightboxTransform();
+    }
+
+    // Phóng to 100% kích thước pixel thực tế (1:1 Zoom) để kiểm tra độ nét chi tiết
+    function toggleLightboxZoom100() {
+        const photo = currentFilteredPhotos[currentLightboxIndex];
+        const img = document.getElementById('lightboxImage');
+        const label = document.getElementById('lightboxZoom100Label');
+        if (!photo || !img) return;
+
+        if (_lbScale > 1) {
+            resetLightboxTransform();
+            if (label) label.innerText = "100%";
+        } else {
+            // Khi zoom 100%, nạp thẳng link ảnh gốc s0 để soi từng chi tiết
+            const fullUrl = getFullResPhotoUrl(photo.url);
+            if (img.src !== fullUrl) img.src = fullUrl;
+
+            _lbScale = 2.5; // Mức phóng to tương đương 100% pixel thực tế
+            applyLightboxTransform();
+            if (label) label.innerText = "Thu nhỏ";
+            showToast("Đang phóng to 100% chi tiết ảnh thực tế", "info");
+        }
     }
 
     function openPhotoNoteModal(photoId) {
@@ -1845,6 +1909,7 @@ const App = (function () {
         showToast,
         zoomInLightbox,
         zoomOutLightbox,
+        toggleLightboxZoom100,
         resetLightboxTransform
     };
 })();
