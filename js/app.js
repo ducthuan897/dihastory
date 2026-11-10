@@ -1146,8 +1146,16 @@ const App = (function () {
         if (anchor) anchor.scrollIntoView({ behavior: 'smooth' });
     }
 
-    function openLightbox(index) {
+    async function openLightbox(index) {
         if (!currentFilteredPhotos.length || index < 0 || index >= currentFilteredPhotos.length) return;
+        // Đảm bảo DOM trang album (chứa lightboxModal) đã được nạp kể cả khi gọi từ trang quản trị
+        if (!document.getElementById('lightboxModal')) {
+            await ensurePageMounted('album');
+        }
+        if (!_lbZoomSetupDone) {
+            setupLightboxZoom();
+            _lbZoomSetupDone = true;
+        }
         currentLightboxIndex = index;
         updateLightboxContent();
         const modal = document.getElementById('lightboxModal');
@@ -1155,10 +1163,10 @@ const App = (function () {
         resetLightboxTransform();
     }
 
-    function openLightboxWithPhotos(photos, index, albumId) {
+    async function openLightboxWithPhotos(photos, index, albumId) {
         if (albumId) currentAlbumId = albumId;
         currentFilteredPhotos = photos || [];
-        openLightbox(index);
+        await openLightbox(index);
     }
 
     function closeLightbox() {
