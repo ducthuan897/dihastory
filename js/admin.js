@@ -3568,11 +3568,11 @@ function testRun() {
                         }
                     </div>
 
-                    <!-- Bottom Bar: Photo Code / Location -->
+                    <!-- Bottom Bar: Photo Code / Location / Time -->
                     <div class="absolute bottom-2.5 inset-x-2.5 flex items-end justify-between gap-2 pointer-events-none">
-                        <div class="opacity-0 group-hover:opacity-100 transition bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] max-w-[85%] truncate">
+                        <div class="opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] max-w-[90%] truncate">
                             <span class="font-mono font-bold block truncate">${photo.code}</span>
-                            <span class="text-amber-300 block truncate">${photo.location ? `<i class="fa-solid fa-location-dot mr-1"></i>${photo.location} • ` : ''}${timeLabel}</span>
+                            <span class="text-amber-300 block truncate">${photo.location ? `<i class="fa-solid fa-location-dot mr-1"></i>${photo.location} • ` : ''}${timeLabel || 'Chưa có giờ chụp'}</span>
                         </div>
                     </div>
                 </div>
@@ -4864,7 +4864,22 @@ function testRun() {
 
     function formatTimeShort(isoStr) {
         if (!isoStr) return "";
-        const parts = isoStr.split('T');
+        // Nếu chuỗi có dạng YYYY-MM-DDTHH:MM hoặc YYYY/MM/DD HH:MM
+        const str = String(isoStr).trim();
+        const m = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:[T\s](\d{1,2}):(\d{2}))?/);
+        if (m) {
+            const yyyy = m[1];
+            const mm = m[2].padStart(2, '0');
+            const dd = m[3].padStart(2, '0');
+            const dStr = `${dd}/${mm}/${yyyy}`;
+            if (m[4] !== undefined && m[5] !== undefined) {
+                const hh = m[4].padStart(2, '0');
+                const min = m[5].padStart(2, '0');
+                return `${hh}:${min} • ${dStr}`;
+            }
+            return dStr;
+        }
+        const parts = str.split('T');
         const datePart = parts[0] ? parts[0].split('-').reverse().join('/') : '';
         const timePart = parts[1] ? parts[1].slice(0, 5) : '';
         return timePart ? `${timePart} • ${datePart}` : datePart;
