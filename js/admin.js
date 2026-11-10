@@ -2913,7 +2913,7 @@ function testRun() {
                                 <span>${album.isPublic ? 'Công khai' : 'Riêng tư'}</span>
                             </button>
 
-                            <!-- Nút Mở Album (2 tùy chọn: 1. Trang chỉ xem (Trang chủ) | 2. Trang chọn ảnh (Gửi khách)) -->
+                            <!-- Nút Xem Album (2 tùy chọn: 1. Chỉ xem (Trang chủ) | 2. Chọn ảnh (Gửi khách)) -->
                             <div class="relative inline-block text-left" id="openAlbumMenuWrap_${album.id}">
                                 <button
                                     type="button"
@@ -2921,7 +2921,7 @@ function testRun() {
                                     class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-xs"
                                 >
                                     <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                                    <span>Mở album</span>
+                                    <span>Xem album</span>
                                     <i class="fa-solid fa-chevron-down text-[11px] ml-0.5 opacity-80"></i>
                                 </button>
                                 <div id="openAlbumDropdown_${album.id}"
