@@ -2913,15 +2913,6 @@ function testRun() {
                                 <span>${album.isPublic ? 'Công khai' : 'Riêng tư'}</span>
                             </button>
 
-                            <button
-                                type="button"
-                                onclick="AdminModule.copyAlbumClientLink('${album.id}')"
-                                class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-xs"
-                            >
-                                <i class="fa-solid fa-link text-sm"></i>
-                                <span>Gửi khách</span>
-                            </button>
-
                             <!-- Nút Mở Album (2 tùy chọn: 1. Trang chỉ xem (Trang chủ) | 2. Trang chọn ảnh (Gửi khách)) -->
                             <div class="relative inline-block text-left" id="openAlbumMenuWrap_${album.id}">
                                 <button
@@ -2934,7 +2925,7 @@ function testRun() {
                                     <i class="fa-solid fa-chevron-down text-[11px] ml-0.5 opacity-80"></i>
                                 </button>
                                 <div id="openAlbumDropdown_${album.id}"
-                                    class="hidden absolute right-0 sm:left-0 mt-1.5 w-64 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+                                    class="hidden absolute right-0 sm:left-0 mt-1.5 w-72 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                                     <button type="button"
                                         onclick="App.openAlbumPage('${album.id}', false); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
                                         class="w-full text-left px-3.5 py-2.5 hover:bg-zinc-100 flex items-center gap-2.5 text-zinc-800 transition">
@@ -2947,17 +2938,27 @@ function testRun() {
                                         </div>
                                     </button>
                                     <div class="border-t border-zinc-100 my-1"></div>
-                                    <button type="button"
-                                        onclick="App.openAlbumPage('${album.id}', true); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
-                                        class="w-full text-left px-3.5 py-2.5 hover:bg-rose-50 flex items-center gap-2.5 text-rose-700 transition">
-                                        <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                                            <i class="fa-solid fa-heart"></i>
-                                        </div>
-                                        <div>
-                                            <span class="block font-bold text-rose-700">2. Trang chọn ảnh của khách</span>
-                                            <span class="text-[10px] text-rose-500/80 block">Giao diện link gửi khách thả tim chọn ảnh</span>
-                                        </div>
-                                    </button>
+                                    <div class="px-3.5 py-2.5 hover:bg-rose-50/70 transition flex items-center justify-between gap-2 group">
+                                        <button type="button"
+                                            onclick="App.openAlbumPage('${album.id}', true); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
+                                            class="flex items-center gap-2.5 text-left flex-1 min-w-0">
+                                            <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-heart"></i>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <span class="block font-bold text-rose-700 truncate">2. Trang chọn ảnh của khách</span>
+                                                <span class="text-[10px] text-rose-500/80 block truncate">Giao diện link gửi khách thả tim chọn ảnh</span>
+                                            </div>
+                                        </button>
+                                        <button type="button"
+                                            onclick="event.stopPropagation(); AdminModule.copyAlbumClientLink('${album.id}'); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
+                                            class="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-semibold transition flex items-center gap-1 shrink-0 shadow-2xs"
+                                            title="Sao chép link gửi cho khách"
+                                        >
+                                            <i class="fa-solid fa-link text-[10px]"></i>
+                                            <span>Gửi khách</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
