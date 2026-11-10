@@ -1413,8 +1413,13 @@ const App = (function () {
         // Scroll wheel zoom (trên stage)
         stage.addEventListener('wheel', (e) => {
             e.preventDefault();
-            const delta = e.deltaY < 0 ? 0.2 : -0.2;
-            _lbScale = Math.min(LB_MAX_SCALE, Math.max(LB_MIN_SCALE, _lbScale + delta));
+            if (!_lbFitWidth || !_lbFitHeight) {
+                recordLightboxFitDimensions();
+            }
+            const zoomFactor = e.deltaY < 0 ? 1.25 : 0.8;
+            _lbScale = Math.min(LB_MAX_SCALE, Math.max(LB_MIN_SCALE, _lbScale * zoomFactor));
+            // Nếu thu nhỏ về gần 1 thì trả hẳn về 1
+            if (_lbScale < 1.05) _lbScale = 1;
             applyLightboxTransform();
         }, { passive: false });
 
@@ -1512,15 +1517,23 @@ const App = (function () {
     function recordLightboxFitDimensions() {
         const img = document.getElementById('lightboxImage');
         const stage = document.getElementById('lightboxStage');
+        const container = document.getElementById('lightboxImageContainer');
         if (!img || !stage) return;
 
-        // Nếu ảnh chưa nạp xong naturalWidth thì bỏ qua
-        if (!img.naturalWidth || !img.naturalHeight) return;
+        // Nếu container đang có kích thước layout tự nhiên
+        if (container && container.offsetWidth && container.offsetHeight && !container.classList.contains('lb-zoomed-mode')) {
+            _lbFitWidth = container.offsetWidth;
+            _lbFitHeight = container.offsetHeight;
+            return;
+        }
 
-        const maxStageW = stage.clientWidth - (window.innerWidth < 640 ? 32 : 128);
-        const maxStageH = stage.clientHeight * 0.82;
+        // Tính theo tỷ lệ naturalWidth / naturalHeight
+        const nw = img.naturalWidth || 1920;
+        const nh = img.naturalHeight || 1080;
+        const maxStageW = (stage.clientWidth || window.innerWidth) - (window.innerWidth < 640 ? 32 : 128);
+        const maxStageH = (stage.clientHeight || window.innerHeight) * 0.82;
 
-        const imgRatio = img.naturalWidth / img.naturalHeight;
+        const imgRatio = nw / nh;
         const stageRatio = maxStageW / maxStageH;
 
         if (imgRatio > stageRatio) {
