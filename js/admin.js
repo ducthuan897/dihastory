@@ -645,19 +645,11 @@ function testRun() {
 
         container.innerHTML = accounts.map((acc, idx) => {
             const displayKey = isPrivileged ? acc.key : maskKeySecret(acc.key);
-            const isActive = !!acc.active;
             return `
-                <div class="p-3 rounded-xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
-                    isActive ? 'bg-emerald-50/60 border-emerald-300' : 'bg-white border-zinc-200'
-                }">
+                <div class="p-3 rounded-xl border border-zinc-200 bg-white transition hover:border-zinc-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-xs text-zinc-900 truncate">${acc.name}</span>
-                            ${
-                                isActive
-                                    ? `<span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold uppercase shadow-2xs">Đang kích hoạt</span>`
-                                    : `<button type="button" onclick="AdminModule.setActiveDriveAccount('${acc.id}')" class="px-2 py-0.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 text-[10px] font-medium transition" title="Đặt làm tài khoản chính">Kích hoạt</button>`
-                            }
                         </div>
                         <div class="text-[11px] font-mono text-zinc-500 truncate mt-0.5" title="${isPrivileged ? acc.key : ''}">
                             ${displayKey}

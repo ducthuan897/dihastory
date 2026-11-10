@@ -264,13 +264,14 @@
         </div>
     </div>
 
-    <!-- GOOGLE DRIVE ACCOUNTS & MULTI-ACCOUNT CONFIGURATION MODAL (HIGH Z-INDEX) -->
+    <!-- GOOGLE DRIVE ACCOUNTS & MULTI-ACCOUNT CONFIGURATION MODAL (HIGH Z-INDEX, 16:9 RATIO) -->
     <div id="driveApiKeyModal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
         <div class="fixed inset-0 bg-zinc-900/70 backdrop-blur-sm" onclick="AdminModule.closeDriveApiKeyModal()"></div>
         <div class="flex min-h-full items-center justify-center p-3 sm:p-5">
             <div
-                class="relative bg-white w-full max-w-2xl rounded-[28px] shadow-2xl p-6 sm:p-7 z-[110] space-y-5 border border-zinc-200">
-                <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
+                class="relative bg-white w-full max-w-5xl rounded-[28px] shadow-2xl p-5 sm:p-6 z-[110] flex flex-col border border-zinc-200/80 max-h-[92vh]">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between pb-3 border-b border-zinc-100 shrink-0">
                     <div class="flex items-center gap-3">
                         <div
                             class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shadow-xs">
@@ -278,123 +279,133 @@
                         </div>
                         <div>
                             <h3 class="text-base sm:text-lg font-bold text-zinc-900 leading-tight">Quản Lý Tài Khoản Google Drive</h3>
-                            <p class="text-[11px] text-zinc-500">Kết nối nhiều tài khoản để quét ảnh và trích xuất EXIF/GPS tự động</p>
+                            <p class="text-[11px] text-zinc-500">Mọi tài khoản liên kết đều tự động kích hoạt để quét ảnh và trích xuất EXIF/GPS</p>
                         </div>
                     </div>
                     <button type="button" onclick="AdminModule.closeDriveApiKeyModal()"
-                        class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center justify-center transition">
+                        class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center justify-center transition shrink-0">
                         <i class="fa-solid fa-xmark text-sm"></i>
                     </button>
                 </div>
 
-                <div id="driveApiKeyAlert" class="hidden text-xs rounded-xl p-3"></div>
+                <div id="driveApiKeyAlert" class="hidden text-xs rounded-xl p-3 my-2 shrink-0"></div>
 
-                <!-- Danh Sách Các Tài Khoản Google Drive Đã Kết Nối -->
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
-                            <i class="fa-solid fa-server text-emerald-600"></i>
-                            <span>Tài khoản Drive đã liên kết</span>
-                        </span>
-                        <span id="driveAccountsCountBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700 font-semibold">1 tài khoản</span>
-                    </div>
+                <!-- Modal Body: 2 Cột (16:9) -->
+                <div class="py-3 overflow-y-auto pr-1 flex-1">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                        <!-- CỘT TRÁI: Form Thêm / Cập nhật tài khoản & Danh sách tài khoản đã liên kết -->
+                        <div class="space-y-3.5">
+                            <!-- Form Thêm / Cập nhật Tài Khoản Drive (Chỉ Admin / Super Admin) -->
+                            <div id="driveAccountManageFormWrap" class="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-bold text-zinc-900 uppercase tracking-wide flex items-center gap-1.5">
+                                        <i class="fa-solid fa-plus-circle text-rose-600"></i>
+                                        <span id="driveAccountFormTitle">Thêm Tài Khoản Google Drive Mới</span>
+                                    </h4>
+                                    <button type="button" id="driveAccountCancelEditBtn" onclick="AdminModule.resetDriveAccountForm()"
+                                        class="hidden text-[11px] text-zinc-500 hover:text-zinc-800 underline">
+                                        Huỷ sửa
+                                    </button>
+                                </div>
 
-                    <div id="driveAccountsListContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1">
-                        <!-- Rendered dynamically by AdminModule.renderDriveAccountsList() -->
-                    </div>
-                </div>
+                                <form onsubmit="AdminModule.handleSaveDriveAccount(event)" class="space-y-3">
+                                    <input type="hidden" id="driveAccountEditId" value="">
+                                    
+                                    <div class="space-y-2.5">
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-zinc-700 mb-1">Tên / Nhãn tài khoản</label>
+                                            <input type="text" id="driveAccountNameInput" required placeholder="VD: Drive Chính, Drive Phụ, email@gmail.com..."
+                                                class="w-full bg-white px-3 py-2 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-zinc-700 mb-1">Mã kết nối (URL Google Apps Script hoặc API Key)</label>
+                                            <input type="text" id="driveAccountKeyInput" required placeholder="https://script.google.com/macros/s/.../exec"
+                                                class="w-full bg-white px-3 py-2 rounded-xl border border-zinc-300 text-xs font-mono outline-none focus:border-zinc-900 transition">
+                                        </div>
+                                    </div>
 
-                <!-- Form Thêm / Cập nhật Tài Khoản Drive (Chỉ Admin / Super Admin) -->
-                <div id="driveAccountManageFormWrap" class="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <h4 class="text-xs font-bold text-zinc-900 uppercase tracking-wide flex items-center gap-1.5">
-                            <i class="fa-solid fa-plus-circle text-rose-600"></i>
-                            <span id="driveAccountFormTitle">Thêm Tài Khoản Google Drive Mới</span>
-                        </h4>
-                        <button type="button" id="driveAccountCancelEditBtn" onclick="AdminModule.resetDriveAccountForm()"
-                            class="hidden text-[11px] text-zinc-500 hover:text-zinc-800 underline">
-                            Huỷ sửa
-                        </button>
-                    </div>
-
-                    <form onsubmit="AdminModule.handleSaveDriveAccount(event)" class="space-y-3">
-                        <input type="hidden" id="driveAccountEditId" value="">
-                        
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                            <div class="sm:col-span-1">
-                                <label class="block text-[11px] font-semibold text-zinc-700 mb-1">Tên / Nhãn tài khoản</label>
-                                <input type="text" id="driveAccountNameInput" required placeholder="VD: Drive Chính, Drive Phụ..."
-                                    class="w-full bg-white px-3 py-2 rounded-xl border border-zinc-300 text-xs outline-none focus:border-zinc-900 transition">
+                                    <div class="flex items-center justify-end gap-2.5 pt-1">
+                                        <button type="button" onclick="AdminModule.testCurrentInputDriveAccount()"
+                                            class="h-9 px-4 rounded-xl border border-zinc-300 bg-white hover:bg-zinc-100 text-zinc-700 text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-2xs">
+                                            <i class="fa-solid fa-bolt text-amber-500"></i>
+                                            <span>Kiểm tra</span>
+                                        </button>
+                                        <button type="submit" id="driveAccountSubmitBtn"
+                                            class="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-md">
+                                            <i class="fa-solid fa-plus"></i>
+                                            <span id="driveAccountSubmitLabel">Lưu Tài Khoản</span>
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-[11px] font-semibold text-zinc-700 mb-1">Mã kết nối (URL Google Apps Script hoặc API Key)</label>
-                                <input type="text" id="driveAccountKeyInput" required placeholder="https://script.google.com/macros/s/.../exec"
-                                    class="w-full bg-white px-3 py-2 rounded-xl border border-zinc-300 text-xs font-mono outline-none focus:border-zinc-900 transition">
+
+                            <!-- Danh Sách Các Tài Khoản Google Drive Đã Kết Nối -->
+                            <div class="space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fa-solid fa-server text-emerald-600"></i>
+                                        <span>Tài khoản Drive đã liên kết</span>
+                                    </span>
+                                    <span id="driveAccountsCountBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700 font-semibold">1 tài khoản</span>
+                                </div>
+
+                                <div id="driveAccountsListContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                    <!-- Rendered dynamically by AdminModule.renderDriveAccountsList() -->
+                                </div>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-end gap-2.5 pt-1">
-                            <button type="button" onclick="AdminModule.testCurrentInputDriveAccount()"
-                                class="h-9 px-4 rounded-xl border border-zinc-300 bg-white hover:bg-zinc-100 text-zinc-700 text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-2xs">
-                                <i class="fa-solid fa-bolt text-amber-500"></i>
-                                <span>Kiểm tra</span>
-                            </button>
-                            <button type="submit" id="driveAccountSubmitBtn"
-                                class="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-md">
-                                <i class="fa-solid fa-plus"></i>
-                                <span id="driveAccountSubmitLabel">Lưu Tài Khoản</span>
-                            </button>
+                        <!-- CỘT PHẢI: Hướng dẫn chi tiết cách lấy mã kết nối (3 bước) -->
+                        <div class="space-y-3.5">
+                            <div class="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 space-y-3 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-zinc-800 uppercase tracking-wide flex items-center gap-1.5">
+                                        <i class="fa-solid fa-book-open text-sky-600"></i>
+                                        <span>Hướng dẫn lấy Mã kết nối</span>
+                                    </span>
+                                    <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                        Khuyên dùng Google Apps Script
+                                    </span>
+                                </div>
+
+                                <!-- Cách 1: Google Apps Script Web App -->
+                                <div class="bg-white rounded-xl p-3.5 border border-zinc-200 space-y-2.5">
+                                    <div class="flex items-center justify-between">
+                                        <h5 class="font-bold text-zinc-900 flex items-center gap-1.5">
+                                            <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 font-mono flex items-center justify-center text-[11px]">1</span>
+                                            <span>Cách 1: Google Apps Script (Tự trích xuất EXIF GPS + Ngày chụp)</span>
+                                        </h5>
+                                        <button type="button" onclick="AdminModule.copyAppsScriptCode()"
+                                            class="text-[11px] text-rose-600 hover:text-rose-700 font-semibold underline flex items-center gap-1">
+                                            <i class="fa-regular fa-copy"></i> Sao chép mã
+                                        </button>
+                                    </div>
+                                    <ol class="list-decimal list-inside space-y-1.5 text-zinc-600 text-[11.5px] leading-relaxed pl-1">
+                                        <li>Mở tài khoản Google cần kết nối, truy cập <a href="https://script.google.com" target="_blank" rel="noopener noreferrer" class="text-sky-600 font-semibold underline">script.google.com</a> rồi nhấn <strong>Dự án mới (New Project)</strong>.</li>
+                                        <li>Xoá code mặc định, nhấn nút <strong>Sao chép mã</strong> ở trên và dán toàn bộ mã vào trình soạn thảo.</li>
+                                        <li>Bấm <strong>Triển khai (Deploy)</strong> &rarr; <strong>Tùy chọn triển khai mới (New deployment)</strong> &rarr; Chọn biểu tượng bánh răng loại <strong>Ứng dụng web (Web app)</strong>.</li>
+                                        <li>Mục <em>"Người có quyền truy cập (Who has access)"</em>: Chọn <strong>Bất kỳ ai (Anyone)</strong> &rarr; Bấm <strong>Triển khai</strong> và cấp quyền.</li>
+                                        <li>Sao chép đường dẫn <strong>URL ứng dụng web</strong> (dạng <code class="bg-zinc-100 px-1 py-0.5 rounded text-[10.5px] text-rose-600 font-mono">https://script.google.com/.../exec</code>) dán vào ô <em>Mã kết nối</em> và bấm <strong>Lưu Tài Khoản</strong>.</li>
+                                    </ol>
+                                </div>
+
+                                <!-- Cách 2: Google Drive API Key -->
+                                <div class="bg-white rounded-xl p-3 border border-zinc-200 space-y-1.5">
+                                    <h5 class="font-bold text-zinc-900 flex items-center gap-1.5">
+                                        <span class="w-5 h-5 rounded-full bg-zinc-100 text-zinc-700 font-mono flex items-center justify-center text-[11px]">2</span>
+                                        <span>Cách 2: Google Cloud API Key (Tùy chọn phụ)</span>
+                                    </h5>
+                                    <p class="text-[11px] text-zinc-600 leading-relaxed pl-1">
+                                        Truy cập <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" class="text-sky-600 font-semibold underline">Google Cloud Console</a> &rarr; Bật thư viện <strong>Google Drive API v3</strong> &rarr; Vào mục <em>Credentials</em> tạo <strong>API Key</strong> (dạng <code class="bg-zinc-100 px-1 py-0.5 rounded text-[10.5px] font-mono text-zinc-800">AIzaSy...</code>) rồi dán vào ô <em>Mã kết nối</em>.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                    </form>
-                </div>
-
-                <!-- Hướng dẫn chi tiết cách lấy mã kết nối Google Apps Script & Google API Key -->
-                <div class="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4 space-y-3 text-xs">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-zinc-800 uppercase tracking-wide flex items-center gap-1.5">
-                            <i class="fa-solid fa-book-open text-sky-600"></i>
-                            <span>Hướng dẫn lấy Mã kết nối (3 bước đơn giản)</span>
-                        </span>
-                        <span class="text-[11px] text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                            Khuyên dùng Google Apps Script (Miễn phí 100%)
-                        </span>
-                    </div>
-
-                    <!-- Cách 1: Google Apps Script Web App -->
-                    <div class="bg-white rounded-xl p-3 border border-zinc-200 space-y-2">
-                        <div class="flex items-center justify-between">
-                            <h5 class="font-bold text-zinc-900 flex items-center gap-1.5">
-                                <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 font-mono flex items-center justify-center text-[11px]">1</span>
-                                <span>Cách 1: Dùng Google Apps Script (Trích xuất EXIF GPS + Ngày chụp tự động)</span>
-                            </h5>
-                            <button type="button" onclick="AdminModule.copyAppsScriptCode()"
-                                class="text-[11px] text-rose-600 hover:text-rose-700 font-semibold underline flex items-center gap-1">
-                                <i class="fa-regular fa-copy"></i> Sao chép mã
-                            </button>
-                        </div>
-                        <ol class="list-decimal list-inside space-y-1 text-zinc-600 text-[11.5px] leading-relaxed pl-1">
-                            <li>Mở tài khoản Google cần kết nối, truy cập <a href="https://script.google.com" target="_blank" rel="noopener noreferrer" class="text-sky-600 font-semibold underline">script.google.com</a> rồi nhấn <strong>Dự án mới (New Project)</strong>.</li>
-                            <li>Xoá code mặc định, nhấn nút <strong>Mã Google Apps Script</strong> ở trên và dán toàn bộ mã vào trình soạn thảo.</li>
-                            <li>Bấm <strong>Triển khai (Deploy)</strong> &rarr; <strong>Tùy chọn triển khai mới (New deployment)</strong> &rarr; Chọn biểu tượng bánh răng loại <strong>Ứng dụng web (Web app)</strong>.</li>
-                            <li>Mục <em>"Người có quyền truy cập (Who has access)"</em>: Chọn <strong>Bất kỳ ai (Anyone)</strong> &rarr; Bấm <strong>Triển khai (Deploy)</strong> và cấp quyền truy cập khi Google hỏi.</li>
-                            <li>Sao chép đường dẫn <strong>URL của ứng dụng web</strong> (dạng <code class="bg-zinc-100 px-1 py-0.5 rounded text-[11px] text-rose-600 font-mono">https://script.google.com/.../exec</code>) dán vào ô <em>Mã kết nối</em> ở trên rồi bấm <strong>Lưu Tài Khoản</strong>.</li>
-                        </ol>
-                    </div>
-
-                    <!-- Cách 2: Google Drive API Key -->
-                    <div class="bg-white rounded-xl p-3 border border-zinc-200 space-y-2">
-                        <h5 class="font-bold text-zinc-900 flex items-center gap-1.5">
-                            <span class="w-5 h-5 rounded-full bg-zinc-100 text-zinc-700 font-mono flex items-center justify-center text-[11px]">2</span>
-                            <span>Cách 2: Dùng Google Cloud API Key (Tùy chọn phụ)</span>
-                        </h5>
-                        <p class="text-[11.5px] text-zinc-600 leading-relaxed pl-1">
-                            Truy cập <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" class="text-sky-600 font-semibold underline">Google Cloud Console</a> &rarr; Bật thư viện <strong>Google Drive API v3</strong> &rarr; Vào <em>Credentials</em> tạo <strong>API Key</strong> (dạng <code class="bg-zinc-100 px-1 py-0.5 rounded text-[11px] font-mono text-zinc-800">AIzaSy...</code>) rồi dán vào ô <em>Mã kết nối</em>.
-                        </p>
                     </div>
                 </div>
 
                 <!-- Thông báo bảo mật cho role editor -->
-                <div id="driveAccountEditorNotice" class="hidden p-3.5 rounded-2xl bg-amber-50 text-amber-900 text-xs border border-amber-200 flex items-center gap-2.5">
+                <div id="driveAccountEditorNotice" class="hidden p-3.5 mt-2 rounded-2xl bg-amber-50 text-amber-900 text-xs border border-amber-200 flex items-center gap-2.5 shrink-0">
                     <i class="fa-solid fa-shield-halved text-amber-600 text-base shrink-0"></i>
                     <span>Bạn đang đăng nhập với quyền <strong>Editor</strong>. Chỉ <strong>Admin</strong> hoặc <strong>Super Admin</strong> mới có quyền xem mã đầy đủ và thay đổi cấu hình kết nối Google Drive.</span>
                 </div>
