@@ -2951,6 +2951,21 @@ function testRun() {
                                     : ''
                             }
 
+                            <!-- 1. Riêng tư / Công khai -->
+                            <button
+                                type="button"
+                                onclick="AdminModule.toggleAlbumPublic('${album.id}')"
+                                class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition flex items-center gap-2 shadow-xs ${
+                                    album.isPublic
+                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+                                        : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200'
+                                }"
+                            >
+                                <i class="fa-solid ${album.isPublic ? 'fa-toggle-on text-emerald-600 text-base' : 'fa-toggle-off text-zinc-400 text-base'}"></i>
+                                <span>${album.isPublic ? 'Công khai' : 'Riêng tư'}</span>
+                            </button>
+
+                            <!-- 2. Cập nhật album -->
                             ${
                                 album.sourceType === 'drive' || (album.driveLinks && album.driveLinks.length > 0)
                                     ? `<button
@@ -2966,28 +2981,15 @@ function testRun() {
                                     : ''
                             }
 
-                            <button
-                                type="button"
-                                onclick="AdminModule.toggleAlbumPublic('${album.id}')"
-                                class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition flex items-center gap-2 shadow-xs ${
-                                    album.isPublic
-                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
-                                        : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200'
-                                }"
-                            >
-                                <i class="fa-solid ${album.isPublic ? 'fa-toggle-on text-emerald-600 text-base' : 'fa-toggle-off text-zinc-400 text-base'}"></i>
-                                <span>${album.isPublic ? 'Công khai' : 'Riêng tư'}</span>
-                            </button>
-
-                            <!-- Nút Xem Album (2 tùy chọn: 1. Chỉ xem (Trang chủ) | 2. Chọn ảnh (Gửi khách)) -->
+                            <!-- 3. Link album (Trước đây là Xem album) -->
                             <div class="relative inline-block text-left" id="openAlbumMenuWrap_${album.id}">
                                 <button
                                     type="button"
                                     onclick="event.stopPropagation(); AdminModule.toggleOpenAlbumDropdown('${album.id}')"
                                     class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-xs"
                                 >
-                                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                                    <span>Xem album</span>
+                                    <i class="fa-solid fa-link text-xs"></i>
+                                    <span>Link album</span>
                                     <i class="fa-solid fa-chevron-down text-[11px] ml-0.5 opacity-80"></i>
                                 </button>
                                 <div id="openAlbumDropdown_${album.id}"
@@ -3032,15 +3034,7 @@ function testRun() {
                                 </div>
                             </div>
 
-                            <button
-                                type="button"
-                                onclick="AdminModule.openEditAlbumSettingsModal('${album.id}')"
-                                class="px-4 py-2 rounded-xl bg-white hover:bg-zinc-100 text-zinc-800 border border-zinc-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-xs"
-                            >
-                                <i class="fa-solid fa-gear text-sm mr-0.5"></i>
-                                <span>Quản lí album</span>
-                            </button>
-
+                            <!-- 4. Xóa -->
                             ${
                                 albums.length > 1
                                     ? `<button
