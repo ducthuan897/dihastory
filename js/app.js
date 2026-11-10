@@ -1014,16 +1014,27 @@ const App = (function () {
         }
 
         let tabsHtml = '';
-        locations.forEach(loc => {
-            const isActive = activeCategory === loc;
-            const label = loc === 'ALL' ? 'Tất cả ảnh' : (loc === 'OTHER' ? 'Địa điểm khác' : loc);
-            const cls = isActive
-                ? "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-zinc-900 text-white shadow-xs shrink-0 cursor-pointer"
-                : "px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200 shrink-0 cursor-pointer";
-            tabsHtml += `<button type="button" onclick="App.setCategoryFilter('${loc}')" class="${cls}">${label}</button>`;
-        });
+        if (!isClientMode) {
+            // Giao diện Trang chỉ xem: thiết kế giống trang Quản lý Album (thanh tab gạch chân dưới tinh tế)
+            locations.forEach(loc => {
+                const isActive = activeCategory === loc;
+                const label = loc === 'ALL' ? 'Tất cả' : (loc === 'OTHER' ? 'Địa điểm khác' : loc);
+                const cls = isActive
+                    ? "pb-2 whitespace-nowrap transition border-b-2 border-zinc-900 font-bold text-zinc-900"
+                    : "pb-2 whitespace-nowrap transition border-b-2 border-transparent font-medium text-zinc-400 hover:text-zinc-700";
+                tabsHtml += `<button type="button" onclick="App.setCategoryFilter('${loc}')" class="${cls}">${label}</button>`;
+            });
+        } else {
+            // Giao diện Khách chọn ảnh: các pill bo tròn có pill "Đã chọn"
+            locations.forEach(loc => {
+                const isActive = activeCategory === loc;
+                const label = loc === 'ALL' ? 'Tất cả ảnh' : (loc === 'OTHER' ? 'Địa điểm khác' : loc);
+                const cls = isActive
+                    ? "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-zinc-900 text-white shadow-xs shrink-0 cursor-pointer"
+                    : "px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200 shrink-0 cursor-pointer";
+                tabsHtml += `<button type="button" onclick="App.setCategoryFilter('${loc}')" class="${cls}">${label}</button>`;
+            });
 
-        if (isClientMode) {
             const isSelectedActive = activeCategory === 'SELECTED';
             const selCls = isSelectedActive
                 ? "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-rose-600 text-white shadow-xs shrink-0 cursor-pointer"
@@ -1057,9 +1068,15 @@ const App = (function () {
         }
 
         photos.sort((a, b) => {
-            const tA = a.capturedAt || '';
-            const tB = b.capturedAt || '';
-            return albumTimeSort === 'asc' ? tA.localeCompare(tB) : tB.localeCompare(tA);
+            if (albumTimeSort === 'name_asc') {
+                return (a.code || a.title || '').localeCompare(b.code || b.title || '');
+            } else if (albumTimeSort === 'name_desc') {
+                return (b.code || b.title || '').localeCompare(a.code || a.title || '');
+            } else if (albumTimeSort === 'asc') {
+                return (a.capturedAt || '').localeCompare(b.capturedAt || '');
+            } else {
+                return (b.capturedAt || '').localeCompare(a.capturedAt || '');
+            }
         });
 
         currentFilteredPhotos = photos;
@@ -1130,7 +1147,36 @@ const App = (function () {
             : "bg-white/80 hover:bg-white text-zinc-700 border-zinc-300";
 
         const timeStr = photo.capturedAt ? photo.capturedAt.replace('T', ' ') : '';
+        const timeLabel = formatTimeShort(photo.capturedAt);
 
+        // NẾU Ở CHẾ ĐỘ CHỈ XEM (!isClientMode): Giao diện hiển thị theo phong cách Trang Quản Lý Album
+        if (!isClientMode) {
+            return `
+                <div
+                    onclick="App.openLightbox(${indexInFiltered})"
+                    class="group relative bg-white rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition cursor-pointer select-none"
+                >
+                    <img
+                        src="${getOptimizedThumbnailUrl(photo.url, 'w800')}"
+                        alt="${photo.code || photo.title || ''}"
+                        loading="lazy"
+                        referrerpolicy="no-referrer"
+                        class="w-full h-72 sm:h-80 object-cover object-center group-hover:scale-[1.02] transition-transform duration-500 pointer-events-none"
+                    >
+                    ${shouldShowWatermark(album) ? '<div class="watermark-pattern-overlay rounded"></div>' : ''}
+
+                    <!-- Bottom Bar: Photo Code & Location / Time on hover / mobile -->
+                    <div class="absolute bottom-2.5 inset-x-2.5 flex items-end justify-between gap-2 pointer-events-none">
+                        <div class="opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] max-w-[90%] truncate">
+                            <span class="font-mono font-bold block truncate">${photo.code || 'IMG'}</span>
+                            <span class="text-amber-300 block truncate">${photo.location ? `<i class="fa-solid fa-location-dot mr-1"></i>${photo.location} • ` : ''}${timeLabel}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // CHẾ ĐỘ KHÁCH CHỌN ẢNH (isClientMode): Giữ các nút hoặc badge chọn ảnh
         return `
             <div class="group relative bg-zinc-100 rounded-xl overflow-hidden shadow-2xs hover:shadow-lg transition-all duration-300 border border-zinc-200/80 flex flex-col select-none">
                 <div class="relative aspect-[4/3] overflow-hidden cursor-pointer" onclick="App.openLightbox(${indexInFiltered})">
@@ -1150,42 +1196,40 @@ const App = (function () {
 
                 <div class="p-2 sm:p-2.5 bg-white flex items-center justify-between gap-1.5 border-t border-zinc-100">
                     <span class="text-[11px] text-zinc-500 truncate font-mono">${timeStr}</span>
-                    ${isClientMode ? (
-                        isLocked ? `
-                            <div class="flex items-center gap-1.5">
-                                ${noteText ? `
-                                    <span class="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] shadow-2xs" title="Ghi chú: ${noteText}">
-                                        <i class="fa-solid fa-comment-dots"></i>
-                                    </span>
-                                ` : ''}
-                                ${isSelected ? `
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold shadow-2xs">
-                                        <i class="fa-solid fa-heart text-[9px]"></i>
-                                        <span>Đã chọn</span>
-                                    </span>
-                                ` : ''}
-                            </div>
-                        ` : `
-                            <div class="flex items-center gap-1.5">
-                                <button
-                                    type="button"
-                                    onclick="App.openPhotoNoteModal('${photo.id}')"
-                                    class="w-7 h-7 rounded-full border flex items-center justify-center text-xs transition ${noteCls}"
-                                    title="${noteText ? 'Ghi chú: ' + noteText : 'Thêm ghi chú chỉnh sửa'}"
-                                >
+                    ${isLocked ? `
+                        <div class="flex items-center gap-1.5">
+                            ${noteText ? `
+                                <span class="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] shadow-2xs" title="Ghi chú: ${noteText}">
                                     <i class="fa-solid fa-comment-dots"></i>
-                                </button>
-                                <button
-                                    type="button"
-                                    onclick="App.togglePhotoHeart('${photo.id}')"
-                                    class="w-7 h-7 rounded-full border flex items-center justify-center text-xs transition ${heartCls}"
-                                    title="${isSelected ? 'Bỏ chọn ảnh' : 'Chọn ảnh này'}"
-                                >
-                                    <i class="fa-solid fa-heart"></i>
-                                </button>
-                            </div>
-                        `
-                    ) : ''}
+                                </span>
+                            ` : ''}
+                            ${isSelected ? `
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold shadow-2xs">
+                                    <i class="fa-solid fa-heart text-[9px]"></i>
+                                    <span>Đã chọn</span>
+                                </span>
+                            ` : ''}
+                        </div>
+                    ` : `
+                        <div class="flex items-center gap-1.5">
+                            <button
+                                type="button"
+                                onclick="App.openPhotoNoteModal('${photo.id}')"
+                                class="w-7 h-7 rounded-full border flex items-center justify-center text-xs transition ${noteCls}"
+                                title="${noteText ? 'Ghi chú: ' + noteText : 'Thêm ghi chú chỉnh sửa'}"
+                            >
+                                <i class="fa-solid fa-comment-dots"></i>
+                            </button>
+                            <button
+                                type="button"
+                                onclick="App.togglePhotoHeart('${photo.id}')"
+                                class="w-7 h-7 rounded-full border flex items-center justify-center text-xs transition ${heartCls}"
+                                title="${isSelected ? 'Bỏ chọn ảnh' : 'Chọn ảnh này'}"
+                            >
+                                <i class="fa-solid fa-heart"></i>
+                            </button>
+                        </div>
+                    `}
                 </div>
             </div>
         `;
