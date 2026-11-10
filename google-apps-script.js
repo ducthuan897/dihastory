@@ -216,18 +216,19 @@ function reverseGeocodeCoords(lat, lon) {
         var name = (comp.long_name || "").trim();
         var nameNorm = stripVnAccents(name);
         if (nameNorm === "viet nam" || nameNorm === "vietnam") continue;
-        var cleanName = name.replace(/^(Tỉnh|Thành phố|TP\.|Quận|Huyện|Thị xã|Phường|Xã)\s+/i, "").trim();
+        var cleanName = name.replace(/^(Tỉnh|Thành phố|TP\.)\s+/i, "").trim();
         if (types.indexOf("administrative_area_level_1") !== -1 || types.indexOf("locality") !== -1) {
           if (!city && cleanName) city = cleanName;
         }
-        if (types.indexOf("administrative_area_level_2") !== -1 || types.indexOf("sublocality") !== -1) {
-          if (!subLoc && cleanName) subLoc = cleanName;
+        if (types.indexOf("administrative_area_level_2") !== -1 || types.indexOf("sublocality") !== -1 || types.indexOf("sublocality_level_1") !== -1) {
+          if (!subLoc && name) subLoc = name.trim();
         }
       }
-      var finalCity = city || subLoc || "";
-      var finalLoc = (subLoc && city && subLoc.toLowerCase() !== city.toLowerCase())
-        ? (subLoc + " - " + city)
-        : (finalCity || formatted);
+      var cleanWard = subLoc ? (subLoc.indexOf("Phường") === 0 || subLoc.indexOf("Xã") === 0 || subLoc.indexOf("Thị trấn") === 0 ? subLoc : ("Phường " + subLoc)) : "";
+      var finalCity = city || (subLoc.replace(/^(Phường|Xã|Thị trấn)\s+/i, "")) || "";
+      var finalLoc = (cleanWard && city && cleanWard.toLowerCase() !== city.toLowerCase())
+        ? (cleanWard + " - " + city)
+        : (cleanWard || finalCity || formatted);
       return {
         city: finalCity,
         location: finalLoc

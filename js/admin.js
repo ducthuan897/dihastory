@@ -272,19 +272,22 @@ function reverseGeocodeCoords(lat, lon) {
       for (var i = 0; i < r.address_components.length; i++) {
         var comp = r.address_components[i];
         var types = comp.types || [];
-        var name = (comp.long_name || "").replace(/^(Tỉnh|Thành phố|TP\.)\s+/i, "").trim();
-        if (name.toLowerCase() === "việt nam" || name.toLowerCase() === "vietnam") continue;
+        var name = (comp.long_name || "").trim();
+        var nameNorm = stripVnAccents(name);
+        if (nameNorm === "viet nam" || nameNorm === "vietnam") continue;
+        var cleanName = name.replace(/^(Tỉnh|Thành phố|TP\.)\s+/i, "").trim();
         if (types.indexOf("administrative_area_level_1") !== -1 || types.indexOf("locality") !== -1) {
-          if (!city && name) city = name;
+          if (!city && cleanName) city = cleanName;
         }
-        if (types.indexOf("administrative_area_level_2") !== -1 || types.indexOf("sublocality") !== -1) {
-          if (!subLoc && name) subLoc = name.replace(/^(Quận|Huyện|Thị xã|Phường|Xã)\s+/i, "").trim();
+        if (types.indexOf("administrative_area_level_2") !== -1 || types.indexOf("sublocality") !== -1 || types.indexOf("sublocality_level_1") !== -1) {
+          if (!subLoc && name) subLoc = name.trim();
         }
       }
-      var finalCity = city || subLoc || "";
-      var finalLoc = (subLoc && city && subLoc.toLowerCase() !== city.toLowerCase())
-        ? (subLoc + " - " + city)
-        : (finalCity || formatted);
+      var cleanWard = subLoc ? (subLoc.indexOf("Phường") === 0 || subLoc.indexOf("Xã") === 0 || subLoc.indexOf("Thị trấn") === 0 ? subLoc : ("Phường " + subLoc)) : "";
+      var finalCity = city || (subLoc.replace(/^(Phường|Xã|Thị trấn)\s+/i, "")) || "";
+      var finalLoc = (cleanWard && city && cleanWard.toLowerCase() !== city.toLowerCase())
+        ? (cleanWard + " - " + city)
+        : (cleanWard || finalCity || formatted);
       return {
         city: finalCity,
         location: finalLoc
@@ -3829,21 +3832,23 @@ function testRun() {
                 }
             });
 
-            // Re-link any delivered photos that might have arrived before original photos
-            album.deliveredPhotos.forEach(dp => {
-                if (!dp.originalPhotoId && dp.originalPhotoCode) {
-                    const cleanTarget = dp.originalPhotoCode.toUpperCase();
-                    const matchedOrig = album.photos.find(p => {
-                        const oc = (p.code || '').toUpperCase();
-                        return oc === cleanTarget || (cleanTarget && oc.includes(cleanTarget)) || (cleanTarget && cleanTarget.includes(oc));
-                    });
-                    if (matchedOrig) {
-                        dp.originalPhotoId = matchedOrig.id;
-                        dp.beforeUrl = matchedOrig.url;
-                        if (!dp.location && matchedOrig.location) dp.location = matchedOrig.location;
+            // TUÂN THỦ ĐIỀU 5: Trích xuất và cập nhật lại thời gian (DateTimeOriginal) & vị trí GPS (quy đổi xã/phường - tỉnh/thành phố)
+            // cho từng bức ảnh trong album nếu có toạ độ hoặc trích xuất từ Google Drive
+            for (let i = 0; i < album.photos.length; i++) {
+                const photo = album.photos[i];
+                if (photo.lat != null && photo.lon != null) {
+                    const geo = await reverseGeocodeCoords(photo.lat, photo.lon);
+                    if (geo) {
+                        if (geo.location && photo.location !== geo.location) {
+                            photo.location = geo.location;
+                            updatedCount++;
+                        }
+                        if (geo.city && photo.city !== geo.city) {
+                            photo.city = geo.city;
+                        }
                     }
                 }
-            });
+            }
 
             if (!album.coverUrl && album.photos.length > 0) {
                 album.coverUrl = album.photos[0].url;
