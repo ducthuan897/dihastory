@@ -1198,7 +1198,7 @@ const App = (function () {
         const proofingControls = document.getElementById('lightboxProofingControls');
         const notePreview = document.getElementById('lightboxNotePreview');
 
-        if (img) img.src = getOptimizedThumbnailUrl(photo.url, 'w1600');
+        if (img) img.src = photo.url;
         if (codeEl) codeEl.innerText = photo.code || photo.title || 'IMG';
         if (counterEl) counterEl.innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
         if (titleEl) titleEl.innerText = photo.location || photo.city || '';
@@ -1330,8 +1330,10 @@ const App = (function () {
     function setupLightboxZoom() {
         const stage = document.getElementById('lightboxStage');
         const img = document.getElementById('lightboxImage');
-        if (!stage || !img) return;
+        const container = document.getElementById('lightboxImageContainer');
+        if (!stage || !img || !container) return;
 
+        // Scroll wheel zoom (trên stage)
         stage.addEventListener('wheel', (e) => {
             e.preventDefault();
             const delta = e.deltaY < 0 ? 0.2 : -0.2;
@@ -1339,13 +1341,15 @@ const App = (function () {
             applyLightboxTransform();
         }, { passive: false });
 
-        img.addEventListener('mousedown', (e) => {
+        // Drag pan bằng chuột (lắng nghe trên container để watermark cũng bám)
+        container.addEventListener('mousedown', (e) => {
             if (_lbScale > 1) {
                 _lbDragging = true;
                 _lbDragStartX = e.clientX;
                 _lbDragStartY = e.clientY;
                 _lbPanStartX = _lbPanX;
                 _lbPanStartY = _lbPanY;
+                e.preventDefault();
             }
         });
 
@@ -1361,7 +1365,8 @@ const App = (function () {
             _lbDragging = false;
         });
 
-        img.addEventListener('dblclick', () => {
+        // Double-click để toggle zoom
+        container.addEventListener('dblclick', () => {
             if (_lbScale > 1) {
                 resetLightboxTransform();
             } else {
@@ -1370,8 +1375,8 @@ const App = (function () {
             }
         });
 
-        // Touch pinch-to-zoom và double-tap
-        img.addEventListener('touchstart', (e) => {
+        // Touch pinch-to-zoom và double-tap (lắng nghe trên container)
+        container.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
                 e.preventDefault();
                 _lbPinchDist = Math.hypot(
@@ -1401,7 +1406,7 @@ const App = (function () {
             }
         }, { passive: false });
 
-        img.addEventListener('touchmove', (e) => {
+        container.addEventListener('touchmove', (e) => {
             e.preventDefault();
             if (e.touches.length === 2 && _lbPinchDist > 0) {
                 const dist = Math.hypot(
@@ -1417,18 +1422,21 @@ const App = (function () {
             }
         }, { passive: false });
 
-        img.addEventListener('touchend', (e) => {
+        container.addEventListener('touchend', (e) => {
             if (e.touches.length < 2) _lbPinchDist = 0;
             if (e.touches.length === 0) _lbDragging = false;
         });
     }
 
     function applyLightboxTransform() {
-        const img = document.getElementById('lightboxImage');
-        if (img) {
-            img.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px) scale(${_lbScale})`;
-            img.style.cursor = _lbScale > 1 ? 'grab' : 'zoom-in';
+        const container = document.getElementById('lightboxImageContainer');
+        if (container) {
+            container.style.transform = `translate(${_lbPanX}px, ${_lbPanY}px) scale(${_lbScale})`;
+            container.style.cursor = _lbScale > 1 ? 'grab' : 'zoom-in';
         }
+        // Cập nhật cursor ảnh để kéo
+        const img = document.getElementById('lightboxImage');
+        if (img) img.style.cursor = _lbScale > 1 ? 'grab' : 'zoom-in';
     }
 
     function resetLightboxTransform() {

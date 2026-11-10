@@ -226,9 +226,16 @@ body {
     -webkit-user-select: none;
     -webkit-user-drag: none;
     touch-action: none;
-    cursor: grab;
+    cursor: zoom-in;
+    display: block;
+}
+
+/* Container bọc ảnh + watermark — transform áp lên đây để watermark bám theo ảnh khi zoom */
+#lightboxImageContainer {
     transform-origin: center center;
-    image-rendering: auto;
+    will-change: transform;
+    touch-action: none;
+    cursor: zoom-in;
 }
 
 #lightboxImage.lightbox-dragging {
