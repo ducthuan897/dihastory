@@ -96,7 +96,7 @@
 
                 <div class="flex items-center gap-2.5">
                     <button type="button" onclick="AdminModule.openCustomAlbumModal('settings')"
-                        class="px-4 py-2 rounded-full bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-200 shadow-2xs text-xs font-semibold flex items-center gap-2 transition">
+                        class="h-9 px-3.5 rounded-xl bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-200 shadow-2xs text-xs font-semibold flex items-center justify-center gap-2 transition">
                         <i class="fa-solid fa-sliders text-zinc-600"></i>
                         <span>Tùy chỉnh album</span>
                     </button>
@@ -140,33 +140,31 @@
                     </button>
                 </div>
 
-                <!-- Right Action Pill Groups -->
-                <div class="flex flex-wrap items-center gap-2">
+                <!-- Right Action Buttons (Uniform style with icon on top & text below on mobile, inline on desktop) -->
+                <div class="w-full sm:w-auto grid grid-cols-3 sm:flex items-center gap-2 pt-1 sm:pt-0">
                     <!-- Nút Cập nhật album -->
                     <button id="managePageSyncBtn" type="button"
                         onclick="AdminModule.syncUpdateAlbumDrive()"
-                        class="px-3.5 py-1.5 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-xs font-medium flex items-center gap-1.5 shadow-2xs transition"
+                        class="h-12 sm:h-9 px-2 sm:px-3.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-[10px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 shadow-2xs transition"
                         title="Đồng bộ cập nhật ngay ảnh và vị trí/ngày chụp từ Google Drive">
-                        <i id="managePageSyncBtnIcon" class="fa-solid fa-rotate text-zinc-600"></i>
-                        <span id="managePageSyncBtnLabel">Cập nhật album</span>
+                        <i id="managePageSyncBtnIcon" class="fa-solid fa-rotate text-xs text-zinc-600"></i>
+                        <span id="managePageSyncBtnLabel">Cập nhật</span>
                     </button>
 
-                    <!-- Group 2: Khoá album + Tải PDF ghi chú -->
-                    <div
-                        class="inline-flex items-center rounded-full border border-zinc-200 bg-white px-1 py-0.5 shadow-2xs">
-                        <button id="managePageLockBtn" type="button"
-                            onclick="AdminModule.toggleLockAlbumFromManagePage()"
-                            class="px-3 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-800 text-xs font-medium flex items-center gap-1.5 transition">
-                            <i id="managePageLockIcon" class="fa-solid fa-lock text-zinc-600"></i>
-                            <span id="managePageLockBtnText">Khoá album</span>
-                        </button>
-                        <div class="w-px h-4 bg-zinc-200"></div>
-                        <button type="button" onclick="AdminModule.exportFeedbackReport()"
-                            class="px-3 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-800 text-xs font-medium flex items-center gap-1.5 transition">
-                            <i class="fa-regular fa-file-lines text-zinc-600"></i>
-                            <span>Tải PDF ghi chú</span>
-                        </button>
-                    </div>
+                    <!-- Nút Khoá album -->
+                    <button id="managePageLockBtn" type="button"
+                        onclick="AdminModule.toggleLockAlbumFromManagePage()"
+                        class="h-12 sm:h-9 px-2 sm:px-3.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-[10px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 shadow-2xs transition">
+                        <i id="managePageLockIcon" class="fa-solid fa-lock text-xs text-zinc-600"></i>
+                        <span id="managePageLockBtnText">Khoá album</span>
+                    </button>
+
+                    <!-- Nút Tải PDF ghi chú -->
+                    <button type="button" onclick="AdminModule.exportFeedbackReport()"
+                        class="h-12 sm:h-9 px-2 sm:px-3.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-[10px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 shadow-2xs transition">
+                        <i class="fa-regular fa-file-lines text-xs text-zinc-600"></i>
+                        <span>Tải PDF ghi chú</span>
+                    </button>
                 </div>
             </div>
 
