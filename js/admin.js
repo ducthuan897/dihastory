@@ -695,7 +695,7 @@ function testRun() {
             completeLockEnabled: true,
             isSelectionLockedBySubmit: false,
             youtubeId: "",
-            coverUrl: "https://drive.google.com/thumbnail?id=1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw&sz=w1600",
+            coverUrl: "https://drive.google.com/thumbnail?id=1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw&sz=s0",
             description: "Album A7C của khách hàng Nguyễn Đức Thuận.",
             photos: [
                 {
@@ -708,7 +708,7 @@ function testRun() {
                     lon: 106.654375,
                     capturedAt: "2026-10-19T20:48",
                     title: "DSC01150.jpg",
-                    url: "https://drive.google.com/thumbnail?id=1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP&sz=w1600",
+                    url: "https://drive.google.com/thumbnail?id=1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP&sz=s0",
                     starred: false
                 },
                 {
@@ -721,7 +721,7 @@ function testRun() {
                     lon: 106.654371,
                     capturedAt: "2026-10-19T21:22",
                     title: "DSC01182.jpg",
-                    url: "https://drive.google.com/thumbnail?id=1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw&sz=w1600"
+                    url: "https://drive.google.com/thumbnail?id=1nJ5dxTpl68WjvUWenlirDDEizbAYgeXw&sz=s0"
                 },
                 {
                     id: "drv_1sAmshkhLZz6G9P3zqZm2mJiY9Eoz6iyV_1794119508989_3",
@@ -731,7 +731,7 @@ function testRun() {
                     city: "Hồ Chí Minh",
                     capturedAt: "2026-09-03T13:22",
                     title: "DSC00889.jpg",
-                    url: "https://drive.google.com/thumbnail?id=1sAmshkhLZz6G9P3zqZm2mJiY9Eoz6iyV&sz=w1600"
+                    url: "https://drive.google.com/thumbnail?id=1sAmshkhLZz6G9P3zqZm2mJiY9Eoz6iyV&sz=s0"
                 }
             ]
         },
@@ -757,7 +757,7 @@ function testRun() {
             completeLockEnabled: true,
             isSelectionLockedBySubmit: false,
             youtubeId: "",
-            coverUrl: "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=w1600",
+            coverUrl: "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=s0",
             description: "Album Gian thần Đạt 09 của khách hàng Nguyễn Thành Đạt (Chụp tại Nhà thờ Phú Cường, Thủ Dầu Một).",
             photos: [
                 {
@@ -770,7 +770,7 @@ function testRun() {
                     lon: 106.678424,
                     capturedAt: "2026-07-24T16:28",
                     title: "DSC00346.jpg",
-                    url: "https://drive.google.com/thumbnail?id=1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7&sz=w1600",
+                    url: "https://drive.google.com/thumbnail?id=1Nmk4KoNJ8KJlO2qFIh33KJKo75WjxGn7&sz=s0",
                     starred: true
                 },
                 {
@@ -783,7 +783,7 @@ function testRun() {
                     lon: 106.654371,
                     capturedAt: "2026-10-19T21:35",
                     title: "DSC01193.jpg",
-                    url: "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=w1600"
+                    url: "https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=s0"
                 },
                 {
                     id: "drv_1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd_1794052824913_3",
@@ -795,7 +795,7 @@ function testRun() {
                     lon: 106.654377,
                     capturedAt: "2026-10-19T21:23",
                     title: "DSC01184.jpg",
-                    url: "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd&sz=w1600"
+                    url: "https://drive.google.com/thumbnail?id=1BCD9gS3MGUoWd9bes1-mi8O0Nmc4w2sd&sz=s0"
                 }
             ]
         }
@@ -816,6 +816,22 @@ function testRun() {
                     // Tự động loại bỏ bất kỳ album mẫu cũ nào còn sót lại trong bộ nhớ trình duyệt
                     parsed = parsed.filter(a => !DEMO_SAMPLE_IDS.includes(a.id));
                     if (parsed.length > 0) {
+                        // Tự động nâng cấp URL ảnh sang chất lượng gốc s0 nếu còn chứa w1600 cũ
+                        parsed.forEach(a => {
+                            if (a.coverUrl && a.coverUrl.includes('drive.google.com/thumbnail')) {
+                                a.coverUrl = a.coverUrl.replace(/sz=[^&]+/i, 'sz=s0');
+                            }
+                            if (Array.isArray(a.photos)) {
+                                a.photos.forEach(p => {
+                                    if (p.url && p.url.includes('drive.google.com/thumbnail')) {
+                                        p.url = p.url.replace(/sz=[^&]+/i, 'sz=s0');
+                                    }
+                                    if (p.beforeUrl && p.beforeUrl.includes('drive.google.com/thumbnail')) {
+                                        p.beforeUrl = p.beforeUrl.replace(/sz=[^&]+/i, 'sz=s0');
+                                    }
+                                });
+                            }
+                        });
                         memoryAlbumsCache = parsed;
                         return parsed;
                     }
@@ -1975,7 +1991,7 @@ function testRun() {
                     folderTitle,
                     modifiedRaw: fMod,
                     capturedAt: extractDateFromText(fName) || null,
-                    url: `https://drive.google.com/thumbnail?id=${fId}&sz=w1600`
+                    url: `https://drive.google.com/thumbnail?id=${fId}&sz=s0`
                 });
             }
         }
@@ -2151,7 +2167,7 @@ function testRun() {
                                 city: photoCity,
                                 lat: f.lat,
                                 lon: f.lon,
-                                url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`
+                                url: `https://drive.google.com/thumbnail?id=${f.id}&sz=s0`
                             };
                         }));
 
@@ -2235,7 +2251,7 @@ function testRun() {
                             city,
                             lat,
                             lon,
-                            url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`
+                            url: `https://drive.google.com/thumbnail?id=${f.id}&sz=s0`
                         };
                     }));
 
@@ -2442,7 +2458,7 @@ function testRun() {
                         city: photoCity,
                         capturedAt: capturedAt || "",
                         title: f.name || `Ảnh Google Drive #${counter}`,
-                        url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600`
+                        url: `https://drive.google.com/thumbnail?id=${f.id}&sz=s0`
                     });
                 }
                 continue;
@@ -2490,7 +2506,7 @@ function testRun() {
                     city: photoCity,
                     capturedAt,
                     title: fName || `Ảnh Google Drive #${counter}`,
-                    url: `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`
+                    url: `https://drive.google.com/thumbnail?id=${fileId}&sz=s0`
                 });
                 continue;
             }
@@ -3964,7 +3980,7 @@ function testRun() {
         // Convert Google Drive file link if pasted here
         const drvId = extractGoogleDriveFileId(url);
         if (drvId) {
-            url = `https://drive.google.com/thumbnail?id=${drvId}&sz=w1600`;
+            url = `https://drive.google.com/thumbnail?id=${drvId}&sz=s0`;
         }
 
         const nextNum = 1001 + album.photos.length;
@@ -4715,3 +4731,4 @@ function testRun() {
         exportAlbumsJsonFile
     };
 })();
+

@@ -62,7 +62,28 @@ const App = (function () {
     function getOptimizedThumbnailUrl(url, size = 'w600') {
         if (!url || typeof url !== 'string') return url || '';
         if (url.includes('drive.google.com/thumbnail')) {
-            return url.replace(/sz=w\d+/i, `sz=${size}`);
+            if (url.includes('sz=')) {
+                return url.replace(/sz=[^&]+/i, `sz=${size}`);
+            } else {
+                const separator = url.includes('?') ? '&' : '?';
+                return `${url}${separator}sz=${size}`;
+            }
+        }
+        return url;
+    }
+
+    // Helper: Lấy ảnh ở độ phân giải gốc cao nhất (Full High-Resolution) cho trình xem ảnh Lightbox
+    function getFullResPhotoUrl(url) {
+        if (!url || typeof url !== 'string') return url || '';
+        if (url.includes('drive.google.com/thumbnail')) {
+            // sz=s0 chỉ định Google Drive trả về ảnh gốc ở độ phân giải tối đa 100%
+            return getOptimizedThumbnailUrl(url, 's0');
+        }
+        // Trường hợp Google User Content trực tiếp (=s... hoặc =w...)
+        if (url.includes('googleusercontent.com')) {
+            if (/=[sw]\d+/i.test(url)) {
+                return url.replace(/=[sw]\d+/i, '=s0');
+            }
         }
         return url;
     }
@@ -1205,7 +1226,7 @@ const App = (function () {
         const proofingControls = document.getElementById('lightboxProofingControls');
         const notePreview = document.getElementById('lightboxNotePreview');
 
-        if (img) img.src = photo.url;
+        if (img) img.src = getFullResPhotoUrl(photo.url);
         if (codeEl) codeEl.innerText = photo.code || photo.title || 'IMG';
         if (counterEl) counterEl.innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
         if (titleEl) titleEl.innerText = photo.location || photo.city || '';
@@ -1293,10 +1314,10 @@ const App = (function () {
 
         isLightboxShowingBefore = !isLightboxShowingBefore;
         if (isLightboxShowingBefore && photo.beforeUrl) {
-            img.src = photo.beforeUrl;
+            img.src = getFullResPhotoUrl(photo.beforeUrl);
             showToast("Đang xem ảnh gốc");
         } else {
-            img.src = photo.url;
+            img.src = getFullResPhotoUrl(photo.url);
             showToast("Đang xem ảnh đã chỉnh sửa");
         }
     }
@@ -1322,15 +1343,16 @@ const App = (function () {
 
         try {
             showToast(`Đang tải ảnh ${photo.code || 'IMG'}...`);
+            const dlUrl = getFullResPhotoUrl(photo.url);
             const a = document.createElement('a');
-            a.href = photo.url;
+            a.href = dlUrl;
             a.target = '_blank';
             a.download = `${photo.code || 'photo'}.jpg`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
         } catch (e) {
-            window.open(photo.url, '_blank');
+            window.open(getFullResPhotoUrl(photo.url), '_blank');
         }
     }
 
