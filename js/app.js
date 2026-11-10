@@ -1629,34 +1629,7 @@ const App = (function () {
         applyLightboxTransform();
     }
 
-    // Phóng to 100% kích thước pixel thực tế (1:1 Zoom) để kiểm tra độ nét chi tiết
-    function toggleLightboxZoom100() {
-        const photo = currentFilteredPhotos[currentLightboxIndex];
-        const img = document.getElementById('lightboxImage');
-        const label = document.getElementById('lightboxZoom100Label');
-        if (!photo || !img) return;
 
-        if (_lbScale > 1) {
-            resetLightboxTransform();
-        } else {
-            recordLightboxFitDimensions();
-            const fullUrl = getFullResPhotoUrl(photo.url);
-            if (img.src !== fullUrl) img.src = fullUrl;
-
-            // Tính toán tỷ lệ zoom chuẩn 1:1 pixel thực tế
-            let targetScale = 2.5;
-            if (img.naturalWidth && _lbFitWidth) {
-                targetScale = Math.max(1.8, Math.min(LB_MAX_SCALE, img.naturalWidth / _lbFitWidth));
-            } else if (img.naturalHeight && _lbFitHeight) {
-                targetScale = Math.max(1.8, Math.min(LB_MAX_SCALE, img.naturalHeight / _lbFitHeight));
-            }
-
-            _lbScale = targetScale;
-            applyLightboxTransform();
-            if (label) label.innerText = "Thu nhỏ";
-            showToast("Đang phóng to 100% chi tiết ảnh thực tế", "info");
-        }
-    }
 
     function openPhotoNoteModal(photoId) {
         activeNotePhotoId = photoId;
@@ -1991,7 +1964,6 @@ const App = (function () {
         showToast,
         zoomInLightbox,
         zoomOutLightbox,
-        toggleLightboxZoom100,
         resetLightboxTransform
     };
 })();
