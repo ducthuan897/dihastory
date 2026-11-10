@@ -100,23 +100,9 @@ const App = (function () {
         return url;
     }
 
-    // Helper: Lấy ảnh độ nét cao nhanh chóng cho màn hình lớn (2560px 2K) để hiển thị tức thì không bị chờ
+    // Helper: Lấy ảnh phân giải cao cho Lightbox
     function getLightboxDisplayUrl(url) {
-        if (!url || typeof url !== 'string') return url || '';
-        const driveId = getDriveIdFromUrl(url);
-        if (driveId) {
-            // Nạp trực tiếp từ CDN lh3.googleusercontent.com tốc độ cao
-            return `https://lh3.googleusercontent.com/d/${driveId}=w2560`;
-        }
-        if (url.includes('drive.google.com/thumbnail')) {
-            return getOptimizedThumbnailUrl(url, 'w2560');
-        }
-        if (url.includes('googleusercontent.com')) {
-            if (/=[sw]\d+/i.test(url)) {
-                return url.replace(/=[sw]\d+/i, '=w2560');
-            }
-        }
-        return url;
+        return getFullResPhotoUrl(url);
     }
 
     // Helper: Watermark chỉ hiển thị trên Trang chỉ xem và Trang chọn ảnh; nếu Quản trị viên đã đăng nhập thì tự động tắt watermark
@@ -1258,32 +1244,29 @@ const App = (function () {
         const proofingControls = document.getElementById('lightboxProofingControls');
         const notePreview = document.getElementById('lightboxNotePreview');
 
-        // Hiển thị ảnh tức thì với độ phân giải cao 2560px (2K) sắc nét, không bị chờ đen màn hình
-        const displayUrl = getLightboxDisplayUrl(photo.url);
-        if (img) {
-            // Hiện spinner nạp mượt nếu ảnh chưa nạp xong
-            if (spinner) spinner.classList.remove('hidden');
-            img.style.opacity = '0.5';
-
-            img.onload = () => {
-                if (spinner) spinner.classList.add('hidden');
-                img.style.opacity = '1';
-            };
-            img.onerror = () => {
-                if (spinner) spinner.classList.add('hidden');
-                img.style.opacity = '1';
-                // Fallback nếu có lỗi mạng
-                if (img.src !== photo.url) img.src = photo.url;
-            };
-
-            img.src = displayUrl;
-        }
-
-        // Tự động tải ngầm bản gốc s0 vào bộ nhớ đệm
+        // Nạp và hiển thị trực tiếp ảnh ở độ phân giải gốc cao nhất (=s0)
         const fullUrl = getFullResPhotoUrl(photo.url);
-        if (fullUrl && fullUrl !== displayUrl) {
-            const preloader = new Image();
-            preloader.src = fullUrl;
+        if (img) {
+            // Nếu ảnh đang đổi khác với ảnh hiện tại, hiển thị spinner nạp
+            if (img.src !== fullUrl) {
+                if (spinner) spinner.classList.remove('hidden');
+                img.style.opacity = '0.7';
+
+                img.onload = () => {
+                    if (spinner) spinner.classList.add('hidden');
+                    img.style.opacity = '1';
+                };
+                img.onerror = () => {
+                    if (spinner) spinner.classList.add('hidden');
+                    img.style.opacity = '1';
+                    if (img.src !== photo.url) img.src = photo.url;
+                };
+
+                img.src = fullUrl;
+            } else {
+                if (spinner) spinner.classList.add('hidden');
+                img.style.opacity = '1';
+            }
         }
 
         if (codeEl) codeEl.innerText = photo.code || photo.title || 'IMG';
