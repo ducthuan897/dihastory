@@ -863,8 +863,8 @@ const App = (function () {
                 if (heroSubmitBtn) heroSubmitBtn.classList.add('hidden');
                 if (lockBanner) lockBanner.classList.remove('hidden');
                 if (lockReasonText) {
-                    lockReasonText.innerText = lockedBySubmit
-                        ? "Đã hoàn tất chọn ảnh. Khách hàng vẫn xem và tải ảnh (có bao gồm hình chìm của studio) bình thường. Để tải ảnh không có hình chìm hoặc chọn thêm ảnh. Vui lòng liên hệ studio"
+                    lockReasonText.innerHTML = lockedBySubmit
+                        ? 'Đã hoàn tất chọn ảnh. Khách hàng vẫn xem và tải ảnh (có bao gồm <strong class="text-white font-extrabold underline decoration-amber-400 underline-offset-2">hình chìm</strong> của studio) bình thường. Để tải ảnh không có <strong class="text-white font-extrabold underline decoration-amber-400 underline-offset-2">hình chìm</strong> hoặc chọn thêm ảnh. Vui lòng liên hệ studio'
                         : "Thời hạn chọn ảnh của Album này đã kết thúc. Phần chọn ảnh đã tự động khoá.";
                 }
                 if (unlockBtnAdmin) {
