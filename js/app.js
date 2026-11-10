@@ -86,8 +86,8 @@ const App = (function () {
         if (!url || typeof url !== 'string') return url || '';
         const driveId = getDriveIdFromUrl(url);
         if (driveId) {
-            // Liên kết trực tiếp qua Google User Content CDN với =s0 đảm bảo 100% không bị nén, sắc nét tuyệt đối
-            return `https://lh3.googleusercontent.com/d/${driveId}=s0`;
+            // Direct binary stream không nén từ Google Drive CDN
+            return `https://drive.usercontent.google.com/download?id=${driveId}&export=view`;
         }
         if (url.includes('drive.google.com/thumbnail')) {
             return getOptimizedThumbnailUrl(url, 's0');
