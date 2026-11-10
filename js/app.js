@@ -1103,9 +1103,9 @@ const App = (function () {
                     </span>
                 </div>
 
-                ${isClientMode ? `
-                    <div class="p-2 sm:p-2.5 bg-white flex items-center justify-between gap-1.5 border-t border-zinc-100">
-                        <span class="text-[11px] text-zinc-500 truncate font-mono">${timeStr}</span>
+                <div class="p-2 sm:p-2.5 bg-white flex items-center justify-between gap-1.5 border-t border-zinc-100">
+                    <span class="text-[11px] text-zinc-500 truncate font-mono">${timeStr}</span>
+                    ${isClientMode ? `
                         <div class="flex items-center gap-1.5">
                             <button
                                 type="button"
@@ -1125,8 +1125,8 @@ const App = (function () {
                                 <i class="fa-solid fa-heart"></i>
                             </button>
                         </div>
-                    </div>
-                ` : ''}
+                    ` : ''}
+                </div>
             </div>
         `;
     }
@@ -1325,7 +1325,10 @@ const App = (function () {
 
         if (codeEl) codeEl.innerText = photo.code || photo.title || 'IMG';
         if (counterEl) counterEl.innerText = `${currentLightboxIndex + 1} / ${currentFilteredPhotos.length}`;
-        if (titleEl) titleEl.innerText = photo.location || photo.city || '';
+        const timePart = photo.capturedAt ? photo.capturedAt.replace('T', ' ') : '';
+        const locPart = photo.location || photo.city || '';
+        const metaSummary = [locPart, timePart].filter(Boolean).join(' • ');
+        if (titleEl) titleEl.innerText = metaSummary;
 
         const album = AdminModule.getAlbumById(currentAlbumId);
         const selections = album ? AdminModule.getSelections(album.id) : {};
