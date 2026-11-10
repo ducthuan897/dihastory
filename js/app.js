@@ -13,8 +13,8 @@ const App = (function () {
 
     // State for Home Showcase (Page 1)
     let homeLocationFilter = 'ALL';
-    let homeTimeSort = 'newest';
-    let homeGroupByLocation = true;
+    let homeTimeSort = 'oldest'; // 'oldest': Cũ nhất trước, 'newest': Mới nhất trước
+    let homeGroupByLocation = false;
 
     // State for Client Album Page (Page 2)
     let activeCategory = 'ALL';
@@ -704,9 +704,26 @@ const App = (function () {
         sortedAlbums.sort((a, b) => {
             const timeA = getAlbumOldestPhotoTime(a);
             const timeB = getAlbumOldestPhotoTime(b);
-            // Sớm nhất trước (cũ nhất đứng đầu)
+            if (homeTimeSort === 'newest') {
+                // Mới nhất trước
+                return timeB.localeCompare(timeA);
+            }
+            // Mặc định: Cũ nhất trước
             return timeA.localeCompare(timeB);
         });
+
+        // Cập nhật giao diện nút bấm Sắp xếp trên Trang Chủ nếu có
+        const sortIcon = document.getElementById('homeSortTimeIcon');
+        const sortLabel = document.getElementById('homeSortTimeLabel');
+        if (sortIcon && sortLabel) {
+            if (homeTimeSort === 'newest') {
+                sortIcon.className = "fa-solid fa-arrow-down-wide-short text-rose-600";
+                sortLabel.innerText = "Mới nhất trước";
+            } else {
+                sortIcon.className = "fa-solid fa-arrow-down-short-wide text-zinc-500";
+                sortLabel.innerText = "Cũ nhất trước";
+            }
+        }
 
         const container = document.getElementById('homeShowcaseContainer');
         if (!container) return;
@@ -780,6 +797,16 @@ const App = (function () {
                 </div>
             </article>
         `;
+    }
+
+    function toggleHomeTimeSort() {
+        homeTimeSort = homeTimeSort === 'newest' ? 'oldest' : 'newest';
+        renderHomeShowcase();
+        showToast(
+            homeTimeSort === 'newest'
+                ? 'Đã sắp xếp: Dự án mới nhất lên đầu'
+                : 'Đã sắp xếp: Dự án từ khoảnh khắc sớm nhất (cũ nhất) lên đầu'
+        );
     }
 
     // =========================================================================
@@ -2317,6 +2344,7 @@ const App = (function () {
         openAlbumPage,
         handleAlbumBackAction,
         renderHomeShowcase,
+        toggleHomeTimeSort,
         renderPublicAlbum,
         setCategoryFilter,
         setAlbumTimeSort,
