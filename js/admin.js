@@ -4705,7 +4705,7 @@ function testRun() {
         const id = albumId || activeAdminAlbumId;
         let base = window.location.origin + window.location.pathname;
         base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-        if (window.location.hostname.includes('github.io')) {
+        if (window.location.hostname === 'ducthuan897.github.io' || window.location.hostname.endsWith('.github.io')) {
             return `https://ducthuan897.github.io/dihastory/${encodeURIComponent(id)}`;
         }
         return `${base}/${encodeURIComponent(id)}`;
