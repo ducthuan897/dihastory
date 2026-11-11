@@ -1641,10 +1641,12 @@ const App = (function () {
 
         isLightboxShowingBefore = !isLightboxShowingBefore;
         if (isLightboxShowingBefore && photo.beforeUrl) {
-            img.src = getFullResPhotoUrl(photo.beforeUrl);
+            const safeBefore = sanitizeMediaUrl(getFullResPhotoUrl(photo.beforeUrl));
+            if (safeBefore) img.setAttribute('src', encodeURI(safeBefore));
             showToast("Đang xem ảnh gốc");
         } else {
-            img.src = getFullResPhotoUrl(photo.url);
+            const safeAfter = sanitizeMediaUrl(getFullResPhotoUrl(photo.url));
+            if (safeAfter) img.setAttribute('src', encodeURI(safeAfter));
             showToast("Đang xem ảnh đã chỉnh sửa");
         }
     }
