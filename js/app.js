@@ -215,7 +215,7 @@ const App = (function () {
 
     function getAppBasePath() {
         let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-        if (window.location.hostname.includes('github.io')) {
+        if (window.location.hostname === 'ducthuan897.github.io' || window.location.hostname.endsWith('.github.io')) {
             base = '/dihastory';
         }
         return base || '';
