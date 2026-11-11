@@ -1712,9 +1712,9 @@ function testRun() {
             <div class="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 text-emerald-900 px-3 py-1.5 rounded-lg text-xs">
                 <div class="flex items-center gap-2 min-w-0">
                     <i class="fa-brands fa-google-drive text-emerald-600 shrink-0"></i>
-                    <span class="truncate font-mono text-[11px]">${link}</span>
+                    <span class="truncate font-mono text-[11px]">${escapeHtml(String(link || ''))}</span>
                 </div>
-                <button type="button" onclick="AdminModule.removeDriveLinkFromCreateModal(${idx})" class="text-zinc-400 hover:text-rose-600 shrink-0">
+                <button type="button" onclick="AdminModule.removeDriveLinkFromCreateModal(${Number(idx)})" class="text-zinc-400 hover:text-rose-600 shrink-0">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
