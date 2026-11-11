@@ -89,10 +89,15 @@ const App = (function () {
             // Direct Web CDN link chuẩn s0 cho phép browser cache và giải mã trọn vẹn 100% kích thước pixel gốc
             return `https://lh3.googleusercontent.com/d/${driveId}=s0`;
         }
-        if (url.includes('drive.google.com/thumbnail')) {
+        let parsedHost = "";
+        try {
+            parsedHost = new URL(url).hostname;
+        } catch (e) {}
+
+        if (parsedHost === 'drive.google.com' && url.includes('/thumbnail')) {
             return getOptimizedThumbnailUrl(url, 's0');
         }
-        if (url.includes('googleusercontent.com')) {
+        if (parsedHost === 'googleusercontent.com' || parsedHost.endsWith('.googleusercontent.com')) {
             if (/=[sw]\d+/i.test(url)) {
                 return url.replace(/=[sw]\d+/i, '=s0');
             }
