@@ -2617,9 +2617,19 @@ function testRun() {
 
         // 0. Duyệt qua các tài khoản Google Apps Script Web App đã kết nối
         for (const currentKey of prioritizedKeys) {
-            if (currentKey.startsWith("https://script.google.com/")) {
+            let scriptUrlObj = null;
+            try {
+                const parsed = new URL(currentKey);
+                if (parsed.protocol === "https:" && parsed.hostname === "script.google.com" && parsed.pathname.startsWith("/macros/s/")) {
+                    scriptUrlObj = parsed;
+                }
+            } catch (err) {}
+
+            if (scriptUrlObj) {
                 try {
-                    const resp = await fetch(`${currentKey}?id=${encodeURIComponent(folderId)}`);
+                    const reqUrl = new URL(scriptUrlObj.href);
+                    reqUrl.searchParams.set("id", String(folderId));
+                    const resp = await fetch(reqUrl.toString());
                     if (resp.ok) {
                         const data = await resp.json();
                         if (data && Array.isArray(data.files) && data.files.length > 0) {
