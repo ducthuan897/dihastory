@@ -3267,7 +3267,7 @@ function testRun() {
 
                                     <!-- Dòng thông tin Khách chọn -->
                                     <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 mt-1.5">
-                                        <span class="text-rose-600 font-semibold inline-flex items-center"><i class="fa-solid fa-heart mr-1.5"></i>Khách chọn: ${selectedCount}/${album.selectionLimit || '∞'}</span>
+                                        <span class="text-rose-600 font-semibold inline-flex items-center"><i class="fa-solid fa-heart mr-1.5"></i>Khách chọn: ${selectedCount}/${album.photos.length}</span>
                                         ${(album.deliveredPhotos && album.deliveredPhotos.length > 0) ? `<span class="text-emerald-700 font-semibold inline-flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-emerald-600"></i>Đã chỉnh: ${album.deliveredPhotos.length} ảnh</span>` : ''}
                                         ${album.deadlineEnabled && album.deadlineAt ? `<span class="text-amber-700 inline-flex items-center"><i class="fa-regular fa-clock mr-1.5 text-amber-500"></i>Hạn: ${formatTimeShort(album.deadlineAt)}</span>` : ''}
                                     </div>
