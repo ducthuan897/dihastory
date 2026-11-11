@@ -1670,25 +1670,25 @@ const App = (function () {
             const img = new Image();
             img.crossOrigin = 'anonymous';
 
-            // Thử nạp blob qua fetch trước để tránh tainted canvas nếu có thể
             let objectUrl = null;
+            let validatedUrl = "";
             try {
-                const proxyUrls = [
-                    photoUrl,
-                    `https://api.allorigins.win/raw?url=${encodeURIComponent(photoUrl)}`,
-                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(photoUrl)}`
-                ];
-                for (const pUrl of proxyUrls) {
-                    try {
-                        const resp = await fetch(pUrl);
-                        if (resp.ok) {
-                            const b = await resp.blob();
-                            objectUrl = URL.createObjectURL(b);
-                            break;
-                        }
-                    } catch (e) {}
+                const parsed = new URL(photoUrl);
+                const allowedHosts = ["drive.google.com", "lh3.googleusercontent.com", "googleusercontent.com"];
+                if (parsed.protocol === "https:" && allowedHosts.some(h => parsed.hostname === h || parsed.hostname.endsWith(`.${h}`))) {
+                    validatedUrl = parsed.href;
                 }
             } catch (e) {}
+
+            if (validatedUrl) {
+                try {
+                    const resp = await fetch(validatedUrl);
+                    if (resp.ok) {
+                        const b = await resp.blob();
+                        objectUrl = URL.createObjectURL(b);
+                    }
+                } catch (e) {}
+            }
 
             img.onload = () => {
                 try {
