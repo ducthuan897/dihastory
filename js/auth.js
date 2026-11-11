@@ -595,9 +595,21 @@ const AuthModule = (function () {
         const text = document.getElementById('editUserAvatarText');
         if (!previewWrap || !img || !text) return;
 
-        const safeAvatar = sanitizeAvatarUrl(avatarUrl);
-        if (safeAvatar) {
-            img.src = safeAvatar;
+        let safeSrc = '';
+        if (avatarUrl && typeof avatarUrl === 'string') {
+            try {
+                const parsedUrl = new URL(avatarUrl, window.location.origin);
+                if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
+                    safeSrc = parsedUrl.href;
+                }
+            } catch (e) {}
+            if (!safeSrc && avatarUrl.startsWith('data:image/')) {
+                safeSrc = avatarUrl;
+            }
+        }
+
+        if (safeSrc) {
+            img.src = safeSrc;
             img.classList.remove('hidden');
             text.classList.add('hidden');
         } else {
