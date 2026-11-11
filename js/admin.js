@@ -3935,7 +3935,11 @@ function testRun() {
             }
             faceListEl.innerHTML = [
                 `<button type="button" onclick="AdminModule.setManagePersonFilter('ALL')" class="w-full text-left px-2.5 py-1.5 rounded-xl ${managePagePersonFilter === 'ALL' ? 'bg-zinc-900 text-white font-semibold' : 'hover:bg-zinc-100 text-zinc-700'}">Tất cả khuôn mặt / Người chọn</button>`,
-                ...persons.map(name => `<button type="button" onclick="AdminModule.setManagePersonFilter('${name}')" class="w-full text-left px-2.5 py-1.5 rounded-xl ${managePagePersonFilter === name ? 'bg-zinc-900 text-white font-semibold' : 'hover:bg-zinc-100 text-zinc-700'}"><i class="fa-regular fa-user mr-1.5"></i>${name}</button>`)
+                ...persons.map(name => {
+                    const safeNameAttr = escapeHtml(String(name || '').replace(/['"\\]/g, ''));
+                    const safeNameLabel = escapeHtml(String(name || ''));
+                    return `<button type="button" onclick="AdminModule.setManagePersonFilter('${safeNameAttr}')" class="w-full text-left px-2.5 py-1.5 rounded-xl ${managePagePersonFilter === name ? 'bg-zinc-900 text-white font-semibold' : 'hover:bg-zinc-100 text-zinc-700'}"><i class="fa-regular fa-user mr-1.5"></i>${safeNameLabel}</button>`;
+                })
             ].join('');
         }
 
