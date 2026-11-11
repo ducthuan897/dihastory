@@ -4834,12 +4834,11 @@ function testRun() {
             const diffY = clientY - coverRepositionStartY;
             const heroEl = document.getElementById('managePageHeroSection');
             const heroHeight = heroEl ? heroEl.clientHeight : 220;
-            // Kéo xuống -> dịch ảnh xuống (tăng % translateY / giảm % posY)
-            // Nhạy cảm vừa phải: 1px = ~0.35%
-            const percentDelta = (diffY / Math.max(100, heroHeight)) * 80;
+            // Tỷ lệ nhạy mượt mà, đầm tay (chậm lại khoảng 2.5 lần so với trước: 32%)
+            const percentDelta = (diffY / Math.max(100, heroHeight)) * 32;
             let nextPos = coverRepositionStartPosY - percentDelta;
             nextPos = Math.max(0, Math.min(100, nextPos));
-            currentTempCoverPosY = Math.round(nextPos);
+            currentTempCoverPosY = Math.round(nextPos * 10) / 10;
 
             const coverImg = document.getElementById('managePageCoverImg');
             if (coverImg) {

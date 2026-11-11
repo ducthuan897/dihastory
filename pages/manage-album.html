@@ -44,14 +44,14 @@
                         class="text-zinc-300 text-sm sm:text-base font-medium mt-1"></p>
                 </div>
 
-                <!-- Top-right: Thanh công cụ căn chỉnh vị trí ảnh bìa (Nút Căn chỉnh ảnh bìa & Nút OK hoàn thành) -->
+                <!-- Top-right: Thanh công cụ căn chỉnh vị trí ảnh bìa (Nút Sửa & Nút OK hoàn thành) -->
                 <div class="absolute top-3 right-3 flex items-center gap-2 z-40">
-                    <!-- Nút bắt đầu căn chỉnh vị trí bìa -->
+                    <!-- Nút bắt đầu căn chỉnh vị trí bìa: chỉ icon và chữ Sửa -->
                     <button id="managePageStartRepositionBtn" type="button" onclick="AdminModule.startCoverReposition()"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/50 hover:bg-black/75 backdrop-blur-md text-white text-xs font-semibold cursor-pointer transition border border-white/25 shadow-sm"
                         title="Kéo ảnh lên / xuống để chọn góc nhìn đẹp nhất cho ảnh bìa">
                         <i class="fa-solid fa-arrows-up-down text-[11px]"></i>
-                        <span>Căn chỉnh ảnh bìa</span>
+                        <span>Sửa</span>
                     </button>
 
                     <!-- Nút OK hoàn thành (chỉ hiện khi đang căn chỉnh) -->
