@@ -17,6 +17,16 @@ const AdminModule = (function () {
     const DEFAULT_GOOGLE_DRIVE_API_KEY = "https://script.google.com/macros/s/AKfycbw2nwiPyK04c9V4dQKVPlAya8Z0FrwBG3McsT0swJjRulOjpwt06ytvSrMKAm7xZ9FL/exec";
 
     // Hàm mã hóa & giải mã bảo mật dữ liệu tài khoản khi lưu vào Database
+    function escapeHtml(str) {
+        if (!str || typeof str !== 'string') return "";
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     const DRIVE_SEC_SALT = 0x5a;
     function encryptSecretStr(plain) {
         if (!plain || typeof plain !== 'string') return "";
@@ -3335,7 +3345,7 @@ function testRun() {
                                 <!-- Cụm thông tin nằm bên phải bức ảnh -->
                                 <div class="min-w-0 flex-1 py-0.5">
                                     <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                        <h3 class="text-base sm:text-lg font-bold text-zinc-900 tracking-tight">${album.title}</h3>
+                                        <h3 class="text-base sm:text-lg font-bold text-zinc-900 tracking-tight">${escapeHtml(album.title)}</h3>
                                         ${
                                             album.sourceType === 'drive'
                                                 ? '<span class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-brands fa-google-drive mr-1"></i>Google Drive</span>'
@@ -3348,7 +3358,7 @@ function testRun() {
                                         }
                                         ${
                                             album.isSelectionLockedBySubmit
-                                                ? '<span class="text-[10px] bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-full font-bold shrink-0"><i class="fa-solid fa-lock mr-1"></i>Đã khoá chọn (Khách đã hoàn tất)</span>'
+                                                ? '<span class="text-[10px] bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-bold shrink-0"><i class="fa-solid fa-lock mr-1"></i>Đã khoá chọn (Khách đã hoàn tất)</span>'
                                                 : ''
                                         }
                                     </div>
@@ -3362,8 +3372,8 @@ function testRun() {
 
                                     <!-- Trên Desktop (sm trở lên): Dòng Ngày chụp, Địa điểm, Số lượng ảnh nằm ngang bên phải ảnh -->
                                     <div class="album-desktop-meta hidden sm:flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-xs text-zinc-500 mt-1.5">
-                                        <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${album.date}</span>
-                                        <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${album.city}</span>
+                                        <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${escapeHtml(album.date)}</span>
+                                        <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${escapeHtml(album.city)}</span>
                                         <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${album.photos.length} ảnh</span>
                                     </div>
                                 </div>
@@ -3371,8 +3381,8 @@ function testRun() {
 
                             <!-- Trên Mobile (dưới sm): Xếp thành 1 hàng ở dưới ảnh album theo đúng yêu cầu -->
                             <div class="album-mobile-meta flex sm:hidden flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 pt-0.5">
-                                <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${album.date}</span>
-                                <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${album.city}</span>
+                                <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${escapeHtml(album.date)}</span>
+                                <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${escapeHtml(album.city)}</span>
                                 <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${album.photos.length} ảnh</span>
                             </div>
                         </div>
