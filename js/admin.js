@@ -2451,7 +2451,11 @@ function testRun() {
         if (!url) return null;
         const folderMatch = url.match(/\/folders\/([a-zA-Z0-9_-]{15,})/);
         if (folderMatch) return folderMatch[1];
-        if (url.includes('drive.google.com') && url.includes('id=') && !url.includes('/file/')) {
+        let parsedHost = '';
+        try {
+            parsedHost = new URL(url).hostname;
+        } catch (e) {}
+        if (parsedHost === 'drive.google.com' && url.includes('id=') && !url.includes('/file/')) {
             const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
             if (idMatch) return idMatch[1];
         }
