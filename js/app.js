@@ -1065,11 +1065,11 @@ const App = (function () {
         const videoPlayer = document.getElementById('mainVideoPlayer');
         if (videoSection && videoPlayer) {
             const ytId = (album.youtubeId || '').trim();
-            if (ytId) {
-                videoPlayer.src = `https://www.youtube.com/embed/${ytId}`;
+            if (/^[a-zA-Z0-9_-]{6,20}$/.test(ytId)) {
+                videoPlayer.setAttribute('src', 'https://www.youtube.com/embed/' + encodeURIComponent(ytId));
                 videoSection.classList.remove('hidden');
             } else {
-                videoPlayer.src = '';
+                videoPlayer.removeAttribute('src');
                 videoSection.classList.add('hidden');
             }
         }
