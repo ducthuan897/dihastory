@@ -3710,6 +3710,7 @@ function testRun() {
     }
 
     function togglePhotoHeartAdmin(photoId) {
+        if (!photoId || photoId === '__proto__' || photoId === 'constructor' || photoId === 'prototype') return;
         const album = getActiveAdminAlbum();
         if (!album) return;
         const selections = getSelections(album.id);
