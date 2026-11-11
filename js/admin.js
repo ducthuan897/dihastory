@@ -29,13 +29,17 @@ const AdminModule = (function () {
 
     function sanitizeMediaUrl(raw) {
         if (!raw || typeof raw !== 'string') return "";
+        const trimmed = raw.trim();
+        if (!/^https?:\/\//i.test(trimmed) && !trimmed.startsWith('data:image/')) {
+            return "";
+        }
         try {
-            const parsedUrl = new URL(raw, window.location.origin);
+            const parsedUrl = new URL(trimmed);
             if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
                 return parsedUrl.href;
             }
         } catch (e) {}
-        if (raw.startsWith('data:image/')) return raw;
+        if (trimmed.startsWith('data:image/')) return trimmed;
         return "";
     }
 
@@ -3813,7 +3817,12 @@ function testRun() {
         const coverImg = document.getElementById('managePageCoverImg');
         if (coverImg) {
             const rawCover = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
-            coverImg.src = sanitizeMediaUrl(rawCover);
+            const safeCover = sanitizeMediaUrl(rawCover);
+            if (safeCover) {
+                coverImg.setAttribute('src', safeCover);
+            } else {
+                coverImg.removeAttribute('src');
+            }
             const pos = typeof album.coverPosY === 'number' ? album.coverPosY : 50;
             coverImg.style.objectPosition = `center ${pos}%`;
         }
