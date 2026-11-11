@@ -3193,46 +3193,44 @@ function testRun() {
                 >
                     <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                         <!-- Album Info -->
-                        <div class="flex flex-col gap-2.5 flex-1 min-w-0">
-                            <!-- Hàng 1: Ảnh bìa bên trái, cụm Tiêu đề + Trạng thái + Khách chọn nằm ngang bên phải -->
-                            <div class="flex items-start gap-3.5 sm:gap-4 w-full">
-                                <img src="${album.coverUrl}" alt="${album.title}" referrerpolicy="no-referrer" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border border-zinc-200/90 shadow-2xs hover:scale-105 transition-transform duration-300 shrink-0" style="object-position: center ${typeof album.coverPosY === 'number' ? album.coverPosY : 50}%;">
+                        <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
+                            <!-- Ảnh bìa album -->
+                            <img src="${album.coverUrl}" alt="${album.title}" referrerpolicy="no-referrer" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border border-zinc-200/90 shadow-2xs hover:scale-105 transition-transform duration-300 shrink-0" style="object-position: center ${typeof album.coverPosY === 'number' ? album.coverPosY : 50}%;">
 
-                                <!-- Cụm text nằm bên phải bức ảnh -->
-                                <div class="min-w-0 flex-1 py-0.5">
-                                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                        <h3 class="text-base sm:text-lg font-bold text-zinc-900 tracking-tight">${album.title}</h3>
-                                        ${
-                                            album.sourceType === 'drive'
-                                                ? '<span class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-brands fa-google-drive mr-1"></i>Google Drive</span>'
-                                                : '<span class="text-[10px] bg-zinc-100 text-zinc-700 border border-zinc-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-solid fa-hard-drive mr-1"></i>Local</span>'
-                                        }
-                                        ${
-                                            album.isPublic
-                                                ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-solid fa-globe mr-1"></i>Đang chiếu Trang chủ</span>'
-                                                : '<span class="text-[10px] bg-zinc-100 text-zinc-600 border border-zinc-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-solid fa-lock mr-1"></i>Chỉ gửi Link riêng</span>'
-                                        }
-                                        ${
-                                            album.isSelectionLockedBySubmit
-                                                ? '<span class="text-[10px] bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-full font-bold shrink-0"><i class="fa-solid fa-lock mr-1"></i>Đã khoá chọn (Khách đã hoàn tất)</span>'
-                                                : ''
-                                        }
-                                    </div>
-
-                                    <!-- Dòng thông tin Khách chọn bên phải ảnh -->
-                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 mt-2">
-                                        <span class="text-rose-600 font-semibold inline-flex items-center"><i class="fa-solid fa-heart mr-1.5"></i>Khách chọn: ${selectedCount}/${album.selectionLimit || '∞'}</span>
-                                        ${(album.deliveredPhotos && album.deliveredPhotos.length > 0) ? `<span class="text-emerald-700 font-semibold inline-flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-emerald-600"></i>Đã chỉnh: ${album.deliveredPhotos.length} ảnh</span>` : ''}
-                                        ${album.deadlineEnabled && album.deadlineAt ? `<span class="text-amber-700 inline-flex items-center"><i class="fa-regular fa-clock mr-1.5 text-amber-500"></i>Hạn: ${formatTimeShort(album.deadlineAt)}</span>` : ''}
-                                    </div>
+                            <!-- Cụm thông tin nằm bên phải bức ảnh -->
+                            <div class="min-w-0 flex-1 py-0.5">
+                                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                    <h3 class="text-base sm:text-lg font-bold text-zinc-900 tracking-tight">${album.title}</h3>
+                                    ${
+                                        album.sourceType === 'drive'
+                                            ? '<span class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-brands fa-google-drive mr-1"></i>Google Drive</span>'
+                                            : '<span class="text-[10px] bg-zinc-100 text-zinc-700 border border-zinc-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-solid fa-hard-drive mr-1"></i>Local</span>'
+                                    }
+                                    ${
+                                        album.isPublic
+                                            ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-solid fa-globe mr-1"></i>Đang chiếu Trang chủ</span>'
+                                            : '<span class="text-[10px] bg-zinc-100 text-zinc-600 border border-zinc-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-solid fa-lock mr-1"></i>Chỉ gửi Link riêng</span>'
+                                    }
+                                    ${
+                                        album.isSelectionLockedBySubmit
+                                            ? '<span class="text-[10px] bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-full font-bold shrink-0"><i class="fa-solid fa-lock mr-1"></i>Đã khoá chọn (Khách đã hoàn tất)</span>'
+                                            : ''
+                                    }
                                 </div>
-                            </div>
 
-                            <!-- Hàng 2: Dòng text phụ xếp thành 1 hàng ở dưới ảnh album (Ngày chụp, Địa điểm, Số lượng ảnh) -->
-                            <div class="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-[11px] sm:text-xs text-zinc-500 pt-0.5">
-                                <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${album.date}</span>
-                                <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${album.city}</span>
-                                <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${album.photos.length} ảnh</span>
+                                <!-- Dòng thông tin Khách chọn -->
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 mt-1.5">
+                                    <span class="text-rose-600 font-semibold inline-flex items-center"><i class="fa-solid fa-heart mr-1.5"></i>Khách chọn: ${selectedCount}/${album.selectionLimit || '∞'}</span>
+                                    ${(album.deliveredPhotos && album.deliveredPhotos.length > 0) ? `<span class="text-emerald-700 font-semibold inline-flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-emerald-600"></i>Đã chỉnh: ${album.deliveredPhotos.length} ảnh</span>` : ''}
+                                    ${album.deadlineEnabled && album.deadlineAt ? `<span class="text-amber-700 inline-flex items-center"><i class="fa-regular fa-clock mr-1.5 text-amber-500"></i>Hạn: ${formatTimeShort(album.deadlineAt)}</span>` : ''}
+                                </div>
+
+                                <!-- Dòng thông tin: Ngày chụp, Địa điểm, Số lượng ảnh chuyển lên bên phải ảnh -->
+                                <div class="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-[11px] sm:text-xs text-zinc-500 mt-1.5">
+                                    <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${album.date}</span>
+                                    <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${album.city}</span>
+                                    <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${album.photos.length} ảnh</span>
+                                </div>
                             </div>
                         </div>
 
