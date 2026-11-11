@@ -27,6 +27,19 @@ const AdminModule = (function () {
             .replace(/'/g, "&#039;");
     }
 
+    function sanitizeMediaUrl(raw) {
+        if (!raw || typeof raw !== 'string') return "";
+        try {
+            const parsedUrl = new URL(raw, window.location.origin);
+            if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:' || raw.startsWith('data:image/')) {
+                return raw;
+            }
+        } catch (e) {
+            if (raw.startsWith('data:image/')) return raw;
+        }
+        return "";
+    }
+
     const DRIVE_SEC_SALT = 0x5a;
     function encryptSecretStr(plain) {
         if (!plain || typeof plain !== 'string') return "";
@@ -4142,7 +4155,7 @@ function testRun() {
 
         const previewImg = document.getElementById('modalCoverPreviewImg');
         const currentCoverUrl = document.getElementById('adminCoverUrl')?.value || album.coverUrl;
-        if (previewImg) previewImg.src = currentCoverUrl;
+        if (previewImg) previewImg.src = sanitizeMediaUrl(currentCoverUrl);
 
         const grid = document.getElementById('modalCoverPhotoPickerGrid');
         if (!grid) return;
