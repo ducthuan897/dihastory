@@ -3364,7 +3364,7 @@ function testRun() {
             const safeDate = escapeHtml(album.date || '');
             const safeCity = escapeHtml(album.city || '');
             const safeDeadline = album.deadlineEnabled && album.deadlineAt ? escapeHtml(formatTimeShort(album.deadlineAt)) : '';
-            const safeCoverPosY = typeof album.coverPosY === 'number' && isFinite(album.coverPosY) ? album.coverPosY : 50;
+            const safeCoverPosY = typeof album.coverPosY === 'number' && isFinite(album.coverPosY) ? Math.max(0, Math.min(100, Math.round(album.coverPosY))) : 50;
 
             return `
                 <div
