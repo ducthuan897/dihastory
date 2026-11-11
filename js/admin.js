@@ -3138,6 +3138,9 @@ function testRun() {
         renderAdminAlbumsTable();
         populateSelectedAlbumEditor();
         updateDriveApiKeyBadge();
+        if (typeof AuthModule !== 'undefined' && typeof AuthModule.checkAuthUI === 'function') {
+            AuthModule.checkAuthUI();
+        }
     }
 
     function selectAlbumForEditing(albumId) {

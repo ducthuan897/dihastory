@@ -172,10 +172,22 @@ const AuthModule = (function () {
                 if (navAvatarImg) navAvatarImg.src = avatarSrc;
                 if (cardAvatarImg) cardAvatarImg.src = avatarSrc;
                 if (cardName) cardName.innerText = u.fullName || u.username;
+
+                // Phân quyền hiển thị "Kết nối Google Drive" và "Quản lý người dùng" ngoài màn hình quản trị
+                // Chỉ Super Admin và Admin mới thấy
+                const isPrivileged = (u.role === 'super_admin' || u.role === 'admin');
+                const headerDriveBtn = document.getElementById('adminHeaderDriveBtn');
+                const headerUsersBtn = document.getElementById('adminHeaderUsersBtn');
+                if (headerDriveBtn) headerDriveBtn.classList.toggle('hidden', !isPrivileged);
+                if (headerUsersBtn) headerUsersBtn.classList.toggle('hidden', !isPrivileged);
             }
         } else {
             if (navLoginBtn) navLoginBtn.classList.remove('hidden');
             if (navAdminControls) navAdminControls.classList.add('hidden');
+            const headerDriveBtn = document.getElementById('adminHeaderDriveBtn');
+            const headerUsersBtn = document.getElementById('adminHeaderUsersBtn');
+            if (headerDriveBtn) headerDriveBtn.classList.add('hidden');
+            if (headerUsersBtn) headerUsersBtn.classList.add('hidden');
             closeProfileDropdown();
         }
     }
