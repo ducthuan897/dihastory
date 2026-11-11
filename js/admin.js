@@ -11,7 +11,6 @@ const AdminModule = (function () {
     const STORAGE_KEY_SELECTIONS_MAP = "shotpik_multi_selections_v2";
     const STORAGE_KEY_SUBMISSIONS_MAP = "shotpik_multi_submissions_v2";
     const STORAGE_KEY_REMOVED_BACKUP_MAP = "shotpik_removed_interactions_backup_v2";
-    const STORAGE_KEY_GOOGLE_API_KEY = "shotpik_google_drive_api_key_v1";
     const STORAGE_KEY_DRIVE_ACCOUNTS = "shotpik_google_drive_accounts_v1";
 
     const DEFAULT_GOOGLE_DRIVE_API_KEY = "https://script.google.com/macros/s/AKfycbw2nwiPyK04c9V4dQKVPlAya8Z0FrwBG3McsT0swJjRulOjpwt06ytvSrMKAm7xZ9FL/exec";
@@ -84,12 +83,11 @@ const AdminModule = (function () {
             }
         } catch (e) {}
 
-        const legacyKey = (localStorage.getItem(STORAGE_KEY_GOOGLE_API_KEY) || DEFAULT_GOOGLE_DRIVE_API_KEY || "").trim();
         const initial = [
             {
                 id: "drv_acc_primary",
                 name: "Tài khoản Drive chính",
-                key: legacyKey,
+                key: DEFAULT_GOOGLE_DRIVE_API_KEY,
                 active: true,
                 createdAt: "2026-11-08T19:00"
             }
@@ -101,10 +99,6 @@ const AdminModule = (function () {
     function saveDriveAccountsList(list, skipCloudSync = false) {
         try {
             localStorage.setItem(STORAGE_KEY_DRIVE_ACCOUNTS, JSON.stringify(list));
-            const primary = list.find(a => a.active) || list[0];
-            if (primary && primary.key) {
-                localStorage.setItem(STORAGE_KEY_GOOGLE_API_KEY, primary.key);
-            }
         } catch (e) {}
         updateDriveApiKeyBadge();
 
@@ -132,10 +126,6 @@ const AdminModule = (function () {
 
         if (!decryptedList.length) return;
         localStorage.setItem(STORAGE_KEY_DRIVE_ACCOUNTS, JSON.stringify(decryptedList));
-        const primary = decryptedList.find(a => a.active) || decryptedList[0];
-        if (primary && primary.key) {
-            localStorage.setItem(STORAGE_KEY_GOOGLE_API_KEY, primary.key);
-        }
         updateDriveApiKeyBadge();
         const modal = document.getElementById('driveApiKeyModal');
         if (modal && !modal.classList.contains('hidden')) {
