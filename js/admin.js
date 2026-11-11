@@ -3972,17 +3972,19 @@ function testRun() {
 
             subTabsEl.innerHTML = subTabs.map(t => {
                 const active = managePageSubTab === t.id;
+                const safeIdAttr = escapeHtml(String(t.id || '').replace(/['"\\]/g, ''));
+                const safeLabel = escapeHtml(String(t.label || ''));
                 return `
                     <button
                         type="button"
-                        onclick="AdminModule.setManageSubTab('${t.id}')"
+                        onclick="AdminModule.setManageSubTab('${safeIdAttr}')"
                         class="pb-2 whitespace-nowrap transition ${
                             active
                                 ? 'border-b-2 border-zinc-900 font-bold text-zinc-900'
                                 : 'border-b-2 border-transparent font-medium text-zinc-400 hover:text-zinc-700'
                         }"
                     >
-                        ${t.label}
+                        ${safeLabel}
                     </button>
                 `;
             }).join('');
