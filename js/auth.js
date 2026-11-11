@@ -733,7 +733,13 @@ const AuthModule = (function () {
         if (roleSelect) {
             if (isSelf) {
                 // Tự sửa chính mình: không được tự ý đổi quyền của mình
-                roleSelect.innerHTML = `<option value="${targetUser.role}" selected>${ROLE_LABELS[targetUser.role]}</option>`;
+                const validRole = ROLE_LABELS[targetUser.role] ? targetUser.role : 'editor';
+                roleSelect.textContent = '';
+                const opt = document.createElement('option');
+                opt.value = validRole;
+                opt.selected = true;
+                opt.textContent = ROLE_LABELS[validRole];
+                roleSelect.appendChild(opt);
                 roleSelect.setAttribute('disabled', 'true');
             } else if (curLevel === 3) {
                 // Super Admin: có thể set cả 3 quyền cho cấp dưới
