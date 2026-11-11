@@ -3723,17 +3723,33 @@ function testRun() {
     }
 
     function togglePhotoHeartAdmin(photoId) {
-        if (!photoId || photoId === '__proto__' || photoId === 'constructor' || photoId === 'prototype') return;
+        if (!photoId || typeof photoId !== 'string') return;
         const album = getActiveAdminAlbum();
         if (!album) return;
-        const selections = getSelections(album.id);
-        const cur = selections[photoId] || { selected: false, note: "" };
+        const validPhoto = (album.photos || []).find(p => p.id === photoId);
+        if (!validPhoto) return;
+
+        const safeKey = 'p_' + photoId;
+        const rawSelections = getSelections(album.id);
+        const selections = Object.create(null);
+        Object.keys(rawSelections).forEach(k => {
+            if (k !== '__proto__' && k !== 'constructor' && k !== 'prototype') {
+                selections['p_' + k.replace(/^p_/, '')] = rawSelections[k];
+            }
+        });
+
+        const cur = selections[safeKey] || { selected: false, note: "" };
         cur.selected = !cur.selected;
         if (cur.selected && !cur.selectorName) {
             cur.selectorName = album.clientName || "Khách hàng";
         }
-        selections[photoId] = cur;
-        saveSelections(selections, album.id);
+        selections[safeKey] = cur;
+
+        const cleanSelections = {};
+        Object.keys(selections).forEach(k => {
+            cleanSelections[k.replace(/^p_/, '')] = selections[k];
+        });
+        saveSelections(cleanSelections, album.id);
         renderAlbumManagePage();
         renderAdminAlbumsTable();
         App.renderPublicAlbum();
