@@ -819,11 +819,11 @@ const App = (function () {
                     </div>
 
                     <div class="absolute bottom-3 left-3 right-3 text-white">
-                        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-amber-300 font-medium mb-0.5">
+                        <h3 class="font-serif-display text-2xl font-bold leading-snug mb-0.5">${safeTitle}</h3>
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-amber-300 font-medium">
                             <span><i class="fa-regular fa-clock mr-1"></i>Từ: ${safeDate}</span>
                             ${safeLocation ? `<span class="opacity-70">•</span><span class="truncate max-w-full"><i class="fa-solid fa-location-dot mr-1"></i>${safeLocation}</span>` : ''}
                         </div>
-                        <h3 class="font-serif-display text-2xl font-bold leading-snug">${safeTitle}</h3>
                     </div>
                 </div>
 
