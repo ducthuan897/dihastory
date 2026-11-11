@@ -2190,7 +2190,9 @@ function testRun() {
         const dateInput = document.getElementById('createAlbumDateInput');
         const dateVal = dateInput && dateInput.value ? dateInput.value.split('-').reverse().join('/') : '';
         if (metaText) {
-            metaText.innerHTML = `<span class="text-emerald-700 font-semibold"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>Địa điểm: ${cityName}</span>${dateVal ? ` • <span class="text-zinc-800 font-medium"><i class="fa-regular fa-calendar text-emerald-600 mr-1"></i>${dateVal}</span>` : ''}`;
+            const safeCity = escapeHtml(String(cityName || ''));
+            const safeDateVal = escapeHtml(String(dateVal || ''));
+            metaText.innerHTML = `<span class="text-emerald-700 font-semibold"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>Địa điểm: ${safeCity}</span>${safeDateVal ? ` • <span class="text-zinc-800 font-medium"><i class="fa-regular fa-calendar text-emerald-600 mr-1"></i>${safeDateVal}</span>` : ''}`;
         }
         const chipContainer = document.getElementById('createQuickLocationChips');
         if (chipContainer) {
