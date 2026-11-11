@@ -5352,19 +5352,23 @@ function testRun() {
             } else {
                 listContainer.innerHTML = filteredSelectedPhotos.map(p => {
                     const st = selections[p.id] || {};
-                    const who = st.selectorName || album.clientName || 'Khách hàng';
+                    const safeUrl = escapeHtml(sanitizeMediaUrl(p.url || ''));
+                    const safeCode = escapeHtml(p.code || '');
+                    const safeWho = escapeHtml(st.selectorName || album.clientName || 'Khách hàng');
+                    const safeLocation = escapeHtml(p.location || album.city || '');
+                    const safeNote = st.note ? escapeHtml(st.note) : '';
                     return `
                         <div class="flex items-start gap-3 p-3 rounded-xl bg-zinc-50 border border-zinc-200">
-                            <img src="${p.url}" alt="${p.code}" class="w-14 h-14 rounded-lg object-cover shrink-0">
+                            <img src="${safeUrl}" alt="${safeCode}" class="w-14 h-14 rounded-lg object-cover shrink-0">
                             <div class="flex-1 min-w-0">
                                 <div class="flex flex-wrap items-center gap-1.5">
-                                    <span class="font-mono font-bold text-xs text-zinc-900 bg-white px-2 py-0.5 rounded border border-zinc-200">${p.code}</span>
-                                    <span class="text-[11px] bg-sky-50 text-sky-800 border border-sky-200 px-2 py-0.5 rounded-full font-medium"><i class="fa-regular fa-user mr-1"></i>${who}</span>
-                                    <span class="text-[11px] text-zinc-500"><i class="fa-solid fa-location-dot mr-1 text-rose-500"></i>${p.location || album.city}</span>
+                                    <span class="font-mono font-bold text-xs text-zinc-900 bg-white px-2 py-0.5 rounded border border-zinc-200">${safeCode}</span>
+                                    <span class="text-[11px] bg-sky-50 text-sky-800 border border-sky-200 px-2 py-0.5 rounded-full font-medium"><i class="fa-regular fa-user mr-1"></i>${safeWho}</span>
+                                    <span class="text-[11px] text-zinc-500"><i class="fa-solid fa-location-dot mr-1 text-rose-500"></i>${safeLocation}</span>
                                     ${st.selected ? '<span class="text-[10px] text-rose-600 font-semibold"><i class="fa-solid fa-heart mr-0.5"></i>Đã chọn</span>' : ''}
                                 </div>
                                 <p class="text-xs text-zinc-600 mt-1">
-                                    ${st.note ? `<span class="text-amber-800 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md block"><i class="fa-regular fa-comment-dots mr-1"></i><strong>Ghi chú:</strong> ${st.note}</span>` : '<span class="text-zinc-400 italic text-[11px]">Không có ghi chú riêng</span>'}
+                                    ${safeNote ? `<span class="text-amber-800 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md block"><i class="fa-regular fa-comment-dots mr-1"></i><strong>Ghi chú:</strong> ${safeNote}</span>` : '<span class="text-zinc-400 italic text-[11px]">Không có ghi chú riêng</span>'}
                                 </p>
                             </div>
                         </div>
