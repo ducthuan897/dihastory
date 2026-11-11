@@ -19,10 +19,11 @@ Các quy tắc bắt buộc phải luôn tuân thủ trong toàn bộ quá trìn
    - Tuyệt đối không tự ý chèn ảnh mẫu (Unsplash) giả vào Album của người dùng khi tạo mới hoặc cập nhật Album.
 
 5. **Tự động lấy Vị trí và Ngày chụp từ thông tin metadata (EXIF / File Info) riêng cho từng bức ảnh & Bảo toàn thông tin ảnh đã đăng**:
-   - Hệ thống tự động trích xuất ngày giờ chụp từ duy nhất thẻ `DateTimeOriginal` (EXIF `0x9003` - Date/Time Original) và tọa độ/vị trí chụp (`GPSLatitude`, `GPSLongitude` chuyển đổi sang địa danh thực tế hoặc thông tin vị trí trong metadata/tên file) trực tiếp và độc lập cho **từng bức ảnh** từ Google Drive đã chia sẻ hoặc file tải từ máy tính. Tuyệt đối không lấy thẻ `CreateDate` (`0x9004`) để đảm bảo đúng ngày chụp gốc thực tế.
+   - Khi bấm "Cập nhật" (hoặc tạo Album), trường thông tin ngày giờ chụp `[capturedAt]` của từng bức ảnh trong database bắt buộc phải lấy từ duy nhất thẻ `DateTimeOriginal` (EXIF `0x9003` - Date/Time Original) của chính bức ảnh đó từ Google Drive đã chia sẻ hoặc file tải từ máy tính. Tuyệt đối không lấy thẻ `CreateDate` (`0x9004`) để đảm bảo đúng ngày chụp gốc thực tế.
+   - Toàn bộ vị trí/tọa độ (`GPSLatitude`, `GPSLongitude`) cũng được tự động trích xuất và quy đổi thành địa danh tiếng Việt thực tế độc lập cho từng bức ảnh.
    - Luôn áp dụng quy tắc này cho **toàn bộ các Album hiện tại và mọi Album trong tương lai**.
-   - Tuyệt đối **không được lấy thời gian hoặc vị trí của một bức ảnh bất kỳ rồi áp dụng chung cho toàn bộ các ảnh khác** trong Album. Mỗi bức ảnh phải mang thông tin thời gian và vị trí riêng biệt của chính bức ảnh đó.
-   - **Tuyệt đối không tự ý thay đổi, ghi đè hoặc làm biến đổi thông tin của các bức ảnh đã đăng tải** (ngày giờ chụp, toạ độ, địa danh, mã ảnh, liên kết ảnh) trong quá trình cập nhật Album, chỉnh sửa Album, hoặc đồng bộ hóa dữ liệu.
+   - Tuyệt đối **không được lấy thời gian hoặc vị trí của một bức ảnh bất kỳ rồi áp dụng chung cho toàn bộ các ảnh khác** trong Album. Mỗi bức ảnh phải mang thông tin thời gian `[capturedAt]` và vị trí riêng biệt của chính bức ảnh đó trong database.
+   - **Tuyệt đối không tự ý thay đổi, ghi đè hoặc làm biến đổi thông tin của các bức ảnh đã đăng tải** (ngày giờ chụp, toạ độ, địa danh, mã ảnh, liên kết ảnh) trong quá trình cập nhật Album, chỉnh sửa Album, hoặc đồng bộ hóa dữ liệu (trừ khi thực hiện cập nhật làm mới lại dữ liệu ảnh theo chủ đích của người quản trị).
    - Tự động điền và cập nhật ngày chụp, thành phố/địa điểm của Album dựa trên thông tin tổng hợp phù hợp, nhưng metadata hiển thị và phân loại của từng bức ảnh luôn phải giữ đúng giá trị riêng của từng bức ảnh đó.
 
 6. **Chức năng "Sửa / Đặt ảnh bìa" là một trang web quản lý chi tiết Album riêng biệt theo giao diện Shotpik**:
