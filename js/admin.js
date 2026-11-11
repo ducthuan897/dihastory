@@ -4168,9 +4168,7 @@ function testRun() {
         const countBadge = document.getElementById('adminPhotoCountBadge');
         if (countBadge) countBadge.innerText = `${(album.photos || []).length} ảnh gốc`;
 
-        const previewImg = document.getElementById('modalCoverPreviewImg');
         const currentCoverUrl = document.getElementById('adminCoverUrl')?.value || album.coverUrl;
-        if (previewImg) previewImg.src = sanitizeMediaUrl(currentCoverUrl);
 
         const grid = document.getElementById('modalCoverPhotoPickerGrid');
         if (!grid) return;
@@ -4216,9 +4214,7 @@ function testRun() {
 
     function pickCoverPhotoInModal(url) {
         const coverInput = document.getElementById('adminCoverUrl');
-        const previewImg = document.getElementById('modalCoverPreviewImg');
         if (coverInput) coverInput.value = url;
-        if (previewImg) previewImg.src = url;
         renderModalCoverPhotoPicker();
     }
 
@@ -4703,9 +4699,6 @@ function testRun() {
         setVal('adminSelectionLimit', album.selectionLimit !== undefined ? album.selectionLimit : 10);
         setVal('adminPinCode', album.pinCode || "");
         setVal('adminYoutubeUrl', album.youtubeId ? `https://www.youtube.com/watch?v=${album.youtubeId}` : "");
-
-        const previewImg = document.getElementById('modalCoverPreviewImg');
-        if (previewImg) previewImg.setAttribute('src', sanitizeMediaUrl(album.coverUrl));
 
         setChk('adminIsPublicCheckbox', album.isPublic);
         setChk('adminReminderEnabledCheckbox', album.reminderEnabled);
