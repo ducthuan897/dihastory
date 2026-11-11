@@ -13,7 +13,7 @@ const AdminModule = (function () {
     const STORAGE_KEY_REMOVED_BACKUP_MAP = "shotpik_removed_interactions_backup_v2";
     const STORAGE_KEY_DRIVE_ACCOUNTS = "shotpik_google_drive_accounts_v1";
 
-    const DEFAULT_GOOGLE_DRIVE_API_KEY = "https://script.google.com/macros/s/AKfycbw2nwiPyK04c9V4dQKVPlAya8Z0FrwBG3McsT0swJjRulOjpwt06ytvSrMKAm7xZ9FL/exec";
+    const DEFAULT_DRIVE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2nwiPyK04c9V4dQKVPlAya8Z0FrwBG3McsT0swJjRulOjpwt06ytvSrMKAm7xZ9FL/exec";
 
     // Hàm mã hóa & giải mã bảo mật dữ liệu tài khoản khi lưu vào Database
     function escapeHtml(str) {
@@ -79,7 +79,15 @@ const AdminModule = (function () {
             const raw = localStorage.getItem(STORAGE_KEY_DRIVE_ACCOUNTS);
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed.map(acc => ({
+                        id: acc.id,
+                        name: decryptSecretStr(acc.name || "") || "Tài khoản Drive",
+                        key: decryptSecretStr(acc.key || ""),
+                        active: !!acc.active,
+                        createdAt: acc.createdAt || ""
+                    }));
+                }
             }
         } catch (e) {}
 
@@ -87,7 +95,7 @@ const AdminModule = (function () {
             {
                 id: "drv_acc_primary",
                 name: "Tài khoản Drive chính",
-                key: DEFAULT_GOOGLE_DRIVE_API_KEY,
+                key: DEFAULT_DRIVE_SCRIPT_URL,
                 active: true,
                 createdAt: "2026-11-08T19:00"
             }
@@ -97,19 +105,19 @@ const AdminModule = (function () {
     }
 
     function saveDriveAccountsList(list, skipCloudSync = false) {
+        const encryptedPayload = list.map(acc => ({
+            id: acc.id,
+            name: encryptSecretStr(acc.name || ""),
+            key: encryptSecretStr(acc.key || ""),
+            active: !!acc.active,
+            createdAt: acc.createdAt || ""
+        }));
         try {
-            localStorage.setItem(STORAGE_KEY_DRIVE_ACCOUNTS, JSON.stringify(list));
+            localStorage.setItem(STORAGE_KEY_DRIVE_ACCOUNTS, JSON.stringify(encryptedPayload));
         } catch (e) {}
         updateDriveApiKeyBadge();
 
         if (!skipCloudSync && typeof FirebaseModule !== 'undefined' && typeof FirebaseModule.saveDriveAccounts === 'function') {
-            const encryptedPayload = list.map(acc => ({
-                id: acc.id,
-                name: encryptSecretStr(acc.name || ""),
-                key: encryptSecretStr(acc.key || ""),
-                active: !!acc.active,
-                createdAt: acc.createdAt || ""
-            }));
             FirebaseModule.saveDriveAccounts(encryptedPayload).catch(() => {});
         }
     }
@@ -125,8 +133,7 @@ const AdminModule = (function () {
         })).filter(acc => acc.key);
 
         if (!decryptedList.length) return;
-        localStorage.setItem(STORAGE_KEY_DRIVE_ACCOUNTS, JSON.stringify(decryptedList));
-        updateDriveApiKeyBadge();
+        saveDriveAccountsList(decryptedList, true);
         const modal = document.getElementById('driveApiKeyModal');
         if (modal && !modal.classList.contains('hidden')) {
             renderDriveAccountsList();
@@ -136,7 +143,7 @@ const AdminModule = (function () {
     function getGoogleDriveApiKey() {
         const accounts = getDriveAccountsList();
         const active = accounts.find(a => a.active) || accounts[0];
-        return (active && active.key ? active.key : DEFAULT_GOOGLE_DRIVE_API_KEY).trim();
+        return (active && active.key ? active.key : DEFAULT_DRIVE_SCRIPT_URL).trim();
     }
 
     function setGoogleDriveApiKey(key) {
@@ -2664,7 +2671,7 @@ function testRun() {
         ].filter(k => k && typeof k === 'string' && k.trim());
 
         if (!prioritizedKeys.length) {
-            prioritizedKeys.push(DEFAULT_GOOGLE_DRIVE_API_KEY);
+            prioritizedKeys.push(DEFAULT_DRIVE_SCRIPT_URL);
         }
 
         // 0. Duyệt qua các tài khoản Google Apps Script Web App đã kết nối
