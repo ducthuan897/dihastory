@@ -26,6 +26,22 @@ const App = (function () {
             .replace(/'/g, "&#039;");
     }
 
+    function sanitizeMediaUrl(raw) {
+        if (!raw || typeof raw !== 'string') return "";
+        const trimmed = raw.trim();
+        if (!/^https?:\/\//i.test(trimmed) && !trimmed.startsWith('data:image/')) {
+            return "";
+        }
+        try {
+            const parsedUrl = new URL(trimmed);
+            if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
+                return encodeURI(parsedUrl.href);
+            }
+        } catch (e) {}
+        if (trimmed.startsWith('data:image/')) return encodeURI(trimmed);
+        return "";
+    }
+
     // State for Client Album Page (Page 2)
     let activeCategory = 'ALL';
     let searchQuery = '';
@@ -2039,7 +2055,14 @@ const App = (function () {
         const codeEl = document.getElementById('noteModalPhotoCode');
         const input = document.getElementById('noteModalInput');
 
-        if (thumb) thumb.src = photo.url;
+        if (thumb) {
+            const safeThumbUrl = sanitizeMediaUrl(photo.url);
+            if (safeThumbUrl) {
+                thumb.setAttribute('src', encodeURI(safeThumbUrl));
+            } else {
+                thumb.removeAttribute('src');
+            }
+        }
         if (codeEl) codeEl.innerText = photo.code || photo.title || 'IMG';
         if (input) input.value = sel.note || '';
 
