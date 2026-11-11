@@ -786,16 +786,23 @@ const App = (function () {
         const formattedDate = oldestTime && oldestTime !== '9999-99-99'
             ? oldestTime.split('T')[0].split('-').reverse().join('.')
             : (album.date ? album.date.split('-').reverse().join('.') : '');
+        const safeId = escapeHtml(String(album.id || '').replace(/['"\\]/g, ''));
+        const safeCoverUrl = escapeHtml(sanitizeMediaUrl(getOptimizedThumbnailUrl(album.coverUrl || '', 'w600')));
+        const safeTitle = escapeHtml(album.title || '');
+        const safeDate = escapeHtml(formattedDate || '');
+        const safeLocation = escapeHtml(album.location || album.city || '');
+        const safeClientName = escapeHtml(album.clientName || '');
+        const photoCount = Array.isArray(album.photos) ? album.photos.length : 0;
 
         return `
             <article
-                onclick="App.openAlbumPage('${album.id}', false)"
+                onclick="App.openAlbumPage('${safeId}', false)"
                 class="group bg-white rounded-2xl overflow-hidden border border-zinc-200 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col"
             >
                 <div class="relative aspect-[4/3] overflow-hidden bg-zinc-100">
                     <img
-                        src="${getOptimizedThumbnailUrl(album.coverUrl, 'w600')}"
-                        alt="${album.title}"
+                        src="${safeCoverUrl}"
+                        alt="${safeTitle}"
                         loading="lazy"
                         referrerpolicy="no-referrer"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
@@ -804,13 +811,13 @@ const App = (function () {
 
                     <div class="absolute top-3 right-3">
                         <span class="bg-white/90 backdrop-blur-md text-zinc-900 text-[11px] font-bold px-2.5 py-1 rounded-full">
-                            <i class="fa-regular fa-images mr-1"></i>${album.photos.length} ảnh
+                            <i class="fa-regular fa-images mr-1"></i>${photoCount} ảnh
                         </span>
                     </div>
 
                     <div class="absolute bottom-3 left-3 right-3 text-white">
-                        <span class="text-[11px] text-amber-300 font-medium block"><i class="fa-regular fa-clock mr-1"></i>Từ: ${formattedDate}</span>
-                        <h3 class="font-serif-display text-2xl font-bold leading-snug">${album.title}</h3>
+                        <span class="text-[11px] text-amber-300 font-medium block"><i class="fa-regular fa-clock mr-1"></i>Từ: ${safeDate}</span>
+                        <h3 class="font-serif-display text-2xl font-bold leading-snug">${safeTitle}</h3>
                     </div>
                 </div>
 
@@ -818,12 +825,12 @@ const App = (function () {
                     <div>
                         <p class="text-xs text-zinc-500 flex items-center gap-1.5">
                             <i class="fa-solid fa-map-pin text-zinc-400"></i>
-                            <span class="truncate">${album.location || album.city || ''}</span>
+                            <span class="truncate">${safeLocation}</span>
                         </p>
                     </div>
 
                     <div class="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
-                        <span class="text-zinc-500">Khách hàng: <strong class="text-zinc-800">${album.clientName}</strong></span>
+                        <span class="text-zinc-500">Khách hàng: <strong class="text-zinc-800">${safeClientName}</strong></span>
                         <span class="font-semibold text-zinc-900 group-hover:text-rose-600 transition flex items-center gap-1">
                             Xem Album <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </span>
