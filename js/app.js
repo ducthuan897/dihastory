@@ -1012,7 +1012,13 @@ const App = (function () {
         const heroSubmitBtn = document.getElementById('heroClientSubmitBtn');
 
         if (heroCover) {
-            heroCover.src = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
+            const rawCover = album.coverUrl || (album.photos && album.photos[0] ? album.photos[0].url : '');
+            const safeCover = sanitizeMediaUrl(rawCover);
+            if (safeCover) {
+                heroCover.setAttribute('src', encodeURI(safeCover));
+            } else {
+                heroCover.removeAttribute('src');
+            }
             const pos = typeof album.coverPosY === 'number' ? album.coverPosY : 50;
             heroCover.style.objectPosition = `center ${pos}%`;
         }
