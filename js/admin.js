@@ -762,34 +762,37 @@ function testRun() {
 
         container.innerHTML = accounts.map((acc, idx) => {
             const displayKey = isPrivileged ? acc.key : maskKeySecret(acc.key);
+            const safeName = escapeHtml(acc.name || '');
+            const safeKey = escapeHtml(displayKey || '');
+            const safeId = escapeHtml(acc.id || '');
             return `
                 <div class="p-3 rounded-xl border border-zinc-200 bg-white transition hover:border-zinc-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-xs text-zinc-900 truncate">${acc.name}</span>
+                            <span class="font-bold text-xs text-zinc-900 truncate">${safeName}</span>
                         </div>
-                        <div class="text-[11px] font-mono text-zinc-500 truncate mt-0.5" title="${isPrivileged ? acc.key : ''}">
-                            ${displayKey}
+                        <div class="text-[11px] font-mono text-zinc-500 truncate mt-0.5" title="${isPrivileged ? safeKey : ''}">
+                            ${safeKey}
                         </div>
                     </div>
 
                     ${
                         isPrivileged
                             ? `<div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-                                <button type="button" onclick="AdminModule.testDriveAccountKey('${acc.key}', '${(acc.name || '').replace(/'/g, "\\'")}')"
+                                <button type="button" onclick="AdminModule.testDriveAccountById('${safeId}')"
                                     class="px-2.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-[11px] font-medium transition flex items-center gap-1"
                                     title="Kiểm tra kết nối">
                                     <i class="fa-solid fa-bolt text-amber-500"></i>
                                     <span class="hidden sm:inline">Kiểm tra</span>
                                 </button>
-                                <button type="button" onclick="AdminModule.editDriveAccount('${acc.id}')"
+                                <button type="button" onclick="AdminModule.editDriveAccount('${safeId}')"
                                     class="p-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs transition"
                                     title="Chỉnh sửa tài khoản">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
                                 ${
                                     accounts.length > 1
-                                        ? `<button type="button" onclick="AdminModule.deleteDriveAccount('${acc.id}')"
+                                        ? `<button type="button" onclick="AdminModule.deleteDriveAccount('${safeId}')"
                                             class="p-1.5 rounded-lg bg-zinc-100 hover:bg-rose-100 text-zinc-400 hover:text-rose-600 text-xs transition"
                                             title="Xóa tài khoản này">
                                             <i class="fa-solid fa-trash-can"></i>
@@ -936,6 +939,17 @@ function testRun() {
             return;
         }
         await testDriveAccountKey(key, name);
+    }
+
+    async function testDriveAccountById(accId) {
+        if (!accId) return;
+        const accounts = getDriveAccountsList();
+        const acc = accounts.find(a => a.id === accId);
+        if (!acc || !acc.key) {
+            App.showToast("Không tìm thấy thông tin tài khoản Drive cần kiểm tra!", "error");
+            return;
+        }
+        await testDriveAccountKey(acc.key, acc.name);
     }
 
     async function testDriveAccountKey(key, accountName) {
@@ -5763,6 +5777,7 @@ function testRun() {
         setActiveDriveAccount,
         deleteDriveAccount,
         resetDriveAccountForm,
+        testDriveAccountById,
         testDriveAccountKey,
         testCurrentInputDriveAccount,
         copyAppsScriptCode,
