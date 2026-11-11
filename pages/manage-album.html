@@ -66,7 +66,7 @@
                 </button>
             </div>
 
-            <!-- Row 2: Client Info, Updated Date, View Status & Tùy chỉnh / Gửi album -->
+            <!-- Row 2: Client Info, Updated Date, View Status -->
             <div class="flex flex-wrap items-center justify-between gap-3 pt-0.5">
                 <div class="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs sm:text-sm text-zinc-500">
                     <span>Khách hàng <strong id="managePageClientName"
@@ -92,14 +92,6 @@
                         <i class="fa-regular fa-circle-check"></i>
                         <span>Khách đang xem được</span>
                     </span>
-                </div>
-
-                <div class="hidden sm:flex items-center gap-2.5">
-                    <button type="button" onclick="AdminModule.openCustomAlbumModal('settings')"
-                        class="h-9 px-3.5 rounded-xl bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-200 shadow-2xs text-xs font-semibold flex items-center justify-center gap-2 transition">
-                        <i class="fa-solid fa-sliders text-zinc-600"></i>
-                        <span>Tùy chỉnh album</span>
-                    </button>
                 </div>
             </div>
 
@@ -140,11 +132,11 @@
                     </button>
                 </div>
 
-                <!-- Right Action Buttons (Uniform 4 buttons on mobile in 4-column grid with icon on top & text below, inline on desktop) -->
+                <!-- Right Action Buttons (Uniform 4 buttons on mobile & desktop with matching clean style) -->
                 <div class="w-full sm:w-auto grid grid-cols-4 sm:flex items-center gap-2 pt-1 sm:pt-0">
-                    <!-- Nút Tùy chỉnh album (hiển thị trên mobile, trên desktop đã có ở hàng trên) -->
+                    <!-- Nút Tùy chỉnh album -->
                     <button type="button" onclick="AdminModule.openCustomAlbumModal('settings')"
-                        class="sm:hidden h-12 px-1 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-[10px] font-semibold flex flex-col items-center justify-center gap-1 shadow-2xs transition"
+                        class="h-12 sm:h-9 px-1 sm:px-3.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-[10px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 shadow-2xs transition"
                         title="Tùy chỉnh album">
                         <i class="fa-solid fa-sliders text-xs text-zinc-600"></i>
                         <span class="truncate max-w-full">Tùy chỉnh</span>
@@ -164,7 +156,7 @@
                         onclick="AdminModule.toggleLockAlbumFromManagePage()"
                         class="h-12 sm:h-9 px-1 sm:px-3.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800 text-[10px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 shadow-2xs transition">
                         <i id="managePageLockIcon" class="fa-solid fa-lock text-xs text-zinc-600"></i>
-                        <span id="managePageLockBtnText" class="truncate max-w-full">Khoá</span>
+                        <span id="managePageLockBtnText" class="truncate max-w-full">Khoá album</span>
                     </button>
 
                     <!-- Nút Tải PDF ghi chú -->
