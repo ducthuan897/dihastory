@@ -977,9 +977,13 @@ function testRun() {
 
         const safeSuccessText = `Kết nối tài khoản "${escapeHtml(displayName)}" thành công`;
 
-        if (key.startsWith("https://script.google.com/")) {
+        const scriptMatch = String(key).match(/^https:\/\/script\.google\.com\/macros\/s\/([a-zA-Z0-9_-]+)(?:\/exec)?/);
+        if (scriptMatch) {
+            const scriptId = scriptMatch[1];
             try {
-                const res = await fetch(`${key}?id=test`);
+                const reqUrl = new URL(`https://script.google.com/macros/s/${encodeURIComponent(scriptId)}/exec`);
+                reqUrl.searchParams.set("id", "test");
+                const res = await fetch(reqUrl.toString());
                 if (res.ok) {
                     if (alert) {
                         alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
