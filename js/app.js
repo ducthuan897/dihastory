@@ -819,25 +819,16 @@ const App = (function () {
                     </div>
 
                     <div class="absolute bottom-3 left-3 right-3 text-white">
-                        <span class="text-[11px] text-amber-300 font-medium block"><i class="fa-regular fa-clock mr-1"></i>Từ: ${safeDate}</span>
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-amber-300 font-medium mb-0.5">
+                            <span><i class="fa-regular fa-clock mr-1"></i>Từ: ${safeDate}</span>
+                            ${safeLocation ? `<span class="opacity-70">•</span><span class="truncate max-w-full"><i class="fa-solid fa-location-dot mr-1"></i>${safeLocation}</span>` : ''}
+                        </div>
                         <h3 class="font-serif-display text-2xl font-bold leading-snug">${safeTitle}</h3>
                     </div>
                 </div>
 
-                <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
-                    <div>
-                        <p class="text-xs text-zinc-500 flex items-center gap-1.5">
-                            <i class="fa-solid fa-map-pin text-zinc-400"></i>
-                            <span class="truncate">${safeLocation}</span>
-                        </p>
-                    </div>
-
-                    <div class="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
-                        <span class="text-zinc-500">Khách hàng: <strong class="text-zinc-800">${safeClientName}</strong></span>
-                        <span class="font-semibold text-zinc-900 group-hover:text-rose-600 transition flex items-center gap-1">
-                            Xem Album <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                        </span>
-                    </div>
+                <div class="px-4 py-3 flex items-center text-xs">
+                    <span class="text-zinc-500 truncate">Khách hàng: <strong class="text-zinc-800">${safeClientName}</strong></span>
                 </div>
             </article>
         `;
