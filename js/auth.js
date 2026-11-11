@@ -124,6 +124,11 @@ const AuthModule = (function () {
     }
 
     function getAdminPassword() {
+        const users = getUsersList();
+        const adminUser = users.find(u => u.username === 'admin');
+        if (adminUser && adminUser.customPassword) {
+            return adminUser.customPassword;
+        }
         return localStorage.getItem(STORAGE_KEY_PASSWORD) || DEFAULT_PASS;
     }
 
@@ -169,10 +174,6 @@ const AuthModule = (function () {
             localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(usersList));
         } catch (e) {}
 
-        const adminUser = usersList.find(u => u.username === 'admin');
-        if (adminUser && adminUser.customPassword) {
-            localStorage.setItem(STORAGE_KEY_PASSWORD, adminUser.customPassword);
-        }
         renderUserManagerModalList();
         renderUsersPageList();
     }
