@@ -19,7 +19,7 @@ Các quy tắc bắt buộc phải luôn tuân thủ trong toàn bộ quá trìn
    - Tuyệt đối không tự ý chèn ảnh mẫu (Unsplash) giả vào Album của người dùng khi tạo mới hoặc cập nhật Album.
 
 5. **Tự động lấy Vị trí và Ngày chụp từ thông tin metadata (EXIF / File Info) riêng cho từng bức ảnh & Bảo toàn thông tin ảnh đã đăng**:
-   - Hệ thống tự động trích xuất ngày giờ chụp (`DateTimeOriginal`, `CreateDate`, `lastModified`) và tọa độ/vị trí chụp (`GPSLatitude`, `GPSLongitude` chuyển đổi sang địa danh thực tế hoặc thông tin vị trí trong metadata/tên file) trực tiếp và độc lập cho **từng bức ảnh** từ Google Drive đã chia sẻ hoặc file tải từ máy tính.
+   - Hệ thống tự động trích xuất ngày giờ chụp từ duy nhất thẻ `DateTimeOriginal` (EXIF `0x9003` - Date/Time Original) và tọa độ/vị trí chụp (`GPSLatitude`, `GPSLongitude` chuyển đổi sang địa danh thực tế hoặc thông tin vị trí trong metadata/tên file) trực tiếp và độc lập cho **từng bức ảnh** từ Google Drive đã chia sẻ hoặc file tải từ máy tính. Tuyệt đối không lấy thẻ `CreateDate` (`0x9004`) để đảm bảo đúng ngày chụp gốc thực tế.
    - Luôn áp dụng quy tắc này cho **toàn bộ các Album hiện tại và mọi Album trong tương lai**.
    - Tuyệt đối **không được lấy thời gian hoặc vị trí của một bức ảnh bất kỳ rồi áp dụng chung cho toàn bộ các ảnh khác** trong Album. Mỗi bức ảnh phải mang thông tin thời gian và vị trí riêng biệt của chính bức ảnh đó.
    - **Tuyệt đối không tự ý thay đổi, ghi đè hoặc làm biến đổi thông tin của các bức ảnh đã đăng tải** (ngày giờ chụp, toạ độ, địa danh, mã ảnh, liên kết ảnh) trong quá trình cập nhật Album, chỉnh sửa Album, hoặc đồng bộ hóa dữ liệu.

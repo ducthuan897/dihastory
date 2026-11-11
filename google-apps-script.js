@@ -302,10 +302,10 @@ function parseBinaryExifGps(bytes) {
             if (!isGps) {
               if (tag === 0x8769) exifOffset = u32(vp, le);
               else if (tag === 0x8825) gpsOffset = u32(vp, le);
-              else if (tag === 0x9003 || tag === 0x9004 || tag === 0x0132) {
+              else if (tag === 0x9003) {
                 var rawStr = readAscii(vp, cnt);
                 var dtM = rawStr.match(/\b(19\d\d|20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})/);
-                if (dtM && (!out.capturedAt || tag === 0x9003)) {
+                if (dtM) {
                   out.capturedAt = dtM[1] + "-" + dtM[2] + "-" + dtM[3] + "T" + dtM[4] + ":" + dtM[5];
                 }
               }
@@ -384,8 +384,8 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
     }
     var str = chars.join('');
 
-    // 1. Tìm ngày giờ chụp thật từ EXIF / XMP (DateTimeOriginal / CreateDate / DateCreated)
-    var mDateXmp = str.match(/(?:DateTimeOriginal|CreateDate|DateCreated)[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
+    // 1. Tìm ngày giờ chụp thật từ EXIF / XMP (chỉ lấy duy nhất DateTimeOriginal - Date taken)
+    var mDateXmp = str.match(/DateTimeOriginal[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
     if (mDateXmp) {
       meta.capturedAt = mDateXmp[1] + "-" + mDateXmp[2] + "-" + mDateXmp[3] + "T" + mDateXmp[4] + ":" + mDateXmp[5];
     }

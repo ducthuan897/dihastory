@@ -456,10 +456,10 @@ function parseBinaryExifGps(bytes) {
             if (!isGps) {
               if (tag === 0x8769) exifOffset = u32(vp, le);
               else if (tag === 0x8825) gpsOffset = u32(vp, le);
-              else if (tag === 0x9003 || tag === 0x9004 || tag === 0x0132) {
+              else if (tag === 0x9003) {
                 var rawStr = readAscii(vp, cnt);
                 var dtM = rawStr.match(/\b(19\d\d|20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})/);
-                if (dtM && (!out.capturedAt || tag === 0x9003)) {
+                if (dtM) {
                   out.capturedAt = dtM[1] + "-" + dtM[2] + "-" + dtM[3] + "T" + dtM[4] + ":" + dtM[5];
                 }
               }
@@ -537,7 +537,7 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
     }
     var str = chars.join('');
 
-    var mDateXmp = str.match(/(?:DateTimeOriginal|CreateDate|DateCreated)[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
+    var mDateXmp = str.match(/DateTimeOriginal[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
     if (mDateXmp) {
       meta.capturedAt = mDateXmp[1] + "-" + mDateXmp[2] + "-" + mDateXmp[3] + "T" + mDateXmp[4] + ":" + mDateXmp[5];
     }
@@ -1921,9 +1921,9 @@ function testRun() {
                         if (!isGps) {
                             if (tag === 0x8769) exifOffset = view.getUint32(vp, le);
                             else if (tag === 0x8825) gpsOffset = view.getUint32(vp, le);
-                            else if (tag === 0x9003 || tag === 0x9004 || tag === 0x0132) {
+                            else if (tag === 0x9003) {
                                 const dt = normalizeDateToIsoMinute(readAscii(vp, count));
-                                if (dt && (!out.capturedAt || tag === 0x9003)) out.capturedAt = dt;
+                                if (dt) out.capturedAt = dt;
                             }
                         } else {
                             if (tag === 0x0001) latRef = (readAscii(vp, count) || "N").toUpperCase();
@@ -1958,7 +1958,7 @@ function testRun() {
                 const headerBytes = new Uint8Array(buffer, 0, Math.min(len, 131072));
                 const asciiHeader = new TextDecoder("utf-8", { fatal: false }).decode(headerBytes);
                 if (!out.capturedAt) {
-                    const dtMatch = asciiHeader.match(/(?:DateTimeOriginal|CreateDate|DateCreated)[=">\s:]+(\d{4}[:\-]\d{2}[:\-]\d{2}[T\s]\d{2}:\d{2})/i);
+                    const dtMatch = asciiHeader.match(/DateTimeOriginal[=">\s:]+(\d{4}[:\-]\d{2}[:\-]\d{2}[T\s]\d{2}:\d{2})/i);
                     if (dtMatch) out.capturedAt = normalizeDateToIsoMinute(dtMatch[1]);
                 }
                 if (!out.capturedAt) {
@@ -2029,7 +2029,7 @@ function testRun() {
                         xmp: true
                     }).catch(() => null);
                     if (parsed) {
-                        const rawDt = parsed.DateTimeOriginal || parsed.CreateDate || parsed.ModifyDate || parsed.DateCreated;
+                        const rawDt = parsed.DateTimeOriginal;
                         capturedAt = normalizeDateToIsoMinute(rawDt);
                         if (lat == null && typeof parsed.latitude === "number" && typeof parsed.longitude === "number") {
                             lat = parsed.latitude;
@@ -2469,7 +2469,7 @@ function testRun() {
                             const ex = await window.exifr.parse(buf, { tiff: true, exif: true, gps: true, xmp: true, iptc: true }).catch(() => null);
                             if (ex) {
                                 if (!meta.capturedAt) {
-                                    meta.capturedAt = normalizeDateToIsoMinute(ex.DateTimeOriginal || ex.CreateDate || ex.ModifyDate);
+                                    meta.capturedAt = normalizeDateToIsoMinute(ex.DateTimeOriginal);
                                 }
                                 if (meta.lat == null && typeof ex.latitude === 'number' && typeof ex.longitude === 'number') {
                                     meta.lat = ex.latitude;
