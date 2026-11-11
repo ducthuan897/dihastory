@@ -301,13 +301,12 @@ const AuthModule = (function () {
                 localStorage.setItem(STORAGE_KEY_AUTH, 'true');
                 localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(matched));
 
-                // Xử lý lưu mật khẩu nếu người dùng tích chọn
+                // Xử lý lưu thông tin tài khoản nếu người dùng tích chọn
                 const rememberCheckbox = document.getElementById('rememberPasswordCheckbox');
                 if (rememberCheckbox && rememberCheckbox.checked) {
                     try {
                         const creds = {
-                            username: matched.username,
-                            password: inputPass
+                            username: matched.username
                         };
                         localStorage.setItem(STORAGE_KEY_REMEMBER, JSON.stringify(creds));
                     } catch (e) {}
@@ -375,9 +374,6 @@ const AuthModule = (function () {
                 if (creds && creds.username && userInput) {
                     userInput.value = creds.username;
                 }
-                if (creds && creds.password && passInput) {
-                    passInput.value = creds.password;
-                }
                 if (rememberCheckbox) {
                     rememberCheckbox.checked = true;
                 }
@@ -399,10 +395,7 @@ const AuthModule = (function () {
         const icon = document.getElementById('togglePasswordIcon');
         if (passInput) {
             passInput.type = 'password';
-            // Nếu không có lưu mật khẩu thì xóa trắng
-            if (!localStorage.getItem(STORAGE_KEY_REMEMBER)) {
-                passInput.value = '';
-            }
+            passInput.value = '';
         }
         if (icon) icon.className = 'fa-regular fa-eye';
         document.getElementById('loginModal').classList.add('hidden');
