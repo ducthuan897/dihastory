@@ -3783,7 +3783,19 @@ function testRun() {
 
         const coverImg = document.getElementById('managePageCoverImg');
         if (coverImg) {
-            coverImg.src = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
+            const rawCover = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
+            let safeCover = '';
+            if (rawCover && typeof rawCover === 'string') {
+                try {
+                    const parsedUrl = new URL(rawCover, window.location.origin);
+                    if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:' || rawCover.startsWith('data:image/')) {
+                        safeCover = rawCover;
+                    }
+                } catch (e) {
+                    if (rawCover.startsWith('data:image/')) safeCover = rawCover;
+                }
+            }
+            coverImg.src = safeCover;
             const pos = typeof album.coverPosY === 'number' ? album.coverPosY : 50;
             coverImg.style.objectPosition = `center ${pos}%`;
         }
