@@ -1742,14 +1742,16 @@ const App = (function () {
         const photo = album.photos.find(p => p.id === photoId);
         if (!photo) return;
 
-        try {
-            const dlUrl = getFullResPhotoUrl(photo.url);
+        const rawDlUrl = getFullResPhotoUrl(photo.url);
+        const dlUrl = sanitizeMediaUrl(rawDlUrl);
+        if (!dlUrl) return;
 
+        try {
             // Nếu studio bật tuỳ chọn cho khách tải ảnh gốc không watermark
             if (album.allowOriginalDownload) {
                 showToast(`Đang tải ảnh gốc ${photo.code || 'IMG'}...`);
                 const a = document.createElement('a');
-                a.href = dlUrl;
+                a.setAttribute('href', encodeURI(dlUrl));
                 a.target = '_blank';
                 a.download = `${photo.code || 'photo'}.jpg`;
                 document.body.appendChild(a);
@@ -1777,14 +1779,14 @@ const App = (function () {
 
             // Fallback nếu không đóng được watermark
             const a = document.createElement('a');
-            a.href = dlUrl;
+            a.setAttribute('href', encodeURI(dlUrl));
             a.target = '_blank';
             a.download = `${photo.code || 'photo'}.jpg`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
         } catch (e) {
-            window.open(getFullResPhotoUrl(photo.url), '_blank');
+            window.open(encodeURI(dlUrl), '_blank', 'noopener,noreferrer');
         }
     }
 
