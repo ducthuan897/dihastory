@@ -3301,8 +3301,8 @@ function testRun() {
                         <div class="flex flex-col gap-2 flex-1 min-w-0">
                             <!-- Hàng chính: Ảnh bìa + Thông tin chính bên phải -->
                             <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 w-full">
-                                <!-- Ảnh bìa album -->
-                                <img src="${album.coverUrl}" alt="${album.title}" referrerpolicy="no-referrer" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border border-zinc-200/90 shadow-2xs hover:scale-105 transition-transform duration-300 shrink-0" style="object-position: center ${typeof album.coverPosY === 'number' ? album.coverPosY : 50}%;">
+                                <!-- Ảnh bìa album (tỉ lệ 16:9 hình chữ nhật chuẩn) -->
+                                <img src="${album.coverUrl}" alt="${album.title}" referrerpolicy="no-referrer" class="w-32 aspect-video sm:w-44 sm:aspect-video rounded-xl object-cover border border-zinc-200/90 shadow-2xs hover:scale-[1.02] transition-transform duration-300 shrink-0" style="object-position: center ${typeof album.coverPosY === 'number' ? album.coverPosY : 50}%;">
 
                                 <!-- Cụm thông tin nằm bên phải bức ảnh -->
                                 <div class="min-w-0 flex-1 py-0.5">
