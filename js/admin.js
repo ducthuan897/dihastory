@@ -36,10 +36,10 @@ const AdminModule = (function () {
         try {
             const parsedUrl = new URL(trimmed);
             if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
-                return parsedUrl.href;
+                return encodeURI(parsedUrl.href);
             }
         } catch (e) {}
-        if (trimmed.startsWith('data:image/')) return trimmed;
+        if (trimmed.startsWith('data:image/')) return encodeURI(trimmed);
         return "";
     }
 
@@ -3819,7 +3819,7 @@ function testRun() {
             const rawCover = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
             const safeCover = sanitizeMediaUrl(rawCover);
             if (safeCover) {
-                coverImg.setAttribute('src', safeCover);
+                coverImg.setAttribute('src', encodeURI(safeCover));
             } else {
                 coverImg.removeAttribute('src');
             }
