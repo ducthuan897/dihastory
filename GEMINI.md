@@ -56,3 +56,7 @@ Các quy tắc bắt buộc phải luôn tuân thủ trong toàn bộ quá trìn
    - Chỉ người dùng có vai trò `admin` hoặc `super_admin` mới có quyền xem đầy đủ mã kết nối, thêm mới, sửa, kích hoạt hoặc xóa tài khoản Google Drive. Người dùng có vai trò khác (như `editor`) hoặc khách chỉ thấy trạng thái ẩn/che mã kết nối (`••••••••`) và không có quyền thay đổi.
    - Khi tạo hoặc cập nhật Album từ Google Drive, hệ thống tự động kiểm tra và quét qua các tài khoản Google Drive đã kết nối để lấy danh sách ảnh và trích xuất EXIF/GPS.
 
+12. **Bắt buộc đọc lại toàn bộ Rule trong `GEMINI.md` trước khi thực hiện bất kỳ yêu cầu nào (Read Rules Before Action)**:
+   - Sau mỗi yêu cầu từ người dùng, AI bắt buộc phải đọc và rà soát lại toàn bộ các quy tắc trong file `GEMINI.md` này trước khi bắt đầu phân tích, lập trình hoặc chỉnh sửa bất kỳ nội dung nào.
+   - Đảm bảo mọi giải pháp và hành động luôn tuân thủ 100% tất cả các quy tắc đã đề ra.
+
