@@ -595,8 +595,9 @@ const AuthModule = (function () {
         const text = document.getElementById('editUserAvatarText');
         if (!previewWrap || !img || !text) return;
 
-        if (avatarUrl) {
-            img.src = avatarUrl;
+        const safeAvatar = sanitizeAvatarUrl(avatarUrl);
+        if (safeAvatar) {
+            img.src = safeAvatar;
             img.classList.remove('hidden');
             text.classList.add('hidden');
         } else {
