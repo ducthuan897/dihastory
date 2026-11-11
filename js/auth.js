@@ -181,7 +181,6 @@ const AuthModule = (function () {
     }
 
     function updateProfileDropdownUI() {
-        const subtext = document.getElementById('profileOpenAdminSubtext');
         const chevron = document.getElementById('profileOpenAdminChevron');
         const card = document.getElementById('profileHeaderActionCard');
         const currentView = (typeof App !== 'undefined' && typeof App.getCurrentView === 'function')
@@ -190,9 +189,6 @@ const AuthModule = (function () {
 
         const isInAdmin = (currentView === 'admin' || currentView === 'manage-album');
 
-        if (subtext) {
-            subtext.classList.toggle('hidden', isInAdmin);
-        }
         if (chevron) {
             chevron.classList.toggle('hidden', isInAdmin);
         }
