@@ -1295,9 +1295,15 @@ function testRun() {
 
             // 2. Dự phòng thêm vào Google Apps Script nếu có cấu hình
             const cloudUrl = getGoogleDriveApiKey();
-            if (cloudUrl && cloudUrl.startsWith('https://script.google.com/')) {
+            let saveScriptId = "";
+            const saveMatch = String(cloudUrl).match(/^https:\/\/script\.google\.com\/macros\/s\/([a-zA-Z0-9_-]+)(?:\/exec)?/);
+            if (saveMatch) {
+                saveScriptId = saveMatch[1];
+            }
+            if (saveScriptId) {
+                const safeSaveUrl = `https://script.google.com/macros/s/${encodeURIComponent(saveScriptId)}/exec`;
                 try {
-                    await fetch(cloudUrl, {
+                    await fetch(safeSaveUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify({ action: 'saveAlbums', albums })
@@ -1305,7 +1311,10 @@ function testRun() {
                 } catch (e) {
                     // Dự phòng qua GET nếu POST bị chặn
                     try {
-                        await fetch(`${cloudUrl}?action=saveAlbums&data=${encodeURIComponent(JSON.stringify(albums))}`);
+                        const getSaveUrl = new URL(safeSaveUrl);
+                        getSaveUrl.searchParams.set("action", "saveAlbums");
+                        getSaveUrl.searchParams.set("data", JSON.stringify(albums));
+                        await fetch(getSaveUrl.toString());
                     } catch(err) {}
                 }
             }
@@ -1336,11 +1345,20 @@ function testRun() {
 
         // 3. Dự phòng qua Google Apps Script Cloud Database khi không có Firebase
         const cloudUrl = getGoogleDriveApiKey();
-        if (cloudUrl && cloudUrl.startsWith('https://script.google.com/')) {
+        let fetchScriptId = "";
+        const fetchMatch = String(cloudUrl).match(/^https:\/\/script\.google\.com\/macros\/s\/([a-zA-Z0-9_-]+)(?:\/exec)?/);
+        if (fetchMatch) {
+            fetchScriptId = fetchMatch[1];
+        }
+        if (fetchScriptId) {
             try {
+                const safeFetchUrl = new URL(`https://script.google.com/macros/s/${encodeURIComponent(fetchScriptId)}/exec`);
+                safeFetchUrl.searchParams.set("action", "getAlbums");
+                safeFetchUrl.searchParams.set("_t", String(Date.now()));
+
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 3000);
-                const resp = await fetch(`${cloudUrl}?action=getAlbums&_t=${Date.now()}`, {
+                const resp = await fetch(safeFetchUrl.toString(), {
                     signal: controller.signal,
                     cache: 'no-store'
                 })
