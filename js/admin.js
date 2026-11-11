@@ -3410,7 +3410,7 @@ function testRun() {
                                     </div>
                                 </button>
                                 <div id="openAlbumDropdown_${album.id}"
-                                    class="hidden absolute right-0 sm:right-auto sm:left-0 mt-1.5 w-64 sm:w-72 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100 max-w-[calc(100vw-32px)]">
+                                    class="hidden absolute left-1/2 -translate-x-1/2 mt-1.5 w-64 sm:w-72 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100 max-w-[calc(100vw-32px)]">
                                     <div class="px-3.5 py-2 hover:bg-zinc-100 transition flex items-center justify-between gap-2 group">
                                         <button type="button"
                                             onclick="App.openAlbumPage('${album.id}', false); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
