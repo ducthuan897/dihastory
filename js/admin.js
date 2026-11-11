@@ -1745,10 +1745,12 @@ function testRun() {
             const yyyy = mEn[3] || new Date().getFullYear().toString();
             return `${yyyy}-${mm}-${dd}T08:30`;
         }
+        // Vietnamese short month Drive format: "Thg 10 20", "20 thg 10"
+        const mVn = str.match(/(?:Thg\s*(\d{1,2})\s+(\d{1,2})|(\d{1,2})\s+thg\s*(\d{1,2}))(?:[,\s]+(\d{4}))?/i);
         if (mVn) {
-            const dd = mVn[1].padStart(2, '0');
-            const mm = mVn[2].padStart(2, '0');
-            const yyyy = mVn[3] || new Date().getFullYear().toString();
+            const dd = (mVn[2] || mVn[3]).padStart(2, '0');
+            const mm = (mVn[1] || mVn[4]).padStart(2, '0');
+            const yyyy = mVn[5] || new Date().getFullYear().toString();
             return `${yyyy}-${mm}-${dd}T08:30`;
         }
         // DD/MM/YYYY format
@@ -2719,11 +2721,10 @@ function testRun() {
             } catch (e) {}
         }
 
-        // Enrich files in folder with client-side EXIF GPS & Capture Date (sample up to 8 files in parallel for speed)
+        // Enrich ALL files in folder with client-side EXIF GPS & Capture Date in parallel (tuân thủ Điều 5 riêng biệt từng ảnh)
         if (parsed.files && parsed.files.length > 0) {
-            const sampleCount = Math.min(parsed.files.length, 8);
             await Promise.all(
-                parsed.files.slice(0, sampleCount).map(async (f) => {
+                parsed.files.map(async (f) => {
                     const exifMeta = await extractDriveFileMetaInBrowser(f.id);
                     if (exifMeta) {
                         if (exifMeta.capturedAt) f.capturedAt = exifMeta.capturedAt;
