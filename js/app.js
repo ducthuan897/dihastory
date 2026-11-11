@@ -1102,10 +1102,12 @@ const App = (function () {
         locations.forEach(loc => {
             const isActive = activeCategory === loc;
             const label = loc === 'ALL' ? 'Tất cả' : (loc === 'OTHER' ? 'Địa điểm khác' : loc);
+            const safeLocAttr = escapeHtml(String(loc).replace(/['"\\]/g, ''));
+            const safeLabel = escapeHtml(String(label));
             const cls = isActive
                 ? "pb-2 whitespace-nowrap transition border-b-2 border-zinc-900 font-bold text-zinc-900"
                 : "pb-2 whitespace-nowrap transition border-b-2 border-transparent font-medium text-zinc-400 hover:text-zinc-700";
-            tabsHtml += `<button type="button" onclick="App.setCategoryFilter('${loc}')" class="${cls}">${label}</button>`;
+            tabsHtml += `<button type="button" onclick="App.setCategoryFilter('${safeLocAttr}')" class="${cls}">${safeLabel}</button>`;
         });
 
         if (isClientMode) {
