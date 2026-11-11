@@ -255,6 +255,8 @@ function parseBinaryExifGps(bytes) {
 
     if (u(0) !== 0xFF || u(1) !== 0xD8) return null;
     var offset = 2;
+    var out = { lat: null, lon: null, capturedAt: null };
+
     while (offset + 4 < len) {
       if (u(offset) !== 0xFF) break;
       while (offset + 1 < len && u(offset + 1) === 0xFF) offset++;
@@ -269,61 +271,89 @@ function parseBinaryExifGps(bytes) {
         var tiff = offset + 10;
         var le = u16(tiff, false) === 0x4949;
         var ifd0 = u32(tiff + 4, le);
-        var pIfd = tiff + ifd0;
-        if (pIfd + 2 > len) return null;
-        var count = u16(pIfd, le);
-        var gpsOffset = 0;
-        for (var i = 0; i < count; i++) {
-          var ep = pIfd + 2 + i * 12;
-          if (ep + 12 > len) break;
-          var tag = u16(ep, le);
-          if (tag === 0x8825) {
-            gpsOffset = u32(ep + 8, le);
-            break;
+
+        var readAscii = function(valPos, count) {
+          if (count <= 0 || count > 100) return "";
+          var p = count <= 4 ? valPos : tiff + u32(valPos, le);
+          if (p < 0 || p + count > len) return "";
+          var s = "";
+          for (var idx = 0; idx < count - 1; idx++) {
+            var c = u(p + idx);
+            if (c === 0) break;
+            s += String.fromCharCode(c);
           }
-        }
-        if (gpsOffset > 0 && tiff + gpsOffset + 2 < len) {
-          var pGps = tiff + gpsOffset;
-          var gCount = u16(pGps, le);
+          return s.trim();
+        };
+
+        var exifOffset = 0;
+        var gpsOffset = 0;
+
+        var scanIfd = function(pIfd, isGps) {
+          if (pIfd + 2 > len) return;
+          var count = u16(pIfd, le);
           var latRef = "N", lonRef = "E", lat = null, lon = null;
-          for (var j = 0; j < gCount; j++) {
-            var gp = pGps + 2 + j * 12;
-            if (gp + 12 > len) break;
-            var gTag = u16(gp, le);
-            var gVp = gp + 8;
-            if (gTag === 0x0001) {
-              latRef = String.fromCharCode(u(gVp)).toUpperCase();
-            } else if (gTag === 0x0002) {
-              var rPos = tiff + u32(gVp, le);
-              if (rPos + 24 <= len) {
-                var d = u32(rPos, le) / (u32(rPos + 4, le) || 1);
-                var m = u32(rPos + 8, le) / (u32(rPos + 12, le) || 1);
-                var s = u32(rPos + 16, le) / (u32(rPos + 20, le) || 1);
-                lat = d + m / 60 + s / 3600;
+          for (var i = 0; i < count; i++) {
+            var ep = pIfd + 2 + i * 12;
+            if (ep + 12 > len) break;
+            var tag = u16(ep, le);
+            var vp = ep + 8;
+            var cnt = u32(ep + 4, le);
+
+            if (!isGps) {
+              if (tag === 0x8769) exifOffset = u32(vp, le);
+              else if (tag === 0x8825) gpsOffset = u32(vp, le);
+              else if (tag === 0x9003 || tag === 0x9004 || tag === 0x0132) {
+                var rawStr = readAscii(vp, cnt);
+                var dtM = rawStr.match(/\b(19\d\d|20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})/);
+                if (dtM && (!out.capturedAt || tag === 0x9003)) {
+                  out.capturedAt = dtM[1] + "-" + dtM[2] + "-" + dtM[3] + "T" + dtM[4] + ":" + dtM[5];
+                }
               }
-            } else if (gTag === 0x0003) {
-              lonRef = String.fromCharCode(u(gVp)).toUpperCase();
-            } else if (gTag === 0x0004) {
-              var rPos2 = tiff + u32(gVp, le);
-              if (rPos2 + 24 <= len) {
-                var d2 = u32(rPos2, le) / (u32(rPos2 + 4, le) || 1);
-                var m2 = u32(rPos2 + 8, le) / (u32(rPos2 + 12, le) || 1);
-                var s2 = u32(rPos2 + 16, le) / (u32(rPos2 + 20, le) || 1);
-                lon = d2 + m2 / 60 + s2 / 3600;
+            } else {
+              if (tag === 0x0001) {
+                latRef = String.fromCharCode(u(vp)).toUpperCase();
+              } else if (tag === 0x0002) {
+                var rPos = tiff + u32(vp, le);
+                if (rPos + 24 <= len) {
+                  var d = u32(rPos, le) / (u32(rPos + 4, le) || 1);
+                  var m = u32(rPos + 8, le) / (u32(rPos + 12, le) || 1);
+                  var s = u32(rPos + 16, le) / (u32(rPos + 20, le) || 1);
+                  lat = d + m / 60 + s / 3600;
+                }
+              } else if (tag === 0x0003) {
+                lonRef = String.fromCharCode(u(vp)).toUpperCase();
+              } else if (tag === 0x0004) {
+                var rPos2 = tiff + u32(vp, le);
+                if (rPos2 + 24 <= len) {
+                  var d2 = u32(rPos2, le) / (u32(rPos2 + 4, le) || 1);
+                  var m2 = u32(rPos2 + 8, le) / (u32(rPos2 + 12, le) || 1);
+                  var s2 = u32(rPos2 + 16, le) / (u32(rPos2 + 20, le) || 1);
+                  lon = d2 + m2 / 60 + s2 / 3600;
+                }
               }
             }
           }
-          if (lat != null && lon != null) {
+
+          if (isGps && lat != null && lon != null) {
             if (latRef === "S") lat = -lat;
             if (lonRef === "W") lon = -lon;
             if (Math.abs(lat) > 0.001 || Math.abs(lon) > 0.001) {
-              return { lat: lat, lon: lon };
+              out.lat = lat;
+              out.lon = lon;
             }
           }
+        };
+
+        scanIfd(tiff + ifd0, false);
+        if (exifOffset > 0) scanIfd(tiff + exifOffset, false);
+        if (gpsOffset > 0) scanIfd(tiff + gpsOffset, true);
+        if (out.capturedAt || (out.lat != null && out.lon != null)) {
+          return out;
         }
       }
       offset += 2 + segLen;
     }
+    return out.capturedAt || out.lat != null ? out : null;
   } catch(e) {}
   return null;
 }
@@ -378,13 +408,18 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
       }
     }
 
-    // 3. Quét toạ độ GPS từ Binary EXIF TIFF nếu XMP không có
-    if (meta.lat == null && bytes.length > 512) {
+    // 3. Quét toạ độ GPS & ngày giờ chụp từ Binary EXIF TIFF nếu XMP chưa có
+    if ((meta.lat == null || !meta.capturedAt) && bytes.length > 512) {
       try {
-        var binGps = parseBinaryExifGps(bytes);
-        if (binGps && binGps.lat != null && binGps.lon != null) {
-          meta.lat = binGps.lat;
-          meta.lon = binGps.lon;
+        var binExif = parseBinaryExifGps(bytes);
+        if (binExif) {
+          if (binExif.lat != null && binExif.lon != null && meta.lat == null) {
+            meta.lat = binExif.lat;
+            meta.lon = binExif.lon;
+          }
+          if (binExif.capturedAt && !meta.capturedAt) {
+            meta.capturedAt = binExif.capturedAt;
+          }
         }
       } catch(eBin) {}
     }
@@ -498,12 +533,14 @@ function getFolderPhotosWithExif(folderId) {
       detectedFolderLoc = meta.location || meta.city;
     }
 
+    // TUÂN THỦ ĐIỀU 5: Mỗi bức ảnh mang thông tin vị trí và ngày giờ chụp riêng biệt của chính nó
+    // Tuyệt đối không lấy vị trí hoặc ngày chụp của thư mục hay ảnh khác gán cho ảnh này
     filesList.push({
       id: f.getId(),
       name: fname,
       capturedAt: fDate || "",
-      city: meta.city || detectedFolderCity || "",
-      location: meta.location || detectedFolderLoc || meta.city || detectedFolderCity || "",
+      city: meta.city || "",
+      location: meta.location || meta.city || "",
       lat: meta.lat != null ? meta.lat : null,
       lon: meta.lon != null ? meta.lon : null
     });
