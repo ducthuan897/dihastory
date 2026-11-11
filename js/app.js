@@ -16,6 +16,16 @@ const App = (function () {
     let homeTimeSort = 'oldest'; // 'oldest': Cũ nhất trước, 'newest': Mới nhất trước
     let homeGroupByLocation = false;
 
+    function escapeHtml(str) {
+        if (!str || typeof str !== 'string') return "";
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     // State for Client Album Page (Page 2)
     let activeCategory = 'ALL';
     let searchQuery = '';
@@ -1150,7 +1160,7 @@ const App = (function () {
                     <div class="mb-10">
                         <div class="flex items-center gap-2 mb-4 pb-2 border-b border-zinc-200">
                             <i class="fa-solid fa-location-dot text-rose-500 text-sm"></i>
-                            <h3 class="text-sm sm:text-base font-bold text-zinc-800">${grpName}</h3>
+                            <h3 class="text-sm sm:text-base font-bold text-zinc-800">${escapeHtml(grpName)}</h3>
                             <span class="text-xs text-zinc-400 font-medium">(${grpPhotos.length} ảnh)</span>
                         </div>
                         <div class="grid ${gridClass} gap-3 sm:gap-4">
@@ -1190,7 +1200,7 @@ const App = (function () {
                 >
                     <img
                         src="${getOptimizedThumbnailUrl(photo.url, 'w800')}"
-                        alt="${photo.code || photo.title || ''}"
+                        alt="${escapeHtml(photo.code || photo.title || '')}"
                         loading="lazy"
                         referrerpolicy="no-referrer"
                         class="w-full h-72 sm:h-80 object-cover object-center group-hover:scale-[1.02] transition-transform duration-500 pointer-events-none"
@@ -1202,8 +1212,8 @@ const App = (function () {
                     <!-- Bottom Bar: Photo Code & Location / Time on hover / mobile -->
                     <div class="absolute bottom-2.5 inset-x-2.5 flex items-end justify-between gap-2 pointer-events-none">
                         <div class="opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] max-w-[90%] truncate">
-                            <span class="font-mono font-bold block truncate">${photo.code || 'IMG'}</span>
-                            <span class="text-amber-300 block truncate">${photo.location ? `<i class="fa-solid fa-location-dot mr-1"></i>${photo.location} • ` : ''}${timeLabel}</span>
+                            <span class="font-mono font-bold block truncate">${escapeHtml(photo.code || 'IMG')}</span>
+                            <span class="text-amber-300 block truncate">${photo.location ? `<i class="fa-solid fa-location-dot mr-1"></i>${escapeHtml(photo.location)} • ` : ''}${escapeHtml(timeLabel)}</span>
                         </div>
                     </div>
                 </div>
@@ -1219,7 +1229,7 @@ const App = (function () {
             >
                 <img
                     src="${getOptimizedThumbnailUrl(photo.url, 'w800')}"
-                    alt="${photo.code || photo.title || ''}"
+                    alt="${escapeHtml(photo.code || photo.title || '')}"
                     loading="lazy"
                     referrerpolicy="no-referrer"
                     class="w-full h-72 sm:h-80 object-cover object-center group-hover:scale-[1.02] transition-transform duration-500 pointer-events-none"
@@ -1233,9 +1243,9 @@ const App = (function () {
                     ${noteText ? `
                         <button
                             type="button"
-                            onclick="App.openPhotoNoteModal('${photo.id}')"
+                            onclick="App.openPhotoNoteModal('${escapeHtml(photo.id)}')"
                             class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-md transition"
-                            title="Ghi chú: ${noteText}"
+                            title="Ghi chú: ${escapeHtml(noteText)}"
                         >
                             <i class="fa-solid fa-comment-dots"></i>
                         </button>
@@ -1243,7 +1253,7 @@ const App = (function () {
                         !isLocked ? `
                             <button
                                 type="button"
-                                onclick="App.openPhotoNoteModal('${photo.id}')"
+                                onclick="App.openPhotoNoteModal('${escapeHtml(photo.id)}')"
                                 class="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full bg-white/85 hover:bg-white text-zinc-700 backdrop-blur-xs flex items-center justify-center text-xs shadow-md transition"
                                 title="Thêm ghi chú chỉnh sửa"
                             >
@@ -1261,7 +1271,7 @@ const App = (function () {
                     ) : `
                         <button
                             type="button"
-                            onclick="App.togglePhotoHeart('${photo.id}')"
+                            onclick="App.togglePhotoHeart('${escapeHtml(photo.id)}')"
                             class="w-7 h-7 rounded-full flex items-center justify-center text-xs transition shadow-md ${
                                 isSelected
                                     ? 'bg-white/95 text-rose-600'
@@ -1277,8 +1287,8 @@ const App = (function () {
                 <!-- Bottom Bar: Photo Code & Location / Time on hover / mobile -->
                 <div class="absolute bottom-2.5 inset-x-2.5 flex items-end justify-between gap-2 pointer-events-none z-10">
                     <div class="opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] max-w-[90%] truncate">
-                        <span class="font-mono font-bold block truncate">${photo.code || 'IMG'}</span>
-                        <span class="text-amber-300 block truncate">${photo.location ? `<i class="fa-solid fa-location-dot mr-1"></i>${photo.location} • ` : ''}${timeLabel}</span>
+                        <span class="font-mono font-bold block truncate">${escapeHtml(photo.code || 'IMG')}</span>
+                        <span class="text-amber-300 block truncate">${photo.location ? `<i class="fa-solid fa-location-dot mr-1"></i>${escapeHtml(photo.location)} • ` : ''}${escapeHtml(timeLabel)}</span>
                     </div>
                 </div>
             </div>
