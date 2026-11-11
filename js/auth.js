@@ -331,7 +331,6 @@ const AuthModule = (function () {
                 closeLoginModal();
                 checkAuthUI();
                 App.showView('admin');
-                App.showToast(`Chào mừng ${matched.fullName || matched.username} đăng nhập thành công!`);
                 return;
             }
         }
