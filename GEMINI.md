@@ -61,3 +61,10 @@ Các quy tắc bắt buộc phải luôn tuân thủ trong toàn bộ quá trìn
    - Sau mỗi yêu cầu từ người dùng, AI bắt buộc phải đọc và rà soát lại toàn bộ các quy tắc trong file `GEMINI.md` này trước khi bắt đầu phân tích, lập trình hoặc chỉnh sửa bất kỳ nội dung nào.
    - Đảm bảo mọi giải pháp và hành động luôn tuân thủ 100% tất cả các quy tắc đã đề ra.
 
+13. **Hệ thống bảo vệ đa tầng chống Inspect Code & chống trích xuất URL ảnh (Full Anti-Inspection & DevTools Defense)**:
+   - Tự động chặn chuột phải (`contextmenu`), chặn kéo thả ảnh (`dragstart`), chặn chạm giữ lâu (`touchstart/long-press`), chặn các tổ hợp phím kiểm tra code / in ấn / chụp màn hình (`F12`, `PrintScreen`, `Ctrl+S`, `Ctrl+P`, `Ctrl+U`, `Ctrl+Shift+I`, `Ctrl+Shift+C`, `Ctrl+Shift+J`) đối với người dùng không phải Quản trị viên (Admin).
+   - Tự động nhận diện khi người dùng mở công cụ DevTools / F12 (qua chênh lệch kích thước cửa sổ): kích hoạt màn chắn bảo vệ làm mờ nội dung và kích hoạt bẫy `debugger` liên tục để làm đóng băng công cụ gỡ lỗi của kẻ gian.
+   - Che giấu và bảo vệ thẻ ảnh: lót lớp phủ trong suốt (`pointer-events: none` hoặc overlay trống) trên toàn bộ các bức ảnh trong lưới ảnh và trong Lightbox để khi dùng chuột bấm Inspect chỉ trỏ vào lớp div trống, không lấy được link ảnh trực tiếp.
+   - Vô hiệu hoá in log ra console (`console.log`, `console.info`, `console.debug`, tự động `console.clear()`) để triệt tiêu việc rò rỉ URL hay ID nội bộ ra tab Console.
+   - Cơ chế bảo vệ tự động nhả cho người dùng đã đăng nhập vai trò Admin để không ảnh hưởng đến việc quản trị và kiểm thử.
+

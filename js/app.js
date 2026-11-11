@@ -163,6 +163,7 @@ const App = (function () {
     function init() {
         AuthModule.checkAuthUI();
         setupKeyboardShortcuts();
+        setupProtectionHandlers();
         setupLightboxZoom();
         _lbZoomSetupDone = true;
         handleUrlRouting();
@@ -1180,7 +1181,7 @@ const App = (function () {
             return `
                 <div
                     onclick="App.openLightbox(${indexInFiltered})"
-                    class="group relative bg-white rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition cursor-pointer select-none"
+                    class="group relative bg-white rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition cursor-pointer select-none photo-card-wrap"
                 >
                     <img
                         src="${getOptimizedThumbnailUrl(photo.url, 'w800')}"
@@ -1189,7 +1190,9 @@ const App = (function () {
                         referrerpolicy="no-referrer"
                         class="w-full h-72 sm:h-80 object-cover object-center group-hover:scale-[1.02] transition-transform duration-500 pointer-events-none"
                     >
-                    ${shouldShowWatermark(album) ? '<div class="watermark-pattern-overlay rounded"></div>' : ''}
+                    <!-- Lớp bảo vệ trong suốt che trên thẻ img chống chuột phải/inspect trực tiếp vào ảnh -->
+                    <div class="absolute inset-0 z-10 select-none"></div>
+                    ${shouldShowWatermark(album) ? '<div class="watermark-pattern-overlay rounded z-10"></div>' : ''}
 
                     <!-- Bottom Bar: Photo Code & Location / Time on hover / mobile -->
                     <div class="absolute bottom-2.5 inset-x-2.5 flex items-end justify-between gap-2 pointer-events-none">
@@ -1207,16 +1210,18 @@ const App = (function () {
         return `
             <div
                 onclick="App.openLightbox(${indexInFiltered})"
-                class="group relative bg-white rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition cursor-pointer select-none"
+                class="group relative bg-white rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition cursor-pointer select-none photo-card-wrap"
             >
                 <img
                     src="${getOptimizedThumbnailUrl(photo.url, 'w800')}"
                     alt="${photo.code || photo.title || ''}"
                     loading="lazy"
                     referrerpolicy="no-referrer"
-                    class="w-full h-72 sm:h-80 object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
+                    class="w-full h-72 sm:h-80 object-cover object-center group-hover:scale-[1.02] transition-transform duration-500 pointer-events-none"
                 >
-                ${shouldShowWatermark(album) ? '<div class="watermark-pattern-overlay rounded"></div>' : ''}
+                <!-- Lớp bảo vệ trong suốt che trên thẻ img chống chuột phải/inspect trực tiếp vào ảnh -->
+                <div class="absolute inset-0 z-10 select-none"></div>
+                ${shouldShowWatermark(album) ? '<div class="watermark-pattern-overlay rounded z-10"></div>' : ''}
 
                 <!-- Top-right: Heart Button (Chọn ảnh) & Note Button (Ghi chú) -->
                 <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-20" onclick="event.stopPropagation()">
@@ -2254,31 +2259,31 @@ const App = (function () {
     }
 
     function setupProtectionHandlers() {
-        const isProtected = () => currentView === 'album' && !isClientMode;
+        const isAdminUser = () => typeof AuthModule !== 'undefined' && typeof AuthModule.isLoggedIn === 'function' && AuthModule.isLoggedIn();
         const shield = document.getElementById('viewOnlyAntiCaptureShield');
 
-        // 1. Chặn chuột phải trên máy tính và menu ngữ cảnh trên di động
+        // 1. Chặn chuột phải trên máy tính và menu ngữ cảnh trên di động (trừ khi Admin đã đăng nhập)
         document.addEventListener('contextmenu', (e) => {
-            if (isProtected()) {
+            if (!isAdminUser()) {
                 e.preventDefault();
-                showToast("Chế độ chỉ xem được bảo vệ bản quyền, không hỗ trợ lưu ảnh!", "error");
+                showToast("Nội dung được bảo vệ bản quyền!", "error");
             }
         });
 
-        // 2. Chặn kéo thả hình ảnh (kéo ảnh ra desktop hoặc tab mới)
+        // 2. Chặn kéo thả hình ảnh ra desktop hoặc tab mới
         document.addEventListener('dragstart', (e) => {
-            if (isProtected() && (e.target.tagName === 'IMG' || e.target.closest('img'))) {
+            if (!isAdminUser() && (e.target.tagName === 'IMG' || e.target.closest('img'))) {
                 e.preventDefault();
             }
         });
 
-        // 3. Chặn hành vi nhấn giữ lâu trên thiết bị di động (long-press context menu để lưu ảnh)
+        // 3. Chặn hành vi nhấn giữ lâu trên thiết bị di động để lưu ảnh
         let touchTimer = null;
         document.addEventListener('touchstart', (e) => {
-            if (!isProtected()) return;
-            if (e.target.tagName === 'IMG' || e.target.closest('#lightboxImageContainer')) {
+            if (isAdminUser()) return;
+            if (e.target.tagName === 'IMG' || e.target.closest('#lightboxImageContainer') || e.target.closest('.photo-card-wrap')) {
                 touchTimer = setTimeout(() => {
-                    // Nếu nhấn giữ quá 500ms thì chặn mở menu lưu ảnh
+                    // Chặn hành vi mở popup save image của mobile
                 }, 400);
             }
         }, { passive: true });
@@ -2291,33 +2296,102 @@ const App = (function () {
             if (touchTimer) clearTimeout(touchTimer);
         }, { passive: true });
 
-        // 4. Chặn phím tắt in ấn, lưu trang, chụp màn hình, mở công cụ lập trình viên
+        // 4. Chặn phím tắt in ấn, lưu trang, chụp màn hình, mở công cụ lập trình viên (F12, Ctrl+Shift+I, etc.)
         window.addEventListener('keydown', (e) => {
-            if (!isProtected()) return;
+            if (isAdminUser()) return;
+            const key = e.key;
             if (
-                e.key === 'PrintScreen' ||
-                (e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'u')) ||
-                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) ||
-                e.key === 'F12'
+                key === 'F12' ||
+                key === 'PrintScreen' ||
+                (e.ctrlKey && (key === 's' || key === 'S' || key === 'p' || key === 'P' || key === 'u' || key === 'U')) ||
+                (e.ctrlKey && e.shiftKey && (key === 'I' || key === 'i' || key === 'C' || key === 'c' || key === 'J' || key === 'j'))
             ) {
                 e.preventDefault();
                 if (shield) {
                     shield.classList.remove('hidden');
-                    setTimeout(() => shield.classList.add('hidden'), 2500);
+                    shield.classList.add('active');
+                    setTimeout(() => {
+                        shield.classList.add('hidden');
+                        shield.classList.remove('active');
+                    }, 2500);
                 }
-                showToast("Chế độ chỉ xem được bảo vệ bản quyền!", "error");
+                showToast("Hệ thống được bảo vệ bản quyền!", "error");
             }
         });
 
+        // 5. Làm mờ / che màn chắn khi mất focus hoặc chuyển tab đối với Trang Chỉ Xem Album
         window.addEventListener('blur', () => {
-            if (isProtected() && shield) {
+            if (currentView === 'album' && !isClientMode && shield) {
                 shield.classList.remove('hidden');
+                shield.classList.add('active');
             }
         });
 
         window.addEventListener('focus', () => {
-            if (shield) shield.classList.add('hidden');
+            if (shield && !shield.dataset.devtoolsBlocked) {
+                shield.classList.add('hidden');
+                shield.classList.remove('active');
+            }
         });
+
+        // 6. Phát hiện mở DevTools (DevTools Detection) & Bẫy Debugger chống kiểm tra mã
+        let isDevToolsOpen = false;
+        const devToolsThreshold = 160;
+
+        function checkDevTools() {
+            if (isAdminUser()) return;
+
+            // Kiểm tra chênh lệch kích thước cửa sổ do dock DevTools gây ra
+            const widthDiff = window.outerWidth - window.innerWidth > devToolsThreshold;
+            const heightDiff = window.outerHeight - window.innerHeight > devToolsThreshold;
+            const detected = widthDiff || heightDiff;
+
+            if (detected) {
+                if (!isDevToolsOpen) {
+                    isDevToolsOpen = true;
+                    if (shield) {
+                        shield.dataset.devtoolsBlocked = "1";
+                        shield.classList.remove('hidden');
+                        shield.classList.add('active');
+                    }
+                    try {
+                        console.clear();
+                    } catch(e) {}
+                }
+                // Kích hoạt bẫy debugger làm treo công cụ kiểm tra của kẻ gian
+                try {
+                    const start = Date.now();
+                    (function() {
+                        debugger;
+                    })();
+                    if (Date.now() - start > 100) {
+                        isDevToolsOpen = true;
+                    }
+                } catch(e) {}
+            } else {
+                if (isDevToolsOpen) {
+                    isDevToolsOpen = false;
+                    if (shield) {
+                        delete shield.dataset.devtoolsBlocked;
+                        shield.classList.add('hidden');
+                        shield.classList.remove('active');
+                    }
+                }
+            }
+        }
+
+        // Định kỳ kiểm tra DevTools và dọn dẹp console
+        setInterval(checkDevTools, 800);
+
+        // 7. Bảo vệ Console: Ghi đè log không cho in link hay thông tin quan trọng
+        try {
+            if (!isAdminUser()) {
+                const noop = () => {};
+                window.console.log = noop;
+                window.console.debug = noop;
+                window.console.info = noop;
+            }
+        } catch(e) {}
     }
 
     function showToast(message, type = 'success') {

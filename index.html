@@ -523,6 +523,8 @@
                 </div>
                 <img id="lightboxImage" src="" alt="Lightbox Preview" referrerpolicy="no-referrer" draggable="false"
                     class="max-h-[82vh] max-w-full object-contain rounded shadow-2xl pointer-events-auto transition-opacity duration-300">
+                <!-- Lớp bảo vệ trong suốt che trên thẻ img trong Lightbox chống inspect/chuột phải trực tiếp -->
+                <div class="absolute inset-0 z-10 select-none pointer-events-none"></div>
                 <div id="lightboxWatermarkOverlay" class="watermark-pattern-overlay rounded hidden"></div>
             </div>
 
