@@ -3679,14 +3679,12 @@ function testRun() {
             if (el) el.innerText = val;
         };
         setTxt('manageStatTotalCount', totalCount);
-        setTxt('manageStatStarCount', starCount);
         setTxt('manageStatHeartCount', heartCount);
         setTxt('manageStatNoteCount', noteCount);
 
-        // Update active state on the 4 stat buttons (Active has translucent/muted background without borders)
+        // Update active state on the stat buttons (Active has translucent/muted background without borders)
         const statPillMap = {
             ALL: document.getElementById('manageFilterPill_ALL'),
-            STARRED: document.getElementById('manageFilterPill_STARRED'),
             SELECTED: document.getElementById('manageFilterPill_SELECTED'),
             NOTED: document.getElementById('manageFilterPill_NOTED')
         };
@@ -3841,16 +3839,8 @@ function testRun() {
                     >
                     <!-- Watermark chỉ hiện ở trang chỉ xem/chọn ảnh cho khách; trong trang quản trị luôn tắt -->
 
-                    <!-- Top-left: Star Badge & Cover Badge -->
+                    <!-- Top-left: Cover Badge -->
                     <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10" onclick="event.stopPropagation()">
-                        <button
-                            type="button"
-                            onclick="AdminModule.togglePhotoStar('${photo.id}')"
-                            class="w-7 h-7 rounded-md bg-white/85 hover:bg-white backdrop-blur-xs flex items-center justify-center shadow-xs transition"
-                            title="${isStarred ? 'Bỏ đánh dấu sao' : 'Đánh dấu sao nổi bật'}"
-                        >
-                            <i class="${isStarred ? 'fa-solid fa-star text-emerald-500' : 'fa-regular fa-star text-zinc-700'} text-xs"></i>
-                        </button>
                         ${
                             isCover
                                 ? `<span class="px-2 py-1 rounded-md bg-amber-500 text-white text-[10px] font-bold shadow-xs">Ảnh bìa</span>`
