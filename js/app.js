@@ -2147,10 +2147,12 @@ const App = (function () {
         if (previewContainer) {
             previewContainer.innerHTML = selectedPhotos.map(p => {
                 const note = selections[p.id]?.note;
+                const safeCode = escapeHtml(p.code || p.title || '');
+                const safeNote = escapeHtml(note || '');
                 return `
                     <div class="py-1 px-2 border-b border-zinc-200 text-xs flex justify-between items-center">
-                        <span class="font-mono font-bold text-zinc-800">${p.code || p.title}</span>
-                        ${note ? `<span class="text-amber-600 truncate max-w-[200px]">"${note}"</span>` : '<span class="text-zinc-400">Không có ghi chú</span>'}
+                        <span class="font-mono font-bold text-zinc-800">${safeCode}</span>
+                        ${safeNote ? `<span class="text-amber-600 truncate max-w-[200px]">"${safeNote}"</span>` : '<span class="text-zinc-400">Không có ghi chú</span>'}
                     </div>
                 `;
             }).join('');
