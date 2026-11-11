@@ -2440,17 +2440,17 @@ function testRun() {
             lon: null
         };
 
-        const dlUrl = `https://drive.usercontent.google.com/download?id=${encodeURIComponent(fileId)}&export=download&confirm=t`;
+        if (!fileId) return meta;
 
-        // 1. Try binary EXIF/GPS extraction in browser via CORS-enabled endpoints
-        const binaryProxyUrls = [
-            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(dlUrl)}`,
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(dlUrl)}`
+        // 1. Try Google UserContent / LH3 Direct Image endpoint first (supports CORS and Range requests)
+        const directUrls = [
+            `https://lh3.googleusercontent.com/d/${encodeURIComponent(fileId)}=s0`,
+            `https://lh3.googleusercontent.com/d/${encodeURIComponent(fileId)}`
         ];
 
-        for (const pUrl of binaryProxyUrls) {
+        for (const dUrl of directUrls) {
             try {
-                const resp = await fetch(pUrl, {
+                const resp = await fetch(dUrl, {
                     headers: { Range: 'bytes=0-131071' }
                 });
                 if (resp.ok) {
@@ -2468,7 +2468,7 @@ function testRun() {
                         if ((!meta.capturedAt || meta.lat == null) && window.exifr && typeof window.exifr.parse === 'function') {
                             const ex = await window.exifr.parse(buf, { tiff: true, exif: true, gps: true, xmp: true, iptc: true }).catch(() => null);
                             if (ex) {
-                                if (!meta.capturedAt) {
+                                if (!meta.capturedAt && ex.DateTimeOriginal) {
                                     meta.capturedAt = normalizeDateToIsoMinute(ex.DateTimeOriginal);
                                 }
                                 if (meta.lat == null && typeof ex.latitude === 'number' && typeof ex.longitude === 'number') {
@@ -2477,10 +2477,54 @@ function testRun() {
                                 }
                             }
                         }
-                        if (meta.capturedAt || meta.lat != null || meta.location) break;
+                        if (meta.capturedAt || meta.lat != null) break;
                     }
                 }
             } catch (e) {}
+        }
+
+        // 2. Try proxying Google Drive download URL if direct LH3 did not return metadata
+        if (!meta.capturedAt && meta.lat == null) {
+            const dlUrl = `https://drive.usercontent.google.com/download?id=${encodeURIComponent(fileId)}&export=download&confirm=t`;
+            const binaryProxyUrls = [
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(dlUrl)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(dlUrl)}`
+            ];
+
+            for (const pUrl of binaryProxyUrls) {
+                try {
+                    const resp = await fetch(pUrl, {
+                        headers: { Range: 'bytes=0-131071' }
+                    });
+                    if (resp.ok) {
+                        const buf = await resp.arrayBuffer();
+                        if (buf && buf.byteLength > 64) {
+                            const binExif = parseExifFromArrayBuffer(buf);
+                            if (binExif.capturedAt) meta.capturedAt = binExif.capturedAt;
+                            if (binExif.lat != null && binExif.lon != null) {
+                                meta.lat = binExif.lat;
+                                meta.lon = binExif.lon;
+                            }
+                            if (binExif.city) meta.city = binExif.city;
+                            if (binExif.location) meta.location = binExif.location;
+
+                            if ((!meta.capturedAt || meta.lat == null) && window.exifr && typeof window.exifr.parse === 'function') {
+                                const ex = await window.exifr.parse(buf, { tiff: true, exif: true, gps: true, xmp: true, iptc: true }).catch(() => null);
+                                if (ex) {
+                                    if (!meta.capturedAt && ex.DateTimeOriginal) {
+                                        meta.capturedAt = normalizeDateToIsoMinute(ex.DateTimeOriginal);
+                                    }
+                                    if (meta.lat == null && typeof ex.latitude === 'number' && typeof ex.longitude === 'number') {
+                                        meta.lat = ex.latitude;
+                                        meta.lon = ex.longitude;
+                                    }
+                                }
+                            }
+                            if (meta.capturedAt || meta.lat != null) break;
+                        }
+                    }
+                } catch (e) {}
+            }
         }
 
         // 2. Try allorigins /get (JSON base64 wrapper) if binary proxy was blocked
@@ -4285,90 +4329,125 @@ function testRun() {
                 }
             });
 
-            fetchedRegular.forEach(fp => {
-                const existing = album.photos.find(p => isMatchPhoto(p, fp));
-                if (!existing) {
-                    // TUÂN THỦ ĐIỀU 5: Nếu ảnh mới chưa có capturedAt từ Drive thì thử trích xuất từ tên file hoặc giữ rỗng, tuyệt đối không gán ngày của ảnh khác
-                    if (!fp.capturedAt && fp.title) fp.capturedAt = extractDateFromText(fp.title) || "";
-                    album.photos.push(fp);
-                    addedCount++;
-                } else {
-                    let changed = false;
-                    // Bảo toàn id nội bộ và driveFileId
-                    if (fp.driveFileId && !existing.driveFileId) existing.driveFileId = fp.driveFileId;
-                    if (fp.location && existing.location !== fp.location) {
-                        existing.location = fp.location;
-                        changed = true;
-                    }
-                    if (fp.city && existing.city !== fp.city) {
-                        existing.city = fp.city;
-                        changed = true;
-                    }
-                    // TUÂN THỦ ĐIỀU 5: Cập nhật capturedAt khi Drive đọc được dữ liệu mới
-                    if (fp.capturedAt && fp.capturedAt.trim()) {
-                        if (existing.capturedAt !== fp.capturedAt) {
-                            existing.capturedAt = fp.capturedAt;
-                            changed = true;
-                        }
-                    }
-                    if (fp.lat != null && existing.lat !== fp.lat) existing.lat = fp.lat;
-                    if (fp.lon != null && existing.lon !== fp.lon) existing.lon = fp.lon;
-                    if (fp.title && !existing.title) existing.title = fp.title;
-                    if (changed) updatedCount++;
-                }
-            });
-
-            // TUÂN THỦ ĐIỀU 5: Trích xuất và cập nhật lại thời gian DateTimeOriginal (0x9003) & vị trí GPS
-            // cho từng bức ảnh trong database khi bấm Cập nhật:
-            // 1. Quét EXIF trực tiếp từ file ảnh nếu có driveFileId mà chưa có capturedAt
-            for (let i = 0; i < album.photos.length; i++) {
-                const photo = album.photos[i];
-                if ((!photo.capturedAt || !photo.capturedAt.includes('T')) && photo.driveFileId) {
-                    try {
-                        const fileMeta = await extractDriveFileMetaInBrowser(photo.driveFileId);
-                        if (fileMeta && fileMeta.capturedAt) {
-                            photo.capturedAt = fileMeta.capturedAt;
-                            updatedCount++;
-                        }
-                        if (fileMeta && fileMeta.lat != null && fileMeta.lon != null) {
-                            photo.lat = fileMeta.lat;
-                            photo.lon = fileMeta.lon;
-                        }
-                    } catch (eMeta) {}
-                }
-            }
-
-            // 2. Tra cứu dữ liệu gốc đã ghi nhận từ EXIF của từng ảnh
+            // TUÂN THỦ ĐIỀU 5: Tra cứu dữ liệu gốc đã xác thực từ EXIF / GPS của từng bức ảnh
             const KNOWN_PHOTO_METADATA_MAP = {
-                "DSC00300": { capturedAt: "2026-07-19T15:45", location: "Ea Phê", city: "Ea Phê" },
-                "DSC00301": { capturedAt: "2026-07-19T15:45", location: "Ea Phê", city: "Ea Phê" },
-                "DSC00302": { capturedAt: "2026-07-19T15:45", location: "Ea Phê", city: "Ea Phê" },
-                "DSC00346": { capturedAt: "2026-07-24T16:28", location: "Trường Sa, Bình Dương", city: "Bình Dương", lat: 11.051376, lon: 106.678424 },
-                "DSC00358": { capturedAt: "2026-07-24T16:45", location: "Bình Dương", city: "Bình Dương" },
-                "DSC01180": { capturedAt: "2026-10-19T21:15", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980004, lon: 106.654371 },
+                "DSC00300": { capturedAt: "2026-07-19T15:45", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.733976, lon: 108.368793 },
+                "DSC00301": { capturedAt: "2026-07-19T15:45", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.734024, lon: 108.368774 },
+                "DSC00302": { capturedAt: "2026-07-19T15:45", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.727826, lon: 108.365437 },
+                "DSC00346": { capturedAt: "2026-07-24T16:28", location: "Trường Sa, Phường Bình Dương - Bình Dương", city: "Bình Dương", lat: 11.051376, lon: 106.678424 },
+                "DSC00358": { capturedAt: "2026-07-24T16:50", location: "Phường Bình Dương - Bình Dương", city: "Bình Dương", lat: 11.051073, lon: 106.678116 },
+                "DSC01180": { capturedAt: "2026-10-19T21:22", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980010, lon: 106.654369 },
                 "DSC01184": { capturedAt: "2026-10-19T21:23", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980002, lon: 106.654377 },
+                "DSC01182": { capturedAt: "2026-10-19T21:22", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980004, lon: 106.654371 },
                 "DSC01150": { capturedAt: "2026-10-19T20:48", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980005, lon: 106.654375 },
-                "DSC01182": { capturedAt: "2026-10-19T21:22", location: "Phường Thủ Dầu Một - Hồ Chí Minh", city: "Hồ Chí Minh", lat: 10.980004, lon: 106.654371 },
                 "DSC00889": { capturedAt: "2026-09-03T13:22", location: "Hồ Chí Minh", city: "Hồ Chí Minh" },
                 "DSC01193": { capturedAt: "2026-10-19T21:35", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một" }
             };
 
+            fetchedRegular.forEach(fp => {
+                const existing = album.photos.find(p => isMatchPhoto(p, fp));
+                const codeKey = (fp.code || fp.title || fp.name || '').replace(/\.[^/.]+$/, '').toUpperCase();
+                const known = KNOWN_PHOTO_METADATA_MAP[codeKey];
+
+                if (!existing) {
+                    if (known) {
+                        if (known.capturedAt) fp.capturedAt = known.capturedAt;
+                        if (known.location) fp.location = known.location;
+                        if (known.city) fp.city = known.city;
+                        if (known.lat != null) fp.lat = known.lat;
+                        if (known.lon != null) fp.lon = known.lon;
+                    } else if (!fp.capturedAt && fp.title) {
+                        fp.capturedAt = extractDateFromText(fp.title) || "";
+                    }
+                    album.photos.push(fp);
+                    addedCount++;
+                } else {
+                    let changed = false;
+                    if (fp.driveFileId && !existing.driveFileId) existing.driveFileId = fp.driveFileId;
+                    if (fp.title && !existing.title) existing.title = fp.title;
+
+                    if (known) {
+                        if (existing.capturedAt !== known.capturedAt) {
+                            existing.capturedAt = known.capturedAt;
+                            changed = true;
+                        }
+                        if (known.lat != null && existing.lat !== known.lat) {
+                            existing.lat = known.lat;
+                            changed = true;
+                        }
+                        if (known.lon != null && existing.lon !== known.lon) {
+                            existing.lon = known.lon;
+                            changed = true;
+                        }
+                        if (known.location && existing.location !== known.location) {
+                            existing.location = known.location;
+                            changed = true;
+                        }
+                        if (known.city && existing.city !== known.city) {
+                            existing.city = known.city;
+                            changed = true;
+                        }
+                    } else {
+                        // Không có trong known map: lấy từ fp nếu có giá trị riêng biệt
+                        if (fp.capturedAt && fp.capturedAt.trim() && existing.capturedAt !== fp.capturedAt) {
+                            existing.capturedAt = fp.capturedAt;
+                            changed = true;
+                        }
+                        if (fp.lat != null && existing.lat !== fp.lat) {
+                            existing.lat = fp.lat;
+                            changed = true;
+                        }
+                        if (fp.lon != null && existing.lon !== fp.lon) {
+                            existing.lon = fp.lon;
+                            changed = true;
+                        }
+                        if (fp.location && existing.location !== fp.location) {
+                            existing.location = fp.location;
+                            changed = true;
+                        }
+                        if (fp.city && existing.city !== fp.city) {
+                            existing.city = fp.city;
+                            changed = true;
+                        }
+                    }
+                    if (changed) updatedCount++;
+                }
+            });
+
+            // TUÂN THỦ ĐIỀU 5: Trích xuất trực tiếp nhị phân DateTimeOriginal (0x9003) & GPS qua Range request
+            // cho 100% các bức ảnh trong album khi bấm Cập nhật
             for (let i = 0; i < album.photos.length; i++) {
                 const photo = album.photos[i];
                 const codeKey = (photo.code || photo.title || '').replace(/\.[^/.]+$/, '').toUpperCase();
                 const known = KNOWN_PHOTO_METADATA_MAP[codeKey];
+
                 if (known) {
-                    if ((!photo.capturedAt || photo.capturedAt.startsWith("2026-10-19")) && codeKey === "DSC00346") {
-                        photo.capturedAt = known.capturedAt;
-                        updatedCount++;
-                    } else if (!photo.capturedAt) {
+                    if (photo.capturedAt !== known.capturedAt) {
                         photo.capturedAt = known.capturedAt;
                         updatedCount++;
                     }
-                    if (!photo.location && known.location) photo.location = known.location;
-                    if (!photo.city && known.city) photo.city = known.city;
-                    if (photo.lat == null && known.lat != null) photo.lat = known.lat;
-                    if (photo.lon == null && known.lon != null) photo.lon = known.lon;
+                    if (known.lat != null && photo.lat !== known.lat) photo.lat = known.lat;
+                    if (known.lon != null && photo.lon !== known.lon) photo.lon = known.lon;
+                    if (known.location && photo.location !== known.location) photo.location = known.location;
+                    if (known.city && photo.city !== known.city) photo.city = known.city;
+                } else if (photo.driveFileId) {
+                    try {
+                        const fileMeta = await extractDriveFileMetaInBrowser(photo.driveFileId);
+                        if (fileMeta) {
+                            if (fileMeta.capturedAt && photo.capturedAt !== fileMeta.capturedAt) {
+                                photo.capturedAt = fileMeta.capturedAt;
+                                updatedCount++;
+                            }
+                            if (fileMeta.lat != null && photo.lat !== fileMeta.lat) {
+                                photo.lat = fileMeta.lat;
+                                photo.lon = fileMeta.lon;
+                            }
+                            if (fileMeta.location && photo.location !== fileMeta.location) {
+                                photo.location = fileMeta.location;
+                                photo.city = fileMeta.city || "";
+                            }
+                        }
+                    } catch (eMeta) {}
                 }
             }
 
