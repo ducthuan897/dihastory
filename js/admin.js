@@ -3358,11 +3358,17 @@ function testRun() {
             const isEditing = album.id === activeAdminAlbumId;
             const sel = selectionsMap[album.id] || {};
             const selectedCount = album.photos.filter(p => sel[p.id] && sel[p.id].selected).length;
-            const shareLink = getClientShareUrl(album.id);
+            const safeId = escapeHtml(String(album.id || '').replace(/['"\\]/g, ''));
+            const safeCoverUrl = escapeHtml(sanitizeMediaUrl(album.coverUrl || ''));
+            const safeTitle = escapeHtml(album.title || '');
+            const safeDate = escapeHtml(album.date || '');
+            const safeCity = escapeHtml(album.city || '');
+            const safeDeadline = album.deadlineEnabled && album.deadlineAt ? escapeHtml(formatTimeShort(album.deadlineAt)) : '';
+            const safeCoverPosY = typeof album.coverPosY === 'number' && isFinite(album.coverPosY) ? album.coverPosY : 50;
 
             return `
                 <div
-                    onclick="AdminModule.openAlbumManagePage('${album.id}')"
+                    onclick="AdminModule.openAlbumManagePage('${safeId}')"
                     class="p-4 sm:p-5 rounded-2xl border transition cursor-pointer ${
                         isEditing
                             ? 'border-zinc-900 bg-zinc-900/5 ring-2 ring-zinc-900/10'
@@ -3376,13 +3382,13 @@ function testRun() {
                             <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 w-full">
                                 <!-- Ảnh bìa album (tỉ lệ 16:9 hình chữ nhật chuẩn) -->
                                 <div class="w-32 aspect-video sm:w-44 sm:aspect-video rounded-xl overflow-hidden border border-zinc-200/90 shadow-2xs shrink-0 bg-zinc-100">
-                                    <img src="${album.coverUrl}" alt="${album.title}" referrerpolicy="no-referrer" class="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-500 will-change-transform" style="object-position: center ${typeof album.coverPosY === 'number' ? album.coverPosY : 50}%;">
+                                    <img src="${safeCoverUrl}" alt="${safeTitle}" referrerpolicy="no-referrer" class="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-500 will-change-transform" style="object-position: center ${safeCoverPosY}%;">
                                 </div>
 
                                 <!-- Cụm thông tin nằm bên phải bức ảnh -->
                                 <div class="min-w-0 flex-1 py-0.5">
                                     <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                        <h3 class="text-base sm:text-lg font-bold text-zinc-900 tracking-tight">${escapeHtml(album.title)}</h3>
+                                        <h3 class="text-base sm:text-lg font-bold text-zinc-900 tracking-tight">${safeTitle}</h3>
                                         ${
                                             album.sourceType === 'drive'
                                                 ? '<span class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-semibold shrink-0"><i class="fa-brands fa-google-drive mr-1"></i>Google Drive</span>'
@@ -3402,25 +3408,25 @@ function testRun() {
 
                                     <!-- Dòng thông tin Khách chọn -->
                                     <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 mt-1.5">
-                                        <span class="text-rose-600 font-semibold inline-flex items-center"><i class="fa-solid fa-heart mr-1.5"></i>Khách chọn: ${selectedCount}/${album.photos.length}</span>
-                                        ${(album.deliveredPhotos && album.deliveredPhotos.length > 0) ? `<span class="text-emerald-700 font-semibold inline-flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-emerald-600"></i>Đã chỉnh: ${album.deliveredPhotos.length} ảnh</span>` : ''}
-                                        ${album.deadlineEnabled && album.deadlineAt ? `<span class="text-amber-700 inline-flex items-center"><i class="fa-regular fa-clock mr-1.5 text-amber-500"></i>Hạn: ${formatTimeShort(album.deadlineAt)}</span>` : ''}
+                                        <span class="text-rose-600 font-semibold inline-flex items-center"><i class="fa-solid fa-heart mr-1.5"></i>Khách chọn: ${Number(selectedCount)}/${Number(album.photos.length)}</span>
+                                        ${(album.deliveredPhotos && album.deliveredPhotos.length > 0) ? `<span class="text-emerald-700 font-semibold inline-flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-emerald-600"></i>Đã chỉnh: ${Number(album.deliveredPhotos.length)} ảnh</span>` : ''}
+                                        ${safeDeadline ? `<span class="text-amber-700 inline-flex items-center"><i class="fa-regular fa-clock mr-1.5 text-amber-500"></i>Hạn: ${safeDeadline}</span>` : ''}
                                     </div>
 
                                     <!-- Trên Desktop (sm trở lên): Dòng Ngày chụp, Địa điểm, Số lượng ảnh nằm ngang bên phải ảnh -->
                                     <div class="album-desktop-meta hidden sm:flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-xs text-zinc-500 mt-1.5">
-                                        <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${escapeHtml(album.date)}</span>
-                                        <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${escapeHtml(album.city)}</span>
-                                        <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${album.photos.length} ảnh</span>
+                                        <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${safeDate}</span>
+                                        <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${safeCity}</span>
+                                        <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${Number(album.photos.length)} ảnh</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Trên Mobile (dưới sm): Xếp thành 1 hàng ở dưới ảnh album theo đúng yêu cầu -->
                             <div class="album-mobile-meta flex sm:hidden flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 pt-0.5">
-                                <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${escapeHtml(album.date)}</span>
-                                <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${escapeHtml(album.city)}</span>
-                                <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${album.photos.length} ảnh</span>
+                                <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${safeDate}</span>
+                                <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${safeCity}</span>
+                                <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${Number(album.photos.length)} ảnh</span>
                             </div>
                         </div>
 
@@ -3430,7 +3436,7 @@ function testRun() {
                                 album.isSelectionLockedBySubmit
                                     ? `<button
                                         type="button"
-                                        onclick="AdminModule.unlockAlbumSelectionForClient('${album.id}')"
+                                        onclick="AdminModule.unlockAlbumSelectionForClient('${safeId}')"
                                         class="col-span-4 sm:col-auto px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-xs mb-1 sm:mb-0"
                                         title="Mở khoá lại cho khách chọn tiếp"
                                     >
@@ -3443,7 +3449,7 @@ function testRun() {
                             <!-- 1. Riêng tư / Công khai -->
                             <button
                                 type="button"
-                                onclick="AdminModule.toggleAlbumPublic('${album.id}')"
+                                onclick="AdminModule.toggleAlbumPublic('${safeId}')"
                                 class="w-full sm:w-auto flex-col sm:flex-row h-12 sm:h-9 px-1.5 sm:px-3.5 rounded-xl bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-[10px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-2 shadow-2xs group"
                                 title="Chuyển chế độ hiển thị Album"
                             >
@@ -3455,23 +3461,23 @@ function testRun() {
                             ${
                                 album.sourceType === 'drive' || (album.driveLinks && album.driveLinks.length > 0)
                                     ? `<button
-                                        id="listSyncBtn_${album.id}"
+                                        id="listSyncBtn_${safeId}"
                                         type="button"
-                                        onclick="AdminModule.syncUpdateAlbumDrive('${album.id}')"
+                                        onclick="AdminModule.syncUpdateAlbumDrive('${safeId}')"
                                         class="w-full sm:w-auto flex-col sm:flex-row h-12 sm:h-9 px-1.5 sm:px-3.5 rounded-xl bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-[10px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-2 shadow-2xs group"
                                         title="Cập nhật nhanh ảnh và vị trí/ngày chụp từ Google Drive"
                                     >
-                                        <i id="listSyncIcon_${album.id}" class="fa-solid fa-rotate text-zinc-600 group-hover:text-zinc-900 text-xs sm:text-sm"></i>
-                                        <span id="listSyncText_${album.id}" class="truncate leading-tight">Cập nhật</span>
+                                        <i id="listSyncIcon_${safeId}" class="fa-solid fa-rotate text-zinc-600 group-hover:text-zinc-900 text-xs sm:text-sm"></i>
+                                        <span id="listSyncText_${safeId}" class="truncate leading-tight">Cập nhật</span>
                                     </button>`
                                     : `<div class="hidden sm:block"></div>`
                             }
 
                             <!-- 3. Link album -->
-                            <div class="relative w-full sm:w-auto" id="openAlbumMenuWrap_${album.id}">
+                            <div class="relative w-full sm:w-auto" id="openAlbumMenuWrap_${safeId}">
                                 <button
                                     type="button"
-                                    onclick="event.stopPropagation(); AdminModule.toggleOpenAlbumDropdown('${album.id}')"
+                                    onclick="event.stopPropagation(); AdminModule.toggleOpenAlbumDropdown('${safeId}')"
                                     class="w-full sm:w-auto flex-col sm:flex-row h-12 sm:h-9 px-1.5 sm:px-3.5 rounded-xl bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-[10px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-2 shadow-2xs group"
                                     title="Tùy chọn liên kết xem hoặc chọn ảnh"
                                 >
@@ -3484,11 +3490,11 @@ function testRun() {
                                         <i class="fa-solid fa-chevron-down text-[9px] opacity-70 hidden sm:inline-block"></i>
                                     </div>
                                 </button>
-                                <div id="openAlbumDropdown_${album.id}"
+                                <div id="openAlbumDropdown_${safeId}"
                                     class="hidden absolute left-1/2 -translate-x-1/2 mt-1.5 w-64 sm:w-72 rounded-2xl bg-white shadow-2xl border border-zinc-200 py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100 max-w-[calc(100vw-32px)]">
                                     <div class="px-3.5 py-2 hover:bg-zinc-100 transition flex items-center justify-between gap-2 group">
                                         <button type="button"
-                                            onclick="App.openAlbumPage('${album.id}', false); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
+                                            onclick="App.openAlbumPage('${safeId}', false); AdminModule.toggleOpenAlbumDropdown('${safeId}', false);"
                                             class="flex items-center gap-2.5 text-left flex-1 min-w-0">
                                             <div class="w-7 h-7 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center shrink-0">
                                                 <i class="fa-regular fa-eye"></i>
@@ -3496,7 +3502,7 @@ function testRun() {
                                             <span class="font-bold text-zinc-900 truncate">Chỉ xem</span>
                                         </button>
                                         <button type="button"
-                                            onclick="event.stopPropagation(); AdminModule.copyAlbumPublicLink('${album.id}'); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
+                                            onclick="event.stopPropagation(); AdminModule.copyAlbumPublicLink('${safeId}'); AdminModule.toggleOpenAlbumDropdown('${safeId}', false);"
                                             class="px-2.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-200 text-[11px] font-semibold transition flex items-center gap-1 shrink-0 shadow-2xs"
                                             title="Sao chép link xem album"
                                         >
@@ -3507,7 +3513,7 @@ function testRun() {
                                     <div class="border-t border-zinc-100 my-1"></div>
                                     <div class="px-3.5 py-2 hover:bg-rose-50/70 transition flex items-center justify-between gap-2 group">
                                         <button type="button"
-                                            onclick="App.openAlbumPage('${album.id}', true); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
+                                            onclick="App.openAlbumPage('${safeId}', true); AdminModule.toggleOpenAlbumDropdown('${safeId}', false);"
                                             class="flex items-center gap-2.5 text-left flex-1 min-w-0">
                                             <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
                                                 <i class="fa-solid fa-heart"></i>
@@ -3515,7 +3521,7 @@ function testRun() {
                                             <span class="font-bold text-rose-700 truncate">Chọn ảnh</span>
                                         </button>
                                         <button type="button"
-                                            onclick="event.stopPropagation(); AdminModule.copyAlbumClientLink('${album.id}'); AdminModule.toggleOpenAlbumDropdown('${album.id}', false);"
+                                            onclick="event.stopPropagation(); AdminModule.copyAlbumClientLink('${safeId}'); AdminModule.toggleOpenAlbumDropdown('${safeId}', false);"
                                             class="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-semibold transition flex items-center gap-1 shrink-0 shadow-2xs"
                                             title="Sao chép link chọn ảnh gửi cho khách"
                                         >
@@ -3531,7 +3537,7 @@ function testRun() {
                                 albums.length > 1
                                     ? `<button
                                         type="button"
-                                        onclick="AdminModule.deleteAlbum('${album.id}')"
+                                        onclick="AdminModule.deleteAlbum('${safeId}')"
                                         class="w-full sm:w-auto flex-col sm:flex-row h-12 sm:h-9 px-1.5 sm:px-3 rounded-xl bg-white hover:bg-rose-50 border border-zinc-200 hover:border-rose-300 text-zinc-800 hover:text-rose-600 text-[10px] sm:text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-1.5 shadow-2xs group"
                                         title="Xoá Album này"
                                     >
