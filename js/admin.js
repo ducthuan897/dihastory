@@ -4690,7 +4690,7 @@ function testRun() {
         setVal('adminYoutubeUrl', album.youtubeId ? `https://www.youtube.com/watch?v=${album.youtubeId}` : "");
 
         const previewImg = document.getElementById('modalCoverPreviewImg');
-        if (previewImg) previewImg.src = album.coverUrl;
+        if (previewImg) previewImg.src = sanitizeMediaUrl(album.coverUrl);
 
         setChk('adminIsPublicCheckbox', album.isPublic);
         setChk('adminReminderEnabledCheckbox', album.reminderEnabled);
