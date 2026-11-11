@@ -2243,7 +2243,6 @@ const App = (function () {
         document.addEventListener('contextmenu', (e) => {
             if (!isAdminUser()) {
                 e.preventDefault();
-                showToast("Nội dung được bảo vệ bản quyền!", "error");
             }
         });
 
@@ -2292,7 +2291,6 @@ const App = (function () {
                         shield.classList.remove('active');
                     }, 2500);
                 }
-                showToast("Hệ thống được bảo vệ bản quyền!", "error");
             }
         });
 
