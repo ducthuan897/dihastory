@@ -3273,7 +3273,7 @@ function testRun() {
                                     </div>
 
                                     <!-- Trên Desktop (sm trở lên): Dòng Ngày chụp, Địa điểm, Số lượng ảnh nằm ngang bên phải ảnh -->
-                                    <div class="hidden sm:flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-xs text-zinc-500 mt-1.5">
+                                    <div class="album-desktop-meta hidden sm:flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-xs text-zinc-500 mt-1.5">
                                         <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${album.date}</span>
                                         <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${album.city}</span>
                                         <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${album.photos.length} ảnh</span>
@@ -3282,7 +3282,7 @@ function testRun() {
                             </div>
 
                             <!-- Trên Mobile (dưới sm): Xếp thành 1 hàng ở dưới ảnh album theo đúng yêu cầu -->
-                            <div class="flex sm:hidden flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 pt-0.5">
+                            <div class="album-mobile-meta flex sm:hidden flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 pt-0.5">
                                 <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${album.date}</span>
                                 <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${album.city}</span>
                                 <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${album.photos.length} ảnh</span>

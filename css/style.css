@@ -256,8 +256,25 @@ body {
 }
 
 /* Utility & Scrollbar */
-.hidden {
+.hidden:not(.sm\:flex):not(.md\:flex):not(.lg\:flex):not(.xl\:flex):not(.sm\:block):not(.md\:block):not(.lg\:block):not(.xl\:block):not(.sm\:inline-flex):not(.md\:inline-flex) {
     display: none !important;
+}
+
+@media (min-width: 640px) {
+    .album-desktop-meta {
+        display: flex !important;
+    }
+    .album-mobile-meta {
+        display: none !important;
+    }
+}
+@media (max-width: 639px) {
+    .album-desktop-meta {
+        display: none !important;
+    }
+    .album-mobile-meta {
+        display: flex !important;
+    }
 }
 
 /* ==========================================================================
