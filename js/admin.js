@@ -3193,9 +3193,19 @@ function testRun() {
                 >
                     <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                         <!-- Album Info -->
-                        <div class="flex items-start sm:items-center gap-4 flex-1 min-w-0">
-                            <img src="${album.coverUrl}" alt="${album.title}" referrerpolicy="no-referrer" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border border-zinc-200/90 shadow-2xs shrink-0 hover:scale-105 transition-transform duration-300">
-                            <div class="min-w-0 flex-1 py-1">
+                        <div class="flex flex-col sm:flex-row sm:items-start gap-3.5 sm:gap-4 flex-1 min-w-0">
+                            <!-- Ảnh bìa album -->
+                            <div class="flex flex-col sm:items-center shrink-0">
+                                <img src="${album.coverUrl}" alt="${album.title}" referrerpolicy="no-referrer" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border border-zinc-200/90 shadow-2xs hover:scale-105 transition-transform duration-300" style="object-position: center ${typeof album.coverPosY === 'number' ? album.coverPosY : 50}%;">
+                                <!-- Dòng thông tin phụ ngay dưới ảnh album: Ngày chụp, Địa điểm, Số lượng ảnh -->
+                                <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-zinc-500 mt-2">
+                                    <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1 text-zinc-400"></i>${album.date}</span>
+                                    <span class="inline-flex items-center max-w-[130px] truncate" title="${album.city}"><i class="fa-solid fa-location-dot mr-1 text-rose-500"></i>${album.city}</span>
+                                    <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1 text-zinc-400"></i>${album.photos.length} ảnh</span>
+                                </div>
+                            </div>
+
+                            <div class="min-w-0 flex-1 py-0.5">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <h3 class="text-base sm:text-lg font-bold text-zinc-900 tracking-tight">${album.title}</h3>
                                     ${
@@ -3214,10 +3224,9 @@ function testRun() {
                                             : ''
                                     }
                                 </div>
-                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-500 mt-2.5">
-                                    <span class="inline-flex items-center"><i class="fa-regular fa-calendar mr-1.5 text-zinc-400"></i>${album.date}</span>
-                                    <span class="inline-flex items-center"><i class="fa-solid fa-location-dot mr-1.5 text-rose-500"></i>${album.city}</span>
-                                    <span class="inline-flex items-center"><i class="fa-regular fa-images mr-1.5 text-zinc-400"></i>${album.photos.length} ảnh</span>
+
+                                <!-- Dòng thông tin trên: Chuyển Khách chọn lên -->
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-500 mt-2">
                                     <span class="text-rose-600 font-semibold inline-flex items-center"><i class="fa-solid fa-heart mr-1.5"></i>Khách chọn: ${selectedCount}/${album.selectionLimit || '∞'}</span>
                                     ${(album.deliveredPhotos && album.deliveredPhotos.length > 0) ? `<span class="text-emerald-700 font-semibold inline-flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-emerald-600"></i>Đã chỉnh: ${album.deliveredPhotos.length} ảnh</span>` : ''}
                                     ${album.deadlineEnabled && album.deadlineAt ? `<span class="text-amber-700 inline-flex items-center"><i class="fa-regular fa-clock mr-1.5 text-amber-500"></i>Hạn: ${formatTimeShort(album.deadlineAt)}</span>` : ''}
