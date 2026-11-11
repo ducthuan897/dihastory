@@ -963,11 +963,11 @@ function testRun() {
 
         if (alert) {
             alert.className = "p-3 rounded-xl bg-zinc-100 text-zinc-700 text-xs border border-zinc-200";
-            alert.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang kiểm tra kết nối tài khoản "${displayName}"...`;
+            alert.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang kiểm tra kết nối tài khoản "${escapeHtml(displayName)}"...`;
             alert.classList.remove('hidden');
         }
 
-        const successText = `Kết nối tài khoản "${displayName}" thành công`;
+        const safeSuccessText = `Kết nối tài khoản "${escapeHtml(displayName)}" thành công`;
 
         if (key.startsWith("https://script.google.com/")) {
             try {
@@ -975,17 +975,17 @@ function testRun() {
                 if (res.ok) {
                     if (alert) {
                         alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
-                        alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> ${successText}`;
+                        alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> ${safeSuccessText}`;
                     }
-                    App.showToast(successText);
+                    App.showToast(`Kết nối tài khoản "${displayName}" thành công`);
                     return;
                 }
             } catch (e) {
                 if (alert) {
                     alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
-                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> ${successText}`;
+                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> ${safeSuccessText}`;
                 }
-                App.showToast(successText);
+                App.showToast(`Kết nối tài khoản "${displayName}" thành công`);
                 return;
             }
         }
@@ -995,9 +995,9 @@ function testRun() {
             if (res.ok) {
                 if (alert) {
                     alert.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium";
-                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> ${successText}`;
+                    alert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> ${safeSuccessText}`;
                 }
-                App.showToast(successText);
+                App.showToast(`Kết nối tài khoản "${displayName}" thành công`);
             } else {
                 if (alert) {
                     alert.className = "p-3 rounded-xl bg-amber-50 text-amber-900 text-xs border border-amber-200";
