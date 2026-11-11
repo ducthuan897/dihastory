@@ -4193,29 +4193,32 @@ function testRun() {
 
         grid.innerHTML = album.photos.map(photo => {
             const isSelectedCover = currentCoverUrl === photo.url;
+            const safeUrl = escapeHtml(sanitizeMediaUrl(photo.url || ''));
+            const safeCode = escapeHtml(photo.code || '');
+            const safeId = escapeHtml(photo.id || '');
             return `
                 <div class="relative group shrink-0">
                     <button
                         type="button"
-                        onclick="AdminModule.pickCoverPhotoInModal('${photo.url}')"
+                        onclick="AdminModule.pickCoverPhotoInModal('${safeId}')"
                         class="relative w-16 h-16 rounded-xl overflow-hidden border-2 transition block ${
                             isSelectedCover
                                 ? 'border-amber-500 ring-2 ring-amber-400 scale-105'
                                 : 'border-zinc-200 opacity-85 hover:opacity-100 hover:border-amber-400'
                         }"
-                        title="Đặt ảnh ${photo.code} làm ảnh bìa"
+                        title="Đặt ảnh ${safeCode} làm ảnh bìa"
                     >
-                        <img src="${photo.url}" alt="${photo.code}" referrerpolicy="no-referrer" class="w-full h-full object-cover">
+                        <img src="${safeUrl}" alt="${safeCode}" referrerpolicy="no-referrer" class="w-full h-full object-cover">
                         ${
                             isSelectedCover
                                 ? '<span class="absolute inset-0 bg-amber-500/30 flex items-center justify-center text-white text-[10px] font-bold drop-shadow">Ảnh bìa</span>'
-                                : '<span class="absolute bottom-0 inset-x-0 bg-black/65 text-white text-[9px] font-mono truncate px-1">' + photo.code + '</span>'
+                                : '<span class="absolute bottom-0 inset-x-0 bg-black/65 text-white text-[9px] font-mono truncate px-1">' + safeCode + '</span>'
                         }
                     </button>
                     <button
                         type="button"
-                        onclick="AdminModule.deletePhoto('${photo.id}')"
-                        title="Xoá ảnh ${photo.code}"
+                        onclick="AdminModule.deletePhoto('${safeId}')"
+                        title="Xoá ảnh ${safeCode}"
                         class="hidden group-hover:flex absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] items-center justify-center shadow"
                     >
                         <i class="fa-solid fa-xmark"></i>
@@ -4225,9 +4228,15 @@ function testRun() {
         }).join('');
     }
 
-    function pickCoverPhotoInModal(url) {
+    function pickCoverPhotoInModal(photoIdOrUrl) {
+        const album = getActiveAdminAlbum();
+        let targetUrl = photoIdOrUrl;
+        if (album && Array.isArray(album.photos)) {
+            const found = album.photos.find(p => p.id === photoIdOrUrl || p.url === photoIdOrUrl);
+            if (found && found.url) targetUrl = found.url;
+        }
         const coverInput = document.getElementById('adminCoverUrl');
-        if (coverInput) coverInput.value = url;
+        if (coverInput) coverInput.value = targetUrl;
         renderModalCoverPhotoPicker();
     }
 
