@@ -5041,12 +5041,17 @@ function testRun() {
         App.showToast("Đã xoá ảnh khỏi Album.");
     }
 
-    function setPhotoAsCover(url, targetAlbumId) {
+    function setPhotoAsCover(urlOrPhotoId, targetAlbumId) {
         const albums = getAllAlbums();
         const album = albums.find(a => a.id === (targetAlbumId || activeAdminAlbumId));
         if (!album) return;
 
-        album.coverUrl = url;
+        let targetUrl = urlOrPhotoId;
+        if (Array.isArray(album.photos)) {
+            const found = album.photos.find(p => p.id === urlOrPhotoId || p.url === urlOrPhotoId);
+            if (found && found.url) targetUrl = found.url;
+        }
+        album.coverUrl = targetUrl;
         // Mặc định đặt vị trí ở giữa nếu chưa có
         if (typeof album.coverPosY !== 'number') {
             album.coverPosY = 50;
@@ -5224,34 +5229,39 @@ function testRun() {
         const sortedPhotos = [...album.photos].sort((a, b) => (a.capturedAt || '').localeCompare(b.capturedAt || ''));
 
         container.innerHTML = sortedPhotos.map(photo => {
-            const timeLabel = formatTimeShort(photo.capturedAt);
+            const timeLabel = escapeHtml(formatTimeShort(photo.capturedAt) || '');
             const isCover = album.coverUrl === photo.url;
+            const safeUrl = escapeHtml(sanitizeMediaUrl(photo.url || ''));
+            const safeCode = escapeHtml(photo.code || '');
+            const safeId = escapeHtml(String(photo.id || '').replace(/['"\\]/g, ''));
+            const safeLocation = escapeHtml(photo.location || album.city || '');
+            const safeShortLocation = escapeHtml(photo.location || '');
             return `
                 <div class="group relative bg-zinc-100 rounded-xl overflow-hidden border ${isCover ? 'border-amber-500 ring-2 ring-amber-400' : 'border-zinc-200'} aspect-square">
-                    <img src="${photo.url}" alt="${photo.code}" class="w-full h-full object-cover">
+                    <img src="${safeUrl}" alt="${safeCode}" class="w-full h-full object-cover">
                     ${isCover ? '<span class="absolute top-1.5 left-1.5 bg-amber-500 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full shadow">Ảnh bìa</span>' : ''}
                     <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition flex flex-col justify-between p-2.5">
                         <div class="flex justify-between items-start">
-                            <span class="text-[10px] bg-black/70 text-white px-2 py-0.5 rounded font-mono">${photo.code}</span>
-                            <button type="button" onclick="AdminModule.deletePhoto('${photo.id}')" title="Xoá ảnh" class="w-6 h-6 rounded-lg bg-white/90 hover:bg-rose-600 hover:text-white text-rose-600 text-xs flex items-center justify-center transition">
+                            <span class="text-[10px] bg-black/70 text-white px-2 py-0.5 rounded font-mono">${safeCode}</span>
+                            <button type="button" onclick="AdminModule.deletePhoto('${safeId}')" title="Xoá ảnh" class="w-6 h-6 rounded-lg bg-white/90 hover:bg-rose-600 hover:text-white text-rose-600 text-xs flex items-center justify-center transition">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
                         <div class="space-y-1.5">
                             <button
                                 type="button"
-                                onclick="AdminModule.setPhotoAsCover('${photo.url}')"
+                                onclick="AdminModule.setPhotoAsCover('${safeId}')"
                                 class="w-full py-1 px-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold transition flex items-center justify-center gap-1 shadow"
                             >
                                 <i class="fa-solid fa-image"></i> Đặt làm ảnh bìa
                             </button>
-                            <span class="text-[10px] text-amber-300 font-medium block truncate"><i class="fa-solid fa-location-dot mr-1"></i>${photo.location || album.city}</span>
+                            <span class="text-[10px] text-amber-300 font-medium block truncate"><i class="fa-solid fa-location-dot mr-1"></i>${safeLocation}</span>
                             <span class="text-[9px] text-zinc-300 block"><i class="fa-regular fa-clock mr-1"></i>${timeLabel}</span>
                         </div>
                     </div>
                     <div class="group-hover:hidden absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between bg-black/65 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded font-mono">
-                        <span>${photo.code}</span>
-                        <span class="text-amber-300 truncate max-w-[70px]">${photo.location || ''}</span>
+                        <span>${safeCode}</span>
+                        <span class="text-amber-300 truncate max-w-[70px]">${safeShortLocation}</span>
                     </div>
                 </div>
             `;
