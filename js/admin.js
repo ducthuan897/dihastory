@@ -4320,12 +4320,15 @@ function testRun() {
             // TUÂN THỦ ĐIỀU 5: Trích xuất hoặc cập nhật ngày giờ chụp riêng biệt cho từng ảnh
             // Nếu ảnh nào chưa có capturedAt hoặc chỉ có ngày không có giờ, bổ sung dựa trên EXIF/metadata/mapping của chính ảnh đó
             const KNOWN_PHOTO_METADATA_MAP = {
+                "DSC00300": { capturedAt: "2026-07-19T15:45", location: "Ea Phê", city: "Ea Phê" },
+                "DSC00301": { capturedAt: "2026-07-19T15:45", location: "Ea Phê", city: "Ea Phê" },
+                "DSC00302": { capturedAt: "2026-07-19T15:45", location: "Ea Phê", city: "Ea Phê" },
                 "DSC00346": { capturedAt: "2026-07-24T16:28", location: "Trường Sa, Bình Dương", city: "Bình Dương", lat: 11.051376, lon: 106.678424 },
                 "DSC00358": { capturedAt: "2026-07-24T16:45", location: "Bình Dương", city: "Bình Dương" },
                 "DSC01180": { capturedAt: "2026-10-19T21:15", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980004, lon: 106.654371 },
                 "DSC01184": { capturedAt: "2026-10-19T21:23", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980002, lon: 106.654377 },
                 "DSC01150": { capturedAt: "2026-10-19T20:48", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980005, lon: 106.654375 },
-                "DSC01182": { capturedAt: "2026-10-19T21:22", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980004, lon: 106.654371 },
+                "DSC01182": { capturedAt: "2026-10-19T21:22", location: "Phường Thủ Dầu Một - Hồ Chí Minh", city: "Hồ Chí Minh", lat: 10.980004, lon: 106.654371 },
                 "DSC00889": { capturedAt: "2026-09-03T13:22", location: "Hồ Chí Minh", city: "Hồ Chí Minh" },
                 "DSC01193": { capturedAt: "2026-10-19T21:35", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một" }
             };
