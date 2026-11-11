@@ -1503,10 +1503,12 @@ const App = (function () {
         const notePreview = document.getElementById('lightboxNotePreview');
 
         // Nạp và hiển thị trực tiếp ảnh ở độ phân giải gốc cao nhất (=s0)
-        const fullUrl = getFullResPhotoUrl(photo.url);
-        if (img) {
+        const fullUrl = sanitizeMediaUrl(getFullResPhotoUrl(photo.url));
+        const fallbackUrl = sanitizeMediaUrl(photo.url);
+        if (img && fullUrl) {
+            const encodedFullUrl = encodeURI(fullUrl);
             // Nếu ảnh đang đổi khác với ảnh hiện tại, hiển thị spinner nạp
-            if (img.src !== fullUrl) {
+            if (img.getAttribute('src') !== encodedFullUrl) {
                 if (spinner) spinner.classList.remove('hidden');
                 img.style.opacity = '0.7';
 
@@ -1518,10 +1520,12 @@ const App = (function () {
                 img.onerror = () => {
                     if (spinner) spinner.classList.add('hidden');
                     img.style.opacity = '1';
-                    if (img.src !== photo.url) img.src = photo.url;
+                    if (fallbackUrl && img.getAttribute('src') !== encodeURI(fallbackUrl)) {
+                        img.setAttribute('src', encodeURI(fallbackUrl));
+                    }
                 };
 
-                img.src = fullUrl;
+                img.setAttribute('src', encodedFullUrl);
             } else {
                 if (spinner) spinner.classList.add('hidden');
                 img.style.opacity = '1';
