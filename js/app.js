@@ -1326,6 +1326,7 @@ const App = (function () {
     }
 
     function togglePhotoHeart(photoId) {
+        if (!photoId || photoId === '__proto__' || photoId === 'constructor' || photoId === 'prototype') return;
         const album = AdminModule.getAlbumById(currentAlbumId);
         if (!album || isAlbumSelectionLocked(album)) {
             showToast("Phần chọn ảnh đã khoá!", "error");
@@ -1333,7 +1334,7 @@ const App = (function () {
         }
 
         const selections = AdminModule.getSelections(album.id);
-        if (!selections[photoId]) {
+        if (!Object.prototype.hasOwnProperty.call(selections, photoId) || !selections[photoId]) {
             selections[photoId] = { selected: true, note: '' };
         } else {
             selections[photoId].selected = !selections[photoId].selected;
