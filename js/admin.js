@@ -3620,7 +3620,11 @@ function testRun() {
         const submissions = getSubmissions(album.id);
 
         const coverImg = document.getElementById('managePageCoverImg');
-        if (coverImg) coverImg.src = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
+        if (coverImg) {
+            coverImg.src = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
+            const pos = typeof album.coverPosY === 'number' ? album.coverPosY : 50;
+            coverImg.style.objectPosition = `center ${pos}%`;
+        }
 
         const titleEl = document.getElementById('managePageAlbumTitle');
         if (titleEl) titleEl.innerText = album.title;
@@ -4764,12 +4768,157 @@ function testRun() {
         if (!album) return;
 
         album.coverUrl = url;
+        // Mặc định đặt vị trí ở giữa nếu chưa có
+        if (typeof album.coverPosY !== 'number') {
+            album.coverPosY = 50;
+        }
         saveAllAlbums(albums);
         populateAdminDashboard();
         renderAlbumManagePage();
         App.renderHomeShowcase();
         App.renderPublicAlbum();
-        App.showToast("Đã đặt ảnh này làm Ảnh bìa Album thành công!");
+        App.showToast("Đã đặt ảnh bìa! Bạn có thể kéo ảnh lên/xuống để căn chỉnh và bấm OK.");
+        // Tự động mở chế độ căn chỉnh để người dùng kéo chỉnh ngay
+        startCoverReposition();
+    }
+
+    // =========================================================================
+    // TÍNH NĂNG KÉO CĂN CHỈNH VỊ TRÍ ẢNH BÌA ALBUM (DRAG REPOSITION COVER)
+    // =========================================================================
+    let isCoverRepositioning = false;
+    let coverRepositionStartY = 0;
+    let coverRepositionStartPosY = 50;
+    let currentTempCoverPosY = 50;
+    let coverRepositionListenersAttached = false;
+
+    function startCoverReposition() {
+        const album = getActiveAdminAlbum();
+        if (!album) return;
+
+        isCoverRepositioning = true;
+        currentTempCoverPosY = typeof album.coverPosY === 'number' ? album.coverPosY : 50;
+
+        const coverImg = document.getElementById('managePageCoverImg');
+        const overlay = document.getElementById('managePageCoverRepositionOverlay');
+        const startBtn = document.getElementById('managePageStartRepositionBtn');
+        const saveBtn = document.getElementById('managePageSaveRepositionBtn');
+        const cancelBtn = document.getElementById('managePageCancelRepositionBtn');
+        const centerContent = document.getElementById('managePageHeroCenterContent');
+
+        if (coverImg) {
+            coverImg.style.objectPosition = `center ${currentTempCoverPosY}%`;
+        }
+        if (overlay) overlay.classList.remove('hidden');
+        if (startBtn) startBtn.classList.add('hidden');
+        if (saveBtn) saveBtn.classList.remove('hidden');
+        if (cancelBtn) cancelBtn.classList.remove('hidden');
+        if (centerContent) centerContent.classList.add('opacity-30');
+
+        attachCoverRepositionEvents();
+    }
+
+    function attachCoverRepositionEvents() {
+        const overlay = document.getElementById('managePageCoverRepositionOverlay');
+        if (!overlay || coverRepositionListenersAttached) return;
+
+        coverRepositionListenersAttached = true;
+
+        const onPointerDown = (clientY) => {
+            if (!isCoverRepositioning) return;
+            coverRepositionStartY = clientY;
+            coverRepositionStartPosY = currentTempCoverPosY;
+        };
+
+        const onPointerMove = (clientY) => {
+            if (!isCoverRepositioning || coverRepositionStartY === 0) return;
+            const diffY = clientY - coverRepositionStartY;
+            const heroEl = document.getElementById('managePageHeroSection');
+            const heroHeight = heroEl ? heroEl.clientHeight : 220;
+            // Kéo xuống -> dịch ảnh xuống (tăng % translateY / giảm % posY)
+            // Nhạy cảm vừa phải: 1px = ~0.35%
+            const percentDelta = (diffY / Math.max(100, heroHeight)) * 80;
+            let nextPos = coverRepositionStartPosY - percentDelta;
+            nextPos = Math.max(0, Math.min(100, nextPos));
+            currentTempCoverPosY = Math.round(nextPos);
+
+            const coverImg = document.getElementById('managePageCoverImg');
+            if (coverImg) {
+                coverImg.style.objectPosition = `center ${currentTempCoverPosY}%`;
+            }
+        };
+
+        const onPointerUp = () => {
+            coverRepositionStartY = 0;
+        };
+
+        // Mouse events
+        overlay.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            onPointerDown(e.clientY);
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (coverRepositionStartY !== 0) {
+                e.preventDefault();
+                onPointerMove(e.clientY);
+            }
+        });
+        window.addEventListener('mouseup', () => onPointerUp());
+
+        // Touch events for mobile
+        overlay.addEventListener('touchstart', (e) => {
+            if (e.touches && e.touches[0]) {
+                onPointerDown(e.touches[0].clientY);
+            }
+        }, { passive: true });
+        window.addEventListener('touchmove', (e) => {
+            if (coverRepositionStartY !== 0 && e.touches && e.touches[0]) {
+                onPointerMove(e.touches[0].clientY);
+            }
+        }, { passive: true });
+        window.addEventListener('touchend', () => onPointerUp());
+    }
+
+    function saveCoverReposition() {
+        const albums = getAllAlbums();
+        const album = albums.find(a => a.id === activeAdminAlbumId);
+        if (!album) return;
+
+        album.coverPosY = currentTempCoverPosY;
+        saveAllAlbums(albums);
+
+        exitCoverRepositionMode();
+        App.renderHomeShowcase();
+        App.renderPublicAlbum();
+        App.showToast("Đã lưu căn chỉnh vị trí ảnh bìa thành công!");
+    }
+
+    function cancelCoverReposition() {
+        const album = getActiveAdminAlbum();
+        if (album) {
+            currentTempCoverPosY = typeof album.coverPosY === 'number' ? album.coverPosY : 50;
+            const coverImg = document.getElementById('managePageCoverImg');
+            if (coverImg) {
+                coverImg.style.objectPosition = `center ${currentTempCoverPosY}%`;
+            }
+        }
+        exitCoverRepositionMode();
+    }
+
+    function exitCoverRepositionMode() {
+        isCoverRepositioning = false;
+        coverRepositionStartY = 0;
+
+        const overlay = document.getElementById('managePageCoverRepositionOverlay');
+        const startBtn = document.getElementById('managePageStartRepositionBtn');
+        const saveBtn = document.getElementById('managePageSaveRepositionBtn');
+        const cancelBtn = document.getElementById('managePageCancelRepositionBtn');
+        const centerContent = document.getElementById('managePageHeroCenterContent');
+
+        if (overlay) overlay.classList.add('hidden');
+        if (startBtn) startBtn.classList.remove('hidden');
+        if (saveBtn) saveBtn.classList.add('hidden');
+        if (cancelBtn) cancelBtn.classList.add('hidden');
+        if (centerContent) centerContent.classList.remove('opacity-30');
     }
 
     function lockAlbumAfterClientSubmit(albumId) {
@@ -5353,6 +5502,9 @@ function testRun() {
         handleLocalFilesUpload,
         deletePhoto,
         setPhotoAsCover,
+        startCoverReposition,
+        saveCoverReposition,
+        cancelCoverReposition,
         copyLightroomCodes,
         clearClientSelections,
         resetDemoData,

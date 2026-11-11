@@ -696,6 +696,8 @@ const App = (function () {
             const targetAlbum = publicAlbums[0] || allAlbums[0];
             if (targetAlbum && targetAlbum.coverUrl) {
                 heroCoverEl.src = targetAlbum.coverUrl;
+                const pos = typeof targetAlbum.coverPosY === 'number' ? targetAlbum.coverPosY : 50;
+                heroCoverEl.style.objectPosition = `center ${pos}%`;
             }
         }
 
@@ -967,7 +969,11 @@ const App = (function () {
         const heroDlBtn = document.getElementById('heroClientDownloadBtn');
         const heroSubmitBtn = document.getElementById('heroClientSubmitBtn');
 
-        if (heroCover) heroCover.src = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
+        if (heroCover) {
+            heroCover.src = album.coverUrl || (album.photos[0] ? album.photos[0].url : '');
+            const pos = typeof album.coverPosY === 'number' ? album.coverPosY : 50;
+            heroCover.style.objectPosition = `center ${pos}%`;
+        }
         if (heroClient) heroClient.innerText = album.clientName || 'Khách hàng';
         if (heroTitle) heroTitle.innerText = album.title || 'Album';
         if (heroDate) {

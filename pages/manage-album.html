@@ -21,13 +21,21 @@
         <div class="bg-white space-y-0">
 
             <!-- Wide Cover Banner — đồng bộ kiểu album-hero -->
-            <section class="album-hero">
+            <section id="managePageHeroSection" class="album-hero relative select-none">
                 <img id="managePageCoverImg" src="" alt="Album Cover" referrerpolicy="no-referrer"
-                    class="album-hero-bg">
+                    class="album-hero-bg transition-none">
                 <div class="album-hero-overlay"></div>
 
+                <!-- Lớp phủ hướng dẫn khi đang ở chế độ căn chỉnh vị trí ảnh bìa (Drag to reposition) -->
+                <div id="managePageCoverRepositionOverlay" class="hidden absolute inset-0 z-30 cursor-grab active:cursor-grabbing flex flex-col items-center justify-center bg-black/35 backdrop-blur-[1px] transition">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/75 text-white text-xs font-semibold shadow-lg border border-white/20 pointer-events-none animate-pulse">
+                        <i class="fa-solid fa-up-down"></i>
+                        <span>Kéo lên / xuống để căn chỉnh ảnh bìa</span>
+                    </div>
+                </div>
+
                 <!-- Nội dung trung tâm -->
-                <div class="relative z-10 text-center text-white px-4 max-w-3xl mx-auto py-6 sm:py-8">
+                <div id="managePageHeroCenterContent" class="relative z-10 text-center text-white px-4 max-w-3xl mx-auto py-6 sm:py-8 pointer-events-none transition-opacity duration-200">
                     <h1 id="managePageAlbumTitle"
                         class="font-serif-display text-2xl sm:text-4xl md:text-5xl font-semibold tracking-wide leading-tight mb-1">
                         Tên Album
@@ -36,16 +44,28 @@
                         class="text-zinc-300 text-sm sm:text-base font-medium mt-1"></p>
                 </div>
 
-                <!-- Top-right "Thay đổi ảnh bìa" pill buttons (đã ẩn nút theo yêu cầu) -->
-                <div class="absolute top-4 right-4 flex items-center gap-2 z-20">
-                    <label
-                        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/45 hover:bg-black/65 backdrop-blur-md text-white text-xs font-medium cursor-pointer transition border border-white/25"
-                        title="Tải một ảnh từ máy tính lên làm ảnh bìa">
-                        <i class="fa-solid fa-upload text-[10px]"></i>
-                        <span>Tải ảnh bìa</span>
-                        <input type="file" accept="image/*" onchange="AdminModule.handleUploadCoverFile(event)"
-                            class="hidden">
-                    </label>
+                <!-- Top-right: Thanh công cụ căn chỉnh vị trí ảnh bìa (Nút Căn chỉnh ảnh bìa & Nút OK hoàn thành) -->
+                <div class="absolute top-3 right-3 flex items-center gap-2 z-40">
+                    <!-- Nút bắt đầu căn chỉnh vị trí bìa -->
+                    <button id="managePageStartRepositionBtn" type="button" onclick="AdminModule.startCoverReposition()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/50 hover:bg-black/75 backdrop-blur-md text-white text-xs font-semibold cursor-pointer transition border border-white/25 shadow-sm"
+                        title="Kéo ảnh lên / xuống để chọn góc nhìn đẹp nhất cho ảnh bìa">
+                        <i class="fa-solid fa-arrows-up-down text-[11px]"></i>
+                        <span>Căn chỉnh ảnh bìa</span>
+                    </button>
+
+                    <!-- Nút OK hoàn thành (chỉ hiện khi đang căn chỉnh) -->
+                    <button id="managePageSaveRepositionBtn" type="button" onclick="AdminModule.saveCoverReposition()"
+                        class="hidden inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer transition shadow-lg border border-emerald-400">
+                        <i class="fa-solid fa-check"></i>
+                        <span>OK</span>
+                    </button>
+
+                    <!-- Nút Huỷ căn chỉnh -->
+                    <button id="managePageCancelRepositionBtn" type="button" onclick="AdminModule.cancelCoverReposition()"
+                        class="hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-zinc-300 hover:text-white text-xs font-medium cursor-pointer transition border border-white/20">
+                        <span>Huỷ</span>
+                    </button>
                 </div>
             </section>
 
