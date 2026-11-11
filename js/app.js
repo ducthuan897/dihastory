@@ -474,7 +474,7 @@ const App = (function () {
             if (adminView) adminView.classList.add('hidden');
             if (manageView) manageView.classList.remove('hidden');
             if (usersView) usersView.classList.add('hidden');
-            if (mainHeader) mainHeader.classList.add('hidden');
+            if (mainHeader) mainHeader.classList.remove('hidden');
             if (navAlbumContextual) navAlbumContextual.classList.add('hidden');
 
             const targetId = AdminModule.getActiveAdminAlbum()?.id || currentAlbumId;
