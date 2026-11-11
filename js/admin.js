@@ -5314,19 +5314,23 @@ function testRun() {
                     label: `${name} (${album.photos.filter(p => selections[p.id]?.selected && (selections[p.id]?.selectorName || 'Khách hàng') === name).length})`
                 }))
             ];
-            personPillsEl.innerHTML = pills.map(p => `
+            personPillsEl.innerHTML = pills.map(p => {
+                const safeIdAttr = escapeHtml(String(p.id || '').replace(/['"\\]/g, ''));
+                const safeLabel = escapeHtml(String(p.label || ''));
+                return `
                 <button
                     type="button"
-                    onclick="AdminModule.setSelectorPersonFilter('${p.id}')"
+                    onclick="AdminModule.setSelectorPersonFilter('${safeIdAttr}')"
                     class="px-2.5 py-1 rounded-full text-[11px] font-semibold transition ${
                         activeSelectorPersonFilter === p.id
                             ? 'bg-zinc-900 text-white'
                             : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                     }"
                 >
-                    ${p.label}
+                    ${safeLabel}
                 </button>
-            `).join('');
+            `;
+            }).join('');
         }
 
         const filteredSelectedPhotos = allSelectedOrNoted.filter(p => {
