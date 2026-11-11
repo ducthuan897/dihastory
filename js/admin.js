@@ -4045,18 +4045,23 @@ function testRun() {
             const hasNote = !!(st.note && st.note.trim());
             const isCover = album.coverUrl === photo.url;
             const isDlChecked = !!manageDownloadSelectedMap[photo.id];
-            const timeLabel = formatTimeShort(photo.capturedAt);
+            const timeLabel = escapeHtml(formatTimeShort(photo.capturedAt) || '');
+            const safeUrl = escapeHtml(sanitizeMediaUrl(photo.url || ''));
+            const safeCode = escapeHtml(photo.code || '');
+            const safeId = escapeHtml(String(photo.id || '').replace(/['"\\]/g, ''));
+            const safeNote = escapeHtml(st.note || '');
+            const safeLocation = photo.location ? escapeHtml(photo.location) : '';
 
             return `
                 <div
-                    onclick="AdminModule.handleManagePhotoCardClick(${idx})"
+                    onclick="AdminModule.handleManagePhotoCardClick(${Number(idx)})"
                     class="group relative bg-white rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition cursor-pointer ${
                         isCoverSelectMode ? 'ring-2 ring-amber-400 hover:ring-4 hover:ring-amber-500' : ''
                     }"
                 >
                     <img
-                        src="${photo.url}"
-                        alt="${photo.code}"
+                        src="${safeUrl}"
+                        alt="${safeCode}"
                         referrerpolicy="no-referrer"
                         loading="lazy"
                         class="w-full h-72 sm:h-80 object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
@@ -4070,7 +4075,7 @@ function testRun() {
                                 ? `<span class="px-2 py-1 rounded-md bg-amber-500 text-white text-[10px] font-bold shadow-xs">Ảnh bìa</span>`
                                 : `<button
                                     type="button"
-                                    onclick="AdminModule.setPhotoAsCover('${photo.url}')"
+                                    onclick="AdminModule.setPhotoAsCover('${safeId}')"
                                     class="opacity-0 group-hover:opacity-100 px-2.5 py-1 rounded-md bg-black/65 hover:bg-amber-500 text-white text-[10px] font-semibold backdrop-blur-xs transition shadow-xs"
                                     title="Đặt tấm ảnh này làm ảnh bìa Album"
                                 >
@@ -4085,9 +4090,9 @@ function testRun() {
                             hasNote
                                 ? `<button
                                     type="button"
-                                    onclick="App.openPhotoNoteModal('${photo.id}')"
+                                    onclick="App.openPhotoNoteModal('${safeId}')"
                                     class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs"
-                                    title="Ghi chú: ${st.note}"
+                                    title="Ghi chú: ${safeNote}"
                                 >
                                     <i class="fa-solid fa-comment-dots"></i>
                                 </button>`
@@ -4108,8 +4113,8 @@ function testRun() {
                     <!-- Bottom Bar: Photo Code / Location / Time -->
                     <div class="absolute bottom-2.5 inset-x-2.5 flex items-end justify-between gap-2 pointer-events-none">
                         <div class="opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] max-w-[90%] truncate">
-                            <span class="font-mono font-bold block truncate">${photo.code}</span>
-                            <span class="text-amber-300 block truncate">${photo.location ? `<i class="fa-solid fa-location-dot mr-1"></i>${photo.location} • ` : ''}${timeLabel || 'Chưa có giờ chụp'}</span>
+                            <span class="font-mono font-bold block truncate">${safeCode}</span>
+                            <span class="text-amber-300 block truncate">${safeLocation ? `<i class="fa-solid fa-location-dot mr-1"></i>${safeLocation} • ` : ''}${timeLabel || 'Chưa có giờ chụp'}</span>
                         </div>
                     </div>
                 </div>
