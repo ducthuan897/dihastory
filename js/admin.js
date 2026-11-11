@@ -2617,17 +2617,15 @@ function testRun() {
 
         // 0. Duyệt qua các tài khoản Google Apps Script Web App đã kết nối
         for (const currentKey of prioritizedKeys) {
-            let scriptUrlObj = null;
-            try {
-                const parsed = new URL(currentKey);
-                if (parsed.protocol === "https:" && parsed.hostname === "script.google.com" && parsed.pathname.startsWith("/macros/s/")) {
-                    scriptUrlObj = parsed;
-                }
-            } catch (err) {}
+            let scriptId = "";
+            const scriptMatch = String(currentKey).match(/^https:\/\/script\.google\.com\/macros\/s\/([a-zA-Z0-9_-]+)(?:\/exec)?/);
+            if (scriptMatch) {
+                scriptId = scriptMatch[1];
+            }
 
-            if (scriptUrlObj) {
+            if (scriptId) {
                 try {
-                    const reqUrl = new URL(scriptUrlObj.href);
+                    const reqUrl = new URL(`https://script.google.com/macros/s/${encodeURIComponent(scriptId)}/exec`);
                     reqUrl.searchParams.set("id", String(folderId));
                     const resp = await fetch(reqUrl.toString());
                     if (resp.ok) {
