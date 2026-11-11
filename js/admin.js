@@ -135,8 +135,7 @@ const AdminModule = (function () {
         const key = getGoogleDriveApiKey();
         const badges = [
             document.getElementById('driveApiKeyBadge'),
-            document.getElementById('adminHeaderDriveBadge'),
-            document.getElementById('adminMenuDriveBadge')
+            document.getElementById('adminHeaderDriveBadge')
         ];
         badges.forEach(badge => {
             if (!badge) return;
