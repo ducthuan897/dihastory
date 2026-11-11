@@ -33,13 +33,17 @@ const AuthModule = (function () {
 
     function sanitizeAvatarUrl(raw) {
         if (!raw || typeof raw !== 'string') return "";
+        const trimmed = raw.trim();
+        if (!/^https?:\/\//i.test(trimmed) && !trimmed.startsWith('data:image/')) {
+            return "";
+        }
         try {
-            const parsedUrl = new URL(raw, window.location.origin);
+            const parsedUrl = new URL(trimmed);
             if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
-                return parsedUrl.href;
+                return encodeURI(parsedUrl.href);
             }
         } catch (e) {}
-        if (raw.startsWith('data:image/')) return raw;
+        if (trimmed.startsWith('data:image/')) return encodeURI(trimmed);
         return "";
     }
 
@@ -595,25 +599,13 @@ const AuthModule = (function () {
         const text = document.getElementById('editUserAvatarText');
         if (!previewWrap || !img || !text) return;
 
-        let safeSrc = '';
-        if (avatarUrl && typeof avatarUrl === 'string') {
-            try {
-                const parsedUrl = new URL(avatarUrl, window.location.origin);
-                if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
-                    safeSrc = parsedUrl.href;
-                }
-            } catch (e) {}
-            if (!safeSrc && avatarUrl.startsWith('data:image/')) {
-                safeSrc = avatarUrl;
-            }
-        }
-
+        const safeSrc = sanitizeAvatarUrl(avatarUrl);
         if (safeSrc) {
-            img.src = safeSrc;
+            img.setAttribute('src', encodeURI(safeSrc));
             img.classList.remove('hidden');
             text.classList.add('hidden');
         } else {
-            img.src = '';
+            img.removeAttribute('src');
             img.classList.add('hidden');
             text.classList.remove('hidden');
             text.innerText = (displayName || 'UN').slice(0, 2).toUpperCase();
