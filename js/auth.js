@@ -31,6 +31,18 @@ const AuthModule = (function () {
         'editor': 'Nhiếp ảnh gia phụ / Editor'
     };
 
+    function sanitizeAvatarUrl(raw) {
+        if (!raw || typeof raw !== 'string') return "";
+        try {
+            const parsedUrl = new URL(raw, window.location.origin);
+            if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
+                return parsedUrl.href;
+            }
+        } catch (e) {}
+        if (raw.startsWith('data:image/')) return raw;
+        return "";
+    }
+
     function getRoleLevel(role) {
         return ROLE_LEVELS[role] || 1;
     }
@@ -167,7 +179,7 @@ const AuthModule = (function () {
                 const cardName = document.querySelector('#profileHeaderActionCard .font-bold');
 
                 const defaultAvatar = "https://lh3.googleusercontent.com/d/1uFtOa6VDIqirSz8Ozz9z-Fq-32E2j8eP=s120";
-                const avatarSrc = u.avatar || defaultAvatar;
+                const avatarSrc = sanitizeAvatarUrl(u.avatar) || defaultAvatar;
 
                 if (navAvatarImg) navAvatarImg.src = avatarSrc;
                 if (cardAvatarImg) cardAvatarImg.src = avatarSrc;
