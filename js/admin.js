@@ -1310,29 +1310,6 @@ function testRun() {
             }
         }
 
-        // 4. Dự phòng offline cuối cùng qua data/albums.json khi hoàn toàn mất mạng
-        try {
-            let base = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-            if (window.location.hostname.includes('github.io')) {
-                base = '/dihastory';
-            }
-            const staticUrl = `${base}/data/albums.json?v=${Date.now()}`;
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
-            const staticResp = await fetch(staticUrl, {
-                signal: controller.signal,
-                cache: 'no-store'
-            })
-                .catch(() => null)
-                .finally(() => clearTimeout(timeoutId));
-            if (staticResp && staticResp.ok) {
-                const staticAlbums = await staticResp.json();
-                if (Array.isArray(staticAlbums) && staticAlbums.length > 0) {
-                    return applyLatestCloudAlbums(staticAlbums);
-                }
-            }
-        } catch (e) {}
-
         return false;
     }
 
