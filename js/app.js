@@ -2055,23 +2055,40 @@ const App = (function () {
 
     function savePhotoNote(e) {
         if (e && e.preventDefault) e.preventDefault();
-        if (!activeNotePhotoId) return;
+        if (!activeNotePhotoId || typeof activeNotePhotoId !== 'string') return;
 
         const album = AdminModule.getAlbumById(currentAlbumId);
         if (!album) return;
+        const validPhoto = (album.photos || []).find(p => p.id === activeNotePhotoId);
+        if (!validPhoto) return;
 
         const input = document.getElementById('noteModalInput');
         const note = input ? input.value.trim() : '';
 
-        const selections = AdminModule.getSelections(album.id);
-        if (!selections[activeNotePhotoId]) {
-            selections[activeNotePhotoId] = { selected: true, note: note };
+        const safeKey = 'p_' + activeNotePhotoId;
+        const rawSelections = AdminModule.getSelections(album.id);
+        const selections = Object.create(null);
+        Object.keys(rawSelections).forEach(k => {
+            if (k !== '__proto__' && k !== 'constructor' && k !== 'prototype') {
+                selections['p_' + k.replace(/^p_/, '')] = rawSelections[k];
+            }
+        });
+
+        if (!selections[safeKey]) {
+            selections[safeKey] = { selected: true, note: note };
         } else {
-            selections[activeNotePhotoId].note = note;
-            if (note) selections[activeNotePhotoId].selected = true;
+            const cur = { ...selections[safeKey] };
+            cur.note = note;
+            if (note) cur.selected = true;
+            selections[safeKey] = cur;
         }
 
-        AdminModule.saveSelections(selections, album.id);
+        const cleanSelections = {};
+        Object.keys(selections).forEach(k => {
+            cleanSelections[k.replace(/^p_/, '')] = selections[k];
+        });
+
+        AdminModule.saveSelections(cleanSelections, album.id);
         showToast("Đã lưu ghi chú cho ảnh!");
         closePhotoNoteModal();
         updateSelectionUI();
