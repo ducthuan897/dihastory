@@ -727,7 +727,10 @@ const App = (function () {
             // Album công khai đầu tiên trong danh sách (hoặc album đầu tiên nếu chưa có công khai)
             const targetAlbum = publicAlbums[0] || allAlbums[0];
             if (targetAlbum && targetAlbum.coverUrl) {
-                heroCoverEl.src = targetAlbum.coverUrl;
+                const safeHeroCover = sanitizeMediaUrl(targetAlbum.coverUrl);
+                if (safeHeroCover) {
+                    heroCoverEl.setAttribute('src', encodeURI(safeHeroCover));
+                }
                 const pos = typeof targetAlbum.coverPosY === 'number' ? targetAlbum.coverPosY : 50;
                 heroCoverEl.style.objectPosition = `center ${pos}%`;
             }
