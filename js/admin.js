@@ -1164,9 +1164,9 @@ function testRun() {
                     parsed = parsed.filter(a => !DEMO_SAMPLE_IDS.includes(a.id));
                     if (parsed.length > 0) {
                         const KNOWN_PHOTO_METADATA_MAP = {
-                            "DSC00300": { capturedAt: "2026-07-19T15:45", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.733976, lon: 108.368793 },
+                            "DSC00300": { capturedAt: "2026-07-19T15:44", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.733976, lon: 108.368793 },
                             "DSC00301": { capturedAt: "2026-07-19T15:45", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.734024, lon: 108.368774 },
-                            "DSC00302": { capturedAt: "2026-07-19T15:45", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.727826, lon: 108.365437 },
+                            "DSC00302": { capturedAt: "2026-07-19T16:36", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.727826, lon: 108.365437 },
                             "DSC00346": { capturedAt: "2026-07-24T16:28", location: "Đường Trường Sa, Hòa Phú, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 11.051376, lon: 106.678424 },
                             "DSC00358": { capturedAt: "2026-07-24T16:50", location: "Hòa Phú, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 11.051073, lon: 106.678116 },
                             "DSC01180": { capturedAt: "2026-10-19T21:22", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980010, lon: 106.654369 },
@@ -4346,9 +4346,9 @@ function testRun() {
 
             // TUÂN THỦ ĐIỀU 5: Tra cứu dữ liệu gốc đã xác thực từ EXIF / GPS của từng bức ảnh (địa danh hành chính thực tế)
             const KNOWN_PHOTO_METADATA_MAP = {
-                "DSC00300": { capturedAt: "2026-07-19T15:45", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.733976, lon: 108.368793 },
+                "DSC00300": { capturedAt: "2026-07-19T15:44", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.733976, lon: 108.368793 },
                 "DSC00301": { capturedAt: "2026-07-19T15:45", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.734024, lon: 108.368774 },
-                "DSC00302": { capturedAt: "2026-07-19T15:45", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.727826, lon: 108.365437 },
+                "DSC00302": { capturedAt: "2026-07-19T16:36", location: "Xã Ea Phê, Đắk Lắk", city: "Ea Phê", lat: 12.727826, lon: 108.365437 },
                 "DSC00346": { capturedAt: "2026-07-24T16:28", location: "Đường Trường Sa, Hòa Phú, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 11.051376, lon: 106.678424 },
                 "DSC00358": { capturedAt: "2026-07-24T16:50", location: "Hòa Phú, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 11.051073, lon: 106.678116 },
                 "DSC01180": { capturedAt: "2026-10-19T21:22", location: "Nhà thờ Phú Cường, Thủ Dầu Một", city: "Thủ Dầu Một", lat: 10.980010, lon: 106.654369 },
