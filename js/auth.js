@@ -31,6 +31,16 @@ const AuthModule = (function () {
         'editor': 'Nhiếp ảnh gia phụ / Editor'
     };
 
+    function escapeHtml(str) {
+        if (!str || typeof str !== 'string') return "";
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     function sanitizeAvatarUrl(raw) {
         if (!raw || typeof raw !== 'string') return "";
         const trimmed = raw.trim();
@@ -478,25 +488,32 @@ const AuthModule = (function () {
             'editor': 'bg-emerald-100 text-emerald-800 border-emerald-200'
         };
 
-        container.innerHTML = users.map(u => `
+        container.innerHTML = users.map(u => {
+            const safeAvatar = escapeHtml(sanitizeAvatarUrl(u.avatar || ''));
+            const safeFullName = escapeHtml(u.fullName || '');
+            const safeUsername = escapeHtml(u.username || '');
+            const safeInitials = escapeHtml((u.fullName || u.username || 'UN').slice(0, 2).toUpperCase());
+            const safeEmail = escapeHtml(u.email || 'user@dihastory.vn');
+            const safeRoleName = escapeHtml(ROLE_FULL_NAMES[u.role] || u.role || '');
+            return `
             <div class="p-3.5 rounded-2xl border ${u.role === 'super_admin' ? 'border-purple-200 bg-purple-50/40' : (u.role === 'admin' ? 'border-indigo-200 bg-indigo-50/40' : 'border-zinc-200 bg-white')} flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
                     <div class="relative">
                         <div class="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-400 text-white flex items-center justify-center font-bold text-sm">
-                            ${u.avatar ? `<img src="${u.avatar}" alt="${u.fullName}" class="w-full h-full object-cover">` : (u.fullName || u.username).slice(0, 2).toUpperCase()}
+                            ${safeAvatar ? `<img src="${safeAvatar}" alt="${safeFullName}" class="w-full h-full object-cover">` : safeInitials}
                         </div>
                         <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
                     </div>
                     <div class="min-w-0">
-                        <div class="font-bold text-zinc-900 text-sm truncate">${u.fullName} (${u.username})</div>
-                        <div class="text-[11px] text-zinc-500 truncate">${u.email || 'user@dihastory.vn'} • ${ROLE_FULL_NAMES[u.role] || u.role}</div>
+                        <div class="font-bold text-zinc-900 text-sm truncate">${safeFullName} (${safeUsername})</div>
+                        <div class="text-[11px] text-zinc-500 truncate">${safeEmail} • ${safeRoleName}</div>
                     </div>
                 </div>
                 <span class="px-2.5 py-1 rounded-full border ${roleColors[u.role] || 'bg-zinc-100 text-zinc-700'} text-[11px] font-bold shrink-0">
                     ${ROLE_LABELS[u.role] || 'Editor'}
                 </span>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     function renderUsersPageList() {
@@ -539,25 +556,33 @@ const AuthModule = (function () {
             const isAllowedToEdit = isMe || (curLevel > targetLevel);
             const isAllowedToDelete = !isMe && (curLevel > targetLevel) && (u.username !== 'admin');
 
+            const safeAvatar = escapeHtml(sanitizeAvatarUrl(u.avatar || ''));
+            const safeFullName = escapeHtml(u.fullName || '');
+            const safeUsername = escapeHtml(u.username || '');
+            const safeInitials = escapeHtml((u.fullName || u.username || 'UN').slice(0, 2).toUpperCase());
+            const safeEmail = escapeHtml(u.email || 'user@dihastory.vn');
+            const safeRoleName = escapeHtml(ROLE_FULL_NAMES[u.role] || u.role || '');
+            const safeId = escapeHtml(u.id || '');
+
             return `
             <div class="p-4 sm:p-5 rounded-2xl border border-zinc-200 bg-white hover:border-zinc-300 transition shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5 min-w-0">
                     <div class="relative shrink-0">
                         <div class="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-400 text-white flex items-center justify-center font-bold text-base shadow-sm ring-1 ring-zinc-200">
-                            ${u.avatar ? `<img src="${u.avatar}" alt="${u.fullName}" class="w-full h-full object-cover">` : (u.fullName || u.username).slice(0, 2).toUpperCase()}
+                            ${safeAvatar ? `<img src="${safeAvatar}" alt="${safeFullName}" class="w-full h-full object-cover">` : safeInitials}
                         </div>
                         <span class="absolute bottom-0 right-0 w-3.5 h-3.5 ${u.active ? 'bg-emerald-500' : 'bg-zinc-400'} border-2 border-white rounded-full"></span>
                     </div>
                     <div class="min-w-0">
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-zinc-900 text-base leading-tight truncate">${u.fullName}</span>
-                            <span class="text-xs text-zinc-400">@${u.username}</span>
+                            <span class="font-bold text-zinc-900 text-base leading-tight truncate">${safeFullName}</span>
+                            <span class="text-xs text-zinc-400">@${safeUsername}</span>
                             ${isMe ? '<span class="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">Bạn</span>' : ''}
                         </div>
                         <div class="text-xs text-zinc-500 mt-0.5 truncate flex items-center gap-2">
-                            <span><i class="fa-regular fa-envelope text-[11px] mr-1"></i>${u.email || 'user@dihastory.vn'}</span>
+                            <span><i class="fa-regular fa-envelope text-[11px] mr-1"></i>${safeEmail}</span>
                             <span>•</span>
-                            <span class="font-medium text-zinc-600">${ROLE_FULL_NAMES[u.role] || u.role}</span>
+                            <span class="font-medium text-zinc-600">${safeRoleName}</span>
                         </div>
                     </div>
                 </div>
@@ -566,7 +591,7 @@ const AuthModule = (function () {
                     ${roleBadges[u.role] || roleBadges['editor']}
 
                     ${isAllowedToEdit ? `
-                    <button type="button" onclick="AuthModule.openEditUserModal('${u.id}')"
+                    <button type="button" onclick="AuthModule.openEditUserModal('${safeId}')"
                         class="px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-semibold transition flex items-center gap-1.5">
                         <i class="fa-solid fa-user-pen text-xs"></i>
                         <span>Chỉnh sửa</span>
@@ -574,7 +599,7 @@ const AuthModule = (function () {
                     ` : ''}
 
                     ${isAllowedToDelete ? `
-                    <button type="button" onclick="AuthModule.deleteUser('${u.id}')"
+                    <button type="button" onclick="AuthModule.deleteUser('${safeId}')"
                         class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition flex items-center gap-1.5">
                         <i class="fa-solid fa-trash-can text-xs"></i>
                         <span>Xóa</span>
