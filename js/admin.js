@@ -5527,23 +5527,28 @@ function testRun() {
             return;
         }
 
-        grid.innerHTML = delivered.map(item => `
+        grid.innerHTML = delivered.map(item => {
+            const safeUrl = escapeHtml(sanitizeMediaUrl(item.url || ''));
+            const safeCode = escapeHtml(item.code || '');
+            const safeId = escapeHtml(item.id || '');
+            return `
             <div class="group relative bg-zinc-100 rounded-xl overflow-hidden border border-emerald-300 aspect-square">
-                <img src="${item.url}" alt="${item.code}" referrerpolicy="no-referrer" class="w-full h-full object-cover">
+                <img src="${safeUrl}" alt="${safeCode}" referrerpolicy="no-referrer" class="w-full h-full object-cover">
                 <span class="absolute top-1.5 left-1.5 bg-emerald-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full shadow">Đã chỉnh</span>
                 <button
                     type="button"
-                    onclick="AdminModule.deleteDeliveredPhoto('${item.id}')"
+                    onclick="AdminModule.deleteDeliveredPhoto('${safeId}')"
                     class="opacity-0 group-hover:opacity-100 absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600 text-white text-xs flex items-center justify-center transition shadow"
                     title="Xoá ảnh đã chỉnh này"
                 >
                     <i class="fa-solid fa-xmark"></i>
                 </button>
                 <div class="absolute bottom-1.5 inset-x-1.5 bg-black/70 text-white text-[10px] font-mono px-2 py-0.5 rounded truncate">
-                    ${item.code}
+                    ${safeCode}
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     async function addDeliveredPhotosFromDrive() {
