@@ -10,7 +10,8 @@
     <script>
         (function () {
             var path = window.location.pathname;
-            var isGithub = window.location.hostname.includes("github.io");
+            var host = window.location.hostname;
+            var isGithub = host === "github.io" || host.endsWith(".github.io");
             var repo = "";
             if (isGithub) {
                 var firstSeg = path.split("/")[1];
