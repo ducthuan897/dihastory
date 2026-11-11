@@ -1213,6 +1213,8 @@ const App = (function () {
         const timeLabel = (typeof AdminModule !== 'undefined' && typeof AdminModule.formatTimeShort === 'function')
             ? AdminModule.formatTimeShort(photo.capturedAt)
             : (photo.capturedAt ? photo.capturedAt.replace('T', ' ') : '');
+        const safeThumbUrl = escapeHtml(sanitizeMediaUrl(getOptimizedThumbnailUrl(photo.url || '', 'w800')));
+        const safePhotoId = escapeHtml(String(photo.id || '').replace(/['"\\]/g, ''));
 
         // NẾU Ở CHẾ ĐỘ CHỈ XEM (!isClientMode): Giao diện thẻ ảnh tràn viền 72/80h chuẩn Trang Quản Lý Album
         if (!isClientMode) {
@@ -1222,7 +1224,7 @@ const App = (function () {
                     class="group relative bg-white rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition cursor-pointer select-none photo-card-wrap"
                 >
                     <img
-                        src="${getOptimizedThumbnailUrl(photo.url, 'w800')}"
+                        src="${safeThumbUrl}"
                         alt="${escapeHtml(photo.code || photo.title || '')}"
                         loading="lazy"
                         referrerpolicy="no-referrer"
@@ -1251,7 +1253,7 @@ const App = (function () {
                 class="group relative bg-white rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition cursor-pointer select-none photo-card-wrap"
             >
                 <img
-                    src="${getOptimizedThumbnailUrl(photo.url, 'w800')}"
+                    src="${safeThumbUrl}"
                     alt="${escapeHtml(photo.code || photo.title || '')}"
                     loading="lazy"
                     referrerpolicy="no-referrer"
@@ -1266,7 +1268,7 @@ const App = (function () {
                     ${noteText ? `
                         <button
                             type="button"
-                            onclick="App.openPhotoNoteModal('${escapeHtml(photo.id)}')"
+                            onclick="App.openPhotoNoteModal('${safePhotoId}')"
                             class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-md transition"
                             title="Ghi chú: ${escapeHtml(noteText)}"
                         >
@@ -1276,7 +1278,7 @@ const App = (function () {
                         !isLocked ? `
                             <button
                                 type="button"
-                                onclick="App.openPhotoNoteModal('${escapeHtml(photo.id)}')"
+                                onclick="App.openPhotoNoteModal('${safePhotoId}')"
                                 class="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full bg-white/85 hover:bg-white text-zinc-700 backdrop-blur-xs flex items-center justify-center text-xs shadow-md transition"
                                 title="Thêm ghi chú chỉnh sửa"
                             >
@@ -1294,7 +1296,7 @@ const App = (function () {
                     ) : `
                         <button
                             type="button"
-                            onclick="App.togglePhotoHeart('${escapeHtml(photo.id)}')"
+                            onclick="App.togglePhotoHeart('${safePhotoId}')"
                             class="w-7 h-7 rounded-full flex items-center justify-center text-xs transition shadow-md ${
                                 isSelected
                                     ? 'bg-white/95 text-rose-600'
