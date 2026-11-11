@@ -1326,19 +1326,27 @@ const App = (function () {
     }
 
     function togglePhotoHeart(photoId) {
-        if (!photoId || photoId === '__proto__' || photoId === 'constructor' || photoId === 'prototype') return;
         const album = AdminModule.getAlbumById(currentAlbumId);
         if (!album || isAlbumSelectionLocked(album)) {
             showToast("Phần chọn ảnh đã khoá!", "error");
             return;
         }
+        const validPhoto = Array.isArray(album.photos) ? album.photos.find(p => p.id === photoId) : null;
+        if (!validPhoto || !validPhoto.id) return;
+        const safeKey = String(validPhoto.id);
+        if (safeKey === '__proto__' || safeKey === 'constructor' || safeKey === 'prototype') return;
 
         const selections = AdminModule.getSelections(album.id);
-        if (!Object.prototype.hasOwnProperty.call(selections, photoId) || !selections[photoId]) {
-            selections[photoId] = { selected: true, note: '' };
-        } else {
-            selections[photoId].selected = !selections[photoId].selected;
-        }
+        const existing = Object.prototype.hasOwnProperty.call(selections, safeKey) ? selections[safeKey] : null;
+        Object.defineProperty(selections, safeKey, {
+            value: {
+                selected: existing ? !existing.selected : true,
+                note: existing && typeof existing.note === 'string' ? existing.note : ''
+            },
+            writable: true,
+            enumerable: true,
+            configurable: true
+        });
 
         AdminModule.saveSelections(selections, album.id);
         updateSelectionUI();
