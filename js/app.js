@@ -1666,29 +1666,9 @@ const App = (function () {
 
     // Helper: Tạo blob ảnh có đóng watermark từ ảnh gốc
     async function createWatermarkedImageBlob(photoUrl) {
-        return new Promise(async (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
-
-            let objectUrl = null;
-            let validatedUrl = "";
-            try {
-                const parsed = new URL(photoUrl);
-                const allowedHosts = ["drive.google.com", "lh3.googleusercontent.com", "googleusercontent.com"];
-                if (parsed.protocol === "https:" && allowedHosts.some(h => parsed.hostname === h || parsed.hostname.endsWith(`.${h}`))) {
-                    validatedUrl = parsed.href;
-                }
-            } catch (e) {}
-
-            if (validatedUrl) {
-                try {
-                    const resp = await fetch(validatedUrl);
-                    if (resp.ok) {
-                        const b = await resp.blob();
-                        objectUrl = URL.createObjectURL(b);
-                    }
-                } catch (e) {}
-            }
 
             img.onload = () => {
                 try {
@@ -1702,7 +1682,6 @@ const App = (function () {
                     applyWatermarkPatternToCanvas(ctx, canvas.width, canvas.height);
 
                     canvas.toBlob((blob) => {
-                        if (objectUrl) URL.revokeObjectURL(objectUrl);
                         if (blob) {
                             resolve(blob);
                         } else {
@@ -1710,17 +1689,15 @@ const App = (function () {
                         }
                     }, 'image/jpeg', 0.92);
                 } catch (err) {
-                    if (objectUrl) URL.revokeObjectURL(objectUrl);
                     reject(err);
                 }
             };
 
             img.onerror = () => {
-                if (objectUrl) URL.revokeObjectURL(objectUrl);
                 reject(new Error("Failed to load image for watermarking"));
             };
 
-            img.src = objectUrl || photoUrl;
+            img.src = photoUrl;
         });
     }
 
