@@ -4318,8 +4318,27 @@ function testRun() {
                 }
             });
 
-            // TUÂN THỦ ĐIỀU 5: Trích xuất hoặc cập nhật ngày giờ chụp riêng biệt cho từng ảnh
-            // Nếu ảnh nào chưa có capturedAt hoặc chỉ có ngày không có giờ, bổ sung dựa trên EXIF/metadata/mapping của chính ảnh đó
+            // TUÂN THỦ ĐIỀU 5: Trích xuất và cập nhật lại thời gian DateTimeOriginal (0x9003) & vị trí GPS
+            // cho từng bức ảnh trong database khi bấm Cập nhật:
+            // 1. Quét EXIF trực tiếp từ file ảnh nếu có driveFileId mà chưa có capturedAt
+            for (let i = 0; i < album.photos.length; i++) {
+                const photo = album.photos[i];
+                if ((!photo.capturedAt || !photo.capturedAt.includes('T')) && photo.driveFileId) {
+                    try {
+                        const fileMeta = await extractDriveFileMetaInBrowser(photo.driveFileId);
+                        if (fileMeta && fileMeta.capturedAt) {
+                            photo.capturedAt = fileMeta.capturedAt;
+                            updatedCount++;
+                        }
+                        if (fileMeta && fileMeta.lat != null && fileMeta.lon != null) {
+                            photo.lat = fileMeta.lat;
+                            photo.lon = fileMeta.lon;
+                        }
+                    } catch (eMeta) {}
+                }
+            }
+
+            // 2. Tra cứu dữ liệu gốc đã ghi nhận từ EXIF của từng ảnh
             const KNOWN_PHOTO_METADATA_MAP = {
                 "DSC00300": { capturedAt: "2026-07-19T15:45", location: "Ea Phê", city: "Ea Phê" },
                 "DSC00301": { capturedAt: "2026-07-19T15:45", location: "Ea Phê", city: "Ea Phê" },
@@ -4353,7 +4372,7 @@ function testRun() {
                 }
             }
 
-            // TUÂN THỦ ĐIỀU 5: Trích xuất và cập nhật lại thời gian (DateTimeOriginal) & vị trí GPS (quy đổi xã/phường - tỉnh/thành phố)
+            // 3. TUÂN THỦ ĐIỀU 5: Trích xuất và cập nhật lại vị trí GPS (quy đổi xã/phường - tỉnh/thành phố)
             // cho từng bức ảnh trong album: nếu có toạ độ thì cập nhật đầy đủ Xã/Phường - Tỉnh/Thành phố, nếu không có thì để trống ""
             for (let i = 0; i < album.photos.length; i++) {
                 const photo = album.photos[i];
