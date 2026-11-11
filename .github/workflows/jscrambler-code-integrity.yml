@@ -31,9 +31,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-      - run: npm run build
+      - name: Install dependencies (if package-lock.json exists)
+        run: |
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          elif [ -f package.json ]; then
+            npm install
+          fi
+      - name: Build project (if package.json exists)
+        run: |
+          if [ -f package.json ]; then
+            npm run build --if-present
+          fi
       - name: Jscrambler Code Integrity
+        if: ${{ env.JSCRAMBLER_APPLICATION_ID != '' && env.JSCRAMBLER_SECRET_KEY != '' && env.JSCRAMBLER_ACCESS_KEY != '' && hashFiles('jscrambler.json') != '' }}
+        env:
+          JSCRAMBLER_APPLICATION_ID: ${{ secrets.JSCRAMBLER_APPLICATION_ID }}
+          JSCRAMBLER_SECRET_KEY: ${{ secrets.JSCRAMBLER_SECRET_KEY }}
+          JSCRAMBLER_ACCESS_KEY: ${{ secrets.JSCRAMBLER_ACCESS_KEY }}
         id: jscrambler
         # the complete list of inputs can be found here: https://github.com/marketplace/actions/jscrambler#inputs
         uses: jscrambler/code-integrity-actions/protect@ab65962a2ecffcc362b75a997e24a181d0bde5fb
@@ -43,5 +58,5 @@ jobs:
           access-key: ${{ secrets.JSCRAMBLER_ACCESS_KEY }}          # This value can be found in your Jscrambler account
           jscrambler-config-path: jscrambler.json                   # Download from your Jscrambler account
           files-src: |                                              # List of Files to be protected
-            dist/**/*
+            js/**/*.js
           files-dest: .
