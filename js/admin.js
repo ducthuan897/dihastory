@@ -31,12 +31,11 @@ const AdminModule = (function () {
         if (!raw || typeof raw !== 'string') return "";
         try {
             const parsedUrl = new URL(raw, window.location.origin);
-            if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:' || raw.startsWith('data:image/')) {
-                return raw;
+            if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
+                return parsedUrl.href;
             }
-        } catch (e) {
-            if (raw.startsWith('data:image/')) return raw;
-        }
+        } catch (e) {}
+        if (raw.startsWith('data:image/')) return raw;
         return "";
     }
 
