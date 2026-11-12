@@ -1015,6 +1015,14 @@ const App = (function () {
             const pos = typeof album.coverPosY === 'number' ? album.coverPosY : 50;
             heroCover.style.objectPosition = `center ${pos}%`;
         }
+        const heroCoverWatermark = document.getElementById('heroCoverWatermarkOverlay');
+        if (heroCoverWatermark) {
+            if (shouldShowWatermark(album, true)) {
+                heroCoverWatermark.classList.remove('hidden');
+            } else {
+                heroCoverWatermark.classList.add('hidden');
+            }
+        }
         if (heroClient) heroClient.innerText = album.clientName || 'Khách hàng';
         if (heroTitle) heroTitle.innerText = album.title || 'Album';
         if (heroDate) {

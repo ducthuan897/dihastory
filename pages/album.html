@@ -35,29 +35,30 @@
     <!-- HERO COVER BANNER -->
     <section class="album-hero">
         <img id="heroCoverImage" src="https://drive.google.com/thumbnail?id=1okRVSEXUqrh3Pem8XoVFPD7Odv0ONV3U&sz=w1600"
-            alt="Album Cover" referrerpolicy="no-referrer" class="album-hero-bg">
+            alt="Album Cover" referrerpolicy="no-referrer" class="album-hero-bg pointer-events-none">
+        <div class="absolute inset-0 z-10 select-none"></div>
+        <div id="heroCoverWatermarkOverlay" class="watermark-pattern-overlay hidden"></div>
         <div class="album-hero-overlay"></div>
 
-        <div class="relative z-10 text-center text-white px-4 max-w-3xl mx-auto py-4 sm:py-6">
-            <div id="heroClientNameBadge"
-                class="inline-flex items-center space-x-2 bg-white/15 backdrop-blur-md border border-white/20 px-3 py-0.5 rounded-full text-[11px] uppercase tracking-widest mb-2">
-                <i class="fa-solid fa-heart text-rose-400"></i>
-                <span id="heroClientName">Nguyễn Thành Đạt</span>
-            </div>
-
+        <div class="relative z-20 text-center text-white px-4 max-w-3xl mx-auto py-4 sm:py-6">
             <h1 id="heroAlbumTitle"
                 class="font-serif-display text-2xl sm:text-4xl md:text-5xl font-semibold tracking-wide leading-tight mb-2 sm:mb-2.5">
                 Gian thần Đạt 09
             </h1>
 
             <div
-                class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 text-xs text-zinc-200 mb-3.5 sm:mb-5">
+                class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 text-xs text-zinc-200 mb-2">
                 <span><i class="fa-regular fa-calendar mr-1.5"></i><span id="heroShootDate">24.07.2026</span></span>
                 <span>•</span>
                 <span><i class="fa-solid fa-location-dot mr-1.5 text-rose-400"></i><span id="heroLocation">Nhà
                         thờ Phú Cường, Thủ Dầu Một</span></span>
                 <span>•</span>
                 <span><i class="fa-regular fa-images mr-1.5"></i><span id="heroPhotoCount">3 Ảnh</span></span>
+            </div>
+
+            <div id="heroClientNameBadge"
+                class="text-center text-xs sm:text-sm font-medium uppercase tracking-widest text-white/95 mb-3.5 sm:mb-5">
+                <span id="heroClientName">Nguyễn Thành Đạt</span>
             </div>
 
             <div class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
