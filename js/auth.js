@@ -356,8 +356,18 @@ const AuthModule = (function () {
         localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
         checkAuthUI();
         if (typeof App !== 'undefined') {
-            if (typeof App.renderHomeShowcase === 'function') App.renderHomeShowcase();
-            if (typeof App.showView === 'function') App.showView('home');
+            const currentView = typeof App.getCurrentView === 'function' ? App.getCurrentView() : 'home';
+            const adminViews = ['admin', 'manage-album', 'users'];
+            if (adminViews.includes(currentView)) {
+                if (typeof App.showView === 'function') App.showView('home');
+            } else {
+                if (typeof App.renderHomeShowcase === 'function' && currentView === 'home') {
+                    App.renderHomeShowcase();
+                }
+                if (typeof App.renderPublicAlbum === 'function' && currentView === 'album') {
+                    App.renderPublicAlbum();
+                }
+            }
         }
         App.showToast('Đã đăng xuất tài khoản Quản trị.');
     }
