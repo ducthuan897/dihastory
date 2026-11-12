@@ -2381,6 +2381,7 @@ const App = (function () {
 
         // 5. Làm mờ / che màn chắn khi mất focus hoặc chuyển tab đối với Trang Chỉ Xem Album
         window.addEventListener('blur', () => {
+            if (isAdminUser()) return;
             if (currentView === 'album' && !isClientMode && shield) {
                 shield.classList.remove('hidden');
                 shield.classList.add('active');
@@ -2399,7 +2400,17 @@ const App = (function () {
         const devToolsThreshold = 160;
 
         function checkDevTools() {
-            if (isAdminUser()) return;
+            if (isAdminUser()) {
+                if (isDevToolsOpen || (shield && !shield.classList.contains('hidden'))) {
+                    isDevToolsOpen = false;
+                    if (shield) {
+                        delete shield.dataset.devtoolsBlocked;
+                        shield.classList.add('hidden');
+                        shield.classList.remove('active');
+                    }
+                }
+                return;
+            }
 
             // Kiểm tra chênh lệch kích thước cửa sổ do dock DevTools gây ra
             const widthDiff = window.outerWidth - window.innerWidth > devToolsThreshold;
