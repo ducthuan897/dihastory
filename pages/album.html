@@ -82,7 +82,7 @@
             <div class="flex items-center gap-2">
                 <span class="bg-rose-600 text-white px-2 py-0.5 rounded font-semibold uppercase text-[10px]">Hướng
                     dẫn chọn ảnh</span>
-                <span>Nhấn biểu tượng <strong>♥</strong> và biểu tượng ghi chú trên từng bức ảnh. Sau đó bấm nút
+                <span>Nhấn biểu tượng <i class="fa-solid fa-heart text-rose-400"></i> và biểu tượng ghi chú trên từng bức ảnh. Sau đó bấm nút
                     <strong>Hoàn Tất Chọn Ảnh</strong> để gửi yêu cầu chỉnh sửa chi tiết cho studio nhé.</span>
             </div>
             <div class="flex items-center gap-3 shrink-0">
@@ -105,8 +105,8 @@
                 <button id="albumTimeSortToggleBtn" type="button" onclick="App.toggleAlbumTimeSort()"
                     class="px-3.5 py-1.5 rounded-full bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 text-xs font-medium transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
                     title="Bấm để đảo chiều sắp xếp theo thời gian chụp">
-                    <span id="albumTimeSortIcon" class="text-zinc-500 font-mono text-xs">↑</span>
-                    <span id="albumTimeSortLabel">Thời gian: Cũ → Mới</span>
+                    <i id="albumTimeSortIcon" class="fa-solid fa-arrow-up text-zinc-500 text-xs"></i>
+                    <span id="albumTimeSortLabel">Thời gian: Cũ <i class="fa-solid fa-arrow-right text-[10px] mx-0.5"></i> Mới</span>
                 </button>
             </div>
         </div>

@@ -1401,10 +1401,14 @@ const App = (function () {
         const label = document.getElementById('albumTimeSortLabel');
         const icon = document.getElementById('albumTimeSortIcon');
         if (label) {
-            label.innerText = albumTimeSort === 'asc' ? 'Thời gian: Cũ → Mới' : 'Thời gian: Mới → Cũ';
+            label.innerHTML = albumTimeSort === 'asc'
+                ? 'Thời gian: Cũ <i class="fa-solid fa-arrow-right text-[10px] mx-0.5"></i> Mới'
+                : 'Thời gian: Mới <i class="fa-solid fa-arrow-right text-[10px] mx-0.5"></i> Cũ';
         }
         if (icon) {
-            icon.innerText = albumTimeSort === 'asc' ? '↑' : '↓';
+            icon.className = albumTimeSort === 'asc'
+                ? 'fa-solid fa-arrow-up text-zinc-500 text-xs'
+                : 'fa-solid fa-arrow-down text-zinc-500 text-xs';
         }
     }
 
