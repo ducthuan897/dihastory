@@ -371,3 +371,11 @@ body.view-only-protected #lightboxImageContainer {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='90' viewBox='0 0 160 90'%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle' transform='rotate(-22 80 45)' fill='%23ffffff' fill-opacity='0.45' stroke='%23000000' stroke-width='0.7' stroke-opacity='0.35' font-family='sans-serif' font-size='13' font-weight='800' letter-spacing='2'%3EDIHA STORY%3C/text%3E%3C/svg%3E");
 }
 
+/* Máy tính (chuột, màn hình lớn): giảm 1/2 mật độ watermark, giữ nguyên cỡ chữ (ô lặp lớn gấp đôi diện tích) */
+@media (min-width: 1024px) and (pointer: fine) {
+    .watermark-pattern-overlay {
+        background-size: 226px 127px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='226' height='127' viewBox='0 0 226 127'%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle' transform='rotate(-22 113 63.5)' fill='%23ffffff' fill-opacity='0.45' stroke='%23000000' stroke-width='0.7' stroke-opacity='0.35' font-family='sans-serif' font-size='13' font-weight='800' letter-spacing='2'%3EDIHA STORY%3C/text%3E%3C/svg%3E");
+    }
+}
+
