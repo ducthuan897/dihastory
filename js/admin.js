@@ -1489,8 +1489,8 @@ function testRun() {
         const token = computeAlbumClientToken(albumId);
         let base = window.location.origin + window.location.pathname;
         base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-        if (window.location.hostname === 'ducthuan897.github.io' || window.location.hostname.endsWith('.github.io')) {
-            return `https://ducthuan897.github.io/dihastory/${encodeURIComponent(albumId)}?k=${token}`;
+        if (window.location.hostname === 'github.io' || window.location.hostname.endsWith('.github.io')) {
+            return `${window.location.origin}/dihastory/${encodeURIComponent(albumId)}?k=${token}`;
         }
         return `${base}/${encodeURIComponent(albumId)}?k=${token}`;
     }
@@ -1613,8 +1613,8 @@ function testRun() {
         if (prefixEl) {
             let base = window.location.origin + window.location.pathname;
             base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-            prefixEl.innerText = (window.location.hostname === 'ducthuan897.github.io' || window.location.hostname.endsWith('.github.io'))
-                ? "https://ducthuan897.github.io/dihastory/"
+            prefixEl.innerText = (window.location.hostname === 'github.io' || window.location.hostname.endsWith('.github.io'))
+                ? `${window.location.origin}/dihastory/`
                 : `${base}/`;
         }
 
@@ -4797,8 +4797,8 @@ function testRun() {
         const id = albumId || activeAdminAlbumId;
         let base = window.location.origin + window.location.pathname;
         base = base.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-        if (window.location.hostname === 'ducthuan897.github.io' || window.location.hostname.endsWith('.github.io')) {
-            return `https://ducthuan897.github.io/dihastory/${encodeURIComponent(id)}`;
+        if (window.location.hostname === 'github.io' || window.location.hostname.endsWith('.github.io')) {
+            return `${window.location.origin}/dihastory/${encodeURIComponent(id)}`;
         }
         return `${base}/${encodeURIComponent(id)}`;
     }
