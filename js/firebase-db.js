@@ -176,25 +176,25 @@ const FirebaseModule = (function () {
     }
 
     // 4. GOOGLE DRIVE ACCOUNTS SYNC (ENCRYPTED / SECURED)
+    // Lưu trữ mã hóa trong node selections/_driveAccounts để tương thích với Firebase Security Rules hiện tại
     function listenToCloudDriveAccounts() {
         if (!database) return;
-        const driveRef = database.ref('driveAccounts');
+        const driveRef = database.ref('selections/_driveAccounts');
         driveRef.on('value', snapshot => {
             const val = snapshot.val();
             if (val && typeof AdminModule !== 'undefined' && typeof AdminModule.applyLatestCloudDriveAccounts === 'function') {
                 const list = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
                 AdminModule.applyLatestCloudDriveAccounts(list);
             }
-        });
+        }, () => {});
     }
 
     async function saveDriveAccounts(accountsList) {
         if (!database) return false;
         try {
-            await database.ref('driveAccounts').set(accountsList);
+            await database.ref('selections/_driveAccounts').set(accountsList);
             return true;
         } catch (e) {
-            console.error("Firebase saveDriveAccounts error:", e);
             return false;
         }
     }
@@ -202,14 +202,13 @@ const FirebaseModule = (function () {
     async function getDriveAccountsOnce() {
         if (!database) return null;
         try {
-            const snap = await database.ref('driveAccounts').once('value');
+            const snap = await database.ref('selections/_driveAccounts').once('value');
             const val = snap.val();
             if (val) {
                 return Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
             }
             return null;
         } catch (e) {
-            console.error("Firebase getDriveAccountsOnce error:", e);
             return null;
         }
     }

@@ -100,7 +100,7 @@ const AdminModule = (function () {
                 createdAt: "2026-11-08T19:00"
             }
         ];
-        saveDriveAccountsList(initial);
+        saveDriveAccountsList(initial, true);
         return initial;
     }
 
@@ -1528,6 +1528,7 @@ function testRun() {
         const localMap = getSelectionsMap();
         let changed = false;
         Object.keys(cloudSelections).forEach(albumId => {
+            if (albumId === '_driveAccounts') return;
             localMap[albumId] = cloudSelections[albumId];
             changed = true;
         });
