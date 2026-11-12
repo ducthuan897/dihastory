@@ -1023,7 +1023,14 @@ const App = (function () {
                 heroCoverWatermark.classList.add('hidden');
             }
         }
-        if (heroClient) heroClient.innerText = album.clientName || 'Khách hàng';
+        if (heroClient) {
+            const rawName = (album.clientName || 'Khách hàng').trim();
+            const titleCaseName = rawName
+                .split(/\s+/)
+                .map(w => w ? w.charAt(0).toLocaleUpperCase('vi-VN') + w.slice(1).toLocaleLowerCase('vi-VN') : '')
+                .join(' ');
+            heroClient.innerText = titleCaseName;
+        }
         if (heroTitle) heroTitle.innerText = album.title || 'Album';
         if (heroDate) {
             const oldestTime = getAlbumOldestPhotoTime(album);
