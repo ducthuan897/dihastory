@@ -3370,10 +3370,10 @@ function testRun() {
             return `
                 <div
                     onclick="AdminModule.openAlbumManagePage('${safeId}')"
-                    class="p-4 sm:p-5 rounded-2xl border transition cursor-pointer ${
+                    class="group p-4 sm:p-5 rounded-2xl border transition-all duration-300 cursor-pointer ${
                         isEditing
                             ? 'border-zinc-900 bg-zinc-900/5 ring-2 ring-zinc-900/10'
-                            : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm'
+                            : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-md'
                     }"
                 >
                     <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
@@ -3383,7 +3383,7 @@ function testRun() {
                             <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 w-full">
                                 <!-- Ảnh bìa album (tỉ lệ 16:9 hình chữ nhật chuẩn) -->
                                 <div class="w-32 aspect-video sm:w-44 sm:aspect-video rounded-xl overflow-hidden border border-zinc-200/90 shadow-2xs shrink-0 bg-zinc-100">
-                                    <img src="${safeCoverUrl}" alt="${safeTitle}" referrerpolicy="no-referrer" class="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-500 will-change-transform" style="object-position: center ${safeCoverPosY}%;">
+                                    <img src="${safeCoverUrl}" alt="${safeTitle}" referrerpolicy="no-referrer" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" style="object-position: center ${safeCoverPosY}%;">
                                 </div>
 
                                 <!-- Cụm thông tin nằm bên phải bức ảnh -->
