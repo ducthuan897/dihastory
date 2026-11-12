@@ -330,7 +330,20 @@ const AuthModule = (function () {
                 alertBox.classList.add('hidden');
                 closeLoginModal();
                 checkAuthUI();
-                App.showView('admin');
+                if (typeof App !== 'undefined') {
+                    if (typeof App.renderHomeShowcase === 'function') App.renderHomeShowcase();
+                    if (typeof App.renderPublicAlbum === 'function' && App.getCurrentView() === 'album') {
+                        App.renderPublicAlbum();
+                    }
+                    const lbOverlay = document.getElementById('lightboxWatermarkOverlay');
+                    if (lbOverlay) lbOverlay.classList.add('hidden');
+                    const shield = document.getElementById('viewOnlyAntiCaptureShield');
+                    if (shield) {
+                        delete shield.dataset.devtoolsBlocked;
+                        shield.classList.add('hidden');
+                        shield.classList.remove('active');
+                    }
+                }
                 return;
             }
         }
