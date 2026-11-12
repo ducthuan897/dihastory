@@ -136,13 +136,12 @@ const App = (function () {
         return getFullResPhotoUrl(url);
     }
 
-    // Helper: Watermark chỉ hiển thị trên Trang chỉ xem và Trang chọn ảnh; nếu Quản trị viên đã đăng nhập thì tự động tắt watermark
+    // Helper: Watermark chỉ hiển thị trên Trang chủ, Trang chỉ xem và Trang chọn ảnh; nếu Quản trị viên đã đăng nhập thì tự động tắt watermark
     function shouldShowWatermark(album) {
         if (!album || !album.watermarkEnabled) return false;
         const isAdmin = (typeof AuthModule !== 'undefined' && typeof AuthModule.isLoggedIn === 'function' && AuthModule.isLoggedIn());
         if (isAdmin) return false;
-        // Chỉ hiện ở trang chỉ xem và trang chọn ảnh (view album)
-        return currentView === 'album';
+        return currentView === 'album' || currentView === 'home';
     }
 
     async function loadPageContent(pageName) {
@@ -808,17 +807,19 @@ const App = (function () {
                         alt="${safeTitle}"
                         loading="lazy"
                         referrerpolicy="no-referrer"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none"
                     >
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent"></div>
+                    <div class="absolute inset-0 z-10 select-none"></div>
+                    ${shouldShowWatermark(album) ? '<div class="watermark-pattern-overlay z-10"></div>' : ''}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent pointer-events-none z-10"></div>
 
-                    <div class="absolute top-3 right-3">
+                    <div class="absolute top-3 right-3 z-20 pointer-events-none">
                         <span class="bg-white/90 backdrop-blur-md text-zinc-900 text-[11px] font-bold px-2.5 py-1 rounded-full">
                             <i class="fa-regular fa-images mr-1"></i>${photoCount} ảnh
                         </span>
                     </div>
 
-                    <div class="absolute bottom-3 left-3 right-3 text-white">
+                    <div class="absolute bottom-3 left-3 right-3 text-white z-20 pointer-events-none">
                         <h3 class="font-serif-display text-2xl font-bold leading-snug mb-0.5">${safeTitle}</h3>
                         <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-amber-300 font-medium">
                             <span><i class="fa-regular fa-clock mr-1"></i>Từ: ${safeDate}</span>
