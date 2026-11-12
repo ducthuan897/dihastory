@@ -369,7 +369,6 @@ const AuthModule = (function () {
                 }
             }
         }
-        App.showToast('Đã đăng xuất tài khoản Quản trị.');
     }
 
     function togglePasswordVisibility(inputId, iconId) {
