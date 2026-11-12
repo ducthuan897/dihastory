@@ -2429,6 +2429,22 @@ const App = (function () {
                 return;
             }
 
+            // Thiết bị di động / cảm ứng (iOS, Android, iPadOS) không có DevTools dock:
+            // thanh địa chỉ/thanh công cụ làm lệch outer/inner size gây nhận diện nhầm -> bỏ qua
+            const ua = navigator.userAgent || '';
+            const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile|CriOS|FxiOS|EdgiOS/i.test(ua) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+                (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+            if (isMobileDevice) {
+                if (isDevToolsOpen && shield) {
+                    isDevToolsOpen = false;
+                    delete shield.dataset.devtoolsBlocked;
+                    shield.classList.add('hidden');
+                    shield.classList.remove('active');
+                }
+                return;
+            }
+
             // Kiểm tra chênh lệch kích thước cửa sổ do dock DevTools gây ra
             const widthDiff = window.outerWidth - window.innerWidth > devToolsThreshold;
             const heightDiff = window.outerHeight - window.innerHeight > devToolsThreshold;
