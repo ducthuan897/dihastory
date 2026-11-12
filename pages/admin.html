@@ -2,11 +2,11 @@
 <main id="adminView" class="hidden w-full px-4 sm:px-6 lg:px-10 xl:px-12 py-8 space-y-8">
     <!-- Admin Header Banner -->
     <div
-        class="bg-zinc-900 text-white p-6 rounded-2xl shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        class="bg-zinc-900 text-white p-6 rounded-2xl shadow-lg flex flex-col lg:flex-row items-center justify-between gap-4 text-center lg:text-left">
         <div>
             <h1 class="text-2xl font-bold">Quản Lý Album</h1>
         </div>
-        <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+        <div class="flex flex-wrap items-center justify-center lg:justify-end gap-2.5 w-full lg:w-auto">
             <!-- Nút Kết nối Google Drive (Chỉ Super Admin & Admin) -->
             <button id="adminHeaderDriveBtn" type="button" onclick="AdminModule.openDriveApiKeyModal()"
                 class="hidden px-4 py-2.5 rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold transition flex items-center gap-2 shadow-sm">
