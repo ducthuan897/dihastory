@@ -136,11 +136,12 @@ const App = (function () {
         return getFullResPhotoUrl(url);
     }
 
-    // Helper: Watermark chỉ hiển thị trên Trang chủ, Trang chỉ xem và Trang chọn ảnh; nếu Quản trị viên đã đăng nhập thì tự động tắt watermark
-    function shouldShowWatermark(album) {
+    // Helper: Watermark hiển thị trên Trang chủ, Trang chỉ xem và Trang chọn ảnh khi người xem không phải Quản trị viên (nếu Album bật watermark)
+    function shouldShowWatermark(album, forHomeCard = false) {
         if (!album || !album.watermarkEnabled) return false;
         const isAdmin = (typeof AuthModule !== 'undefined' && typeof AuthModule.isLoggedIn === 'function' && AuthModule.isLoggedIn());
         if (isAdmin) return false;
+        if (forHomeCard) return true;
         return currentView === 'album' || currentView === 'home';
     }
 
@@ -810,7 +811,7 @@ const App = (function () {
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none"
                     >
                     <div class="absolute inset-0 z-10 select-none"></div>
-                    ${shouldShowWatermark(album) ? '<div class="watermark-pattern-overlay z-10"></div>' : ''}
+                    ${shouldShowWatermark(album, true) ? '<div class="watermark-pattern-overlay z-10"></div>' : ''}
                     <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent pointer-events-none z-10"></div>
 
                     <div class="absolute top-3 right-3 z-20 pointer-events-none">

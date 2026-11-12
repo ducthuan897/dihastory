@@ -342,7 +342,10 @@ const AuthModule = (function () {
         localStorage.removeItem(STORAGE_KEY_AUTH);
         localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
         checkAuthUI();
-        App.showView('home');
+        if (typeof App !== 'undefined') {
+            if (typeof App.renderHomeShowcase === 'function') App.renderHomeShowcase();
+            if (typeof App.showView === 'function') App.showView('home');
+        }
         App.showToast('Đã đăng xuất tài khoản Quản trị.');
     }
 
