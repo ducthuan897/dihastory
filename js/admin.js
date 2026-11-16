@@ -589,24 +589,21 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
     for (var i = 0; i < maxLen; i++) {
       var b = bytes[i];
       if (b < 0) b += 256;
-      if (b >= 32 && b <= 126) {
-        chars.push(String.fromCharCode(b));
-      } else {
-        chars.push(' ');
-      }
+      chars.push(b > 0 ? String.fromCharCode(b) : ' ');
     }
-    var str = chars.join('');
+    var rawHeaderStr = chars.join('');
+    var str = rawHeaderStr.replace(/[\\x00-\\x1F\\x7F-\\x9F]+/g, ' ');
 
     if (!meta.capturedAt) {
-      var mDateXmp = str.match(/DateTimeOriginal[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
+      var mDateXmp = str.match(/DateTimeOriginal[=">\\s:]+(\\d{4})[:\\-](\\d{2})[:\\-](\\d{2})[T\\s](\\d{2}):(\\d{2})/i);
       if (mDateXmp) {
         meta.capturedAt = mDateXmp[1] + "-" + mDateXmp[2] + "-" + mDateXmp[3] + "T" + mDateXmp[4] + ":" + mDateXmp[5];
       }
     }
 
     if (meta.lat == null) {
-      var mLat = str.match(/exif:GPSLatitude[=">\s]+([^"<&\s]+)/i);
-      var mLon = str.match(/exif:GPSLongitude[=">\s]+([^"<&\s]+)/i);
+      var mLat = str.match(/exif:GPSLatitude[=">\\s]+([^"<&\\s]+)/i);
+      var mLon = str.match(/exif:GPSLongitude[=">\\s]+([^"<&\\s]+)/i);
       if (mLat && mLon) {
         var pLat = parseGpsString(mLat[1]);
         var pLon = parseGpsString(mLon[1]);
@@ -617,18 +614,26 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
       }
     }
 
-    var mCity = str.match(/photoshop:City[=">\s]+([^"<&\r\n]+)/i);
+    var decodeUtf8 = function(rawS) {
+      if (!rawS) return "";
+      try {
+        return decodeURIComponent(escape(rawS)).trim();
+      } catch (e) {
+        return rawS.trim();
+      }
+    };
+    var mCity = rawHeaderStr.match(/photoshop:City[=">\\s]+([^"<&\\r\\n\\x00]+)/i);
     if (mCity) {
-      var cCandidate = mCity[1].trim();
+      var cCandidate = decodeUtf8(mCity[1]);
       if (cCandidate.toLowerCase() !== "việt nam" && cCandidate.toLowerCase() !== "vietnam") {
         meta.city = cCandidate;
       }
     }
-    var mLoc = str.match(/Iptc4xmpCore:Location[=">\s]+([^"<&\r\n]+)/i);
+    var mLoc = rawHeaderStr.match(/(?:Iptc4xmpCore:Location|photoshop:Sublocation)[=">\\s]+([^"<&\\r\\n\\x00]+)/i);
     if (mLoc) {
-      meta.location = mLoc[1].trim();
-      if (meta.city && meta.location !== meta.city) {
-        meta.location = meta.location + " - " + meta.city;
+      meta.location = decodeUtf8(mLoc[1]);
+      if (meta.city && meta.location.toLowerCase().indexOf(meta.city.toLowerCase()) === -1) {
+        meta.location = meta.location + ", " + meta.city;
       }
     } else if (meta.city) {
       meta.location = meta.city;
@@ -2685,26 +2690,28 @@ function testRun() {
                         const data = await resp.json();
                         if (data && Array.isArray(data.files) && data.files.length > 0) {
                             const folderTitle = data.folderTitle || "";
-                            // Phát hiện nếu bản triển khai Apps Script cũ trả về cùng 1 ngày hoặc cùng 1 địa điểm không có tọa độ cho toàn bộ ảnh
+                            // Phát hiện nếu bản triển khai Apps Script cũ trả về cùng 1 ngày hoặc cùng 1 địa điểm từ tên thư mục cho toàn bộ ảnh
                             const validDatesInBatch = data.files.map(x => x.capturedAt).filter(Boolean);
                             const allSameFallbackDate = data.files.length > 1 &&
                                 validDatesInBatch.length === data.files.length &&
                                 validDatesInBatch.every(d => d === validDatesInBatch[0]) &&
                                 data.files.every(x => x.lat == null && x.lon == null);
 
+                            const titleLocHint = extractLocationFromText(folderTitle);
                             const validLocsInBatch = data.files.map(x => x.location).filter(Boolean);
-                            const allSameGenericLocWithoutGps = data.files.length > 1 &&
+                            const allSameFolderTitleLoc = data.files.length > 1 &&
+                                titleLocHint &&
                                 validLocsInBatch.length === data.files.length &&
-                                validLocsInBatch.every(l => l === validLocsInBatch[0]) &&
+                                validLocsInBatch.every(l => l === titleLocHint.location) &&
                                 data.files.every(x => x.lat == null && x.lon == null);
 
                             const processedFiles = await Promise.all(data.files.map(async (f) => {
-                                let photoLoc = allSameGenericLocWithoutGps ? "" : (f.location || "");
-                                let photoCity = allSameGenericLocWithoutGps ? "" : (f.city || "");
+                                let photoLoc = allSameFolderTitleLoc ? "" : (f.location || "");
+                                let photoCity = allSameFolderTitleLoc ? "" : (f.city || "");
                                 let capturedAt = allSameFallbackDate
-                                    ? (extractDateFromText(f.name) || "")
+                                    ? (extractDateFromText(f.name) || normalizeDateToIsoMinute(f.capturedAt) || "")
                                     : (normalizeDateToIsoMinute(f.capturedAt) || extractDateFromText(f.name));
-                                if (!photoLoc && f.lat != null && f.lon != null) {
+                                if (f.lat != null && f.lon != null) {
                                     const geo = await reverseGeocodeCoords(f.lat, f.lon);
                                     if (geo) {
                                         photoLoc = geo.location;
@@ -4593,11 +4600,7 @@ function testRun() {
             }
 
             // 3. TUÂN THỦ ĐIỀU 5: Trích xuất và cập nhật lại vị trí GPS (quy đổi xã/phường - tỉnh/thành phố)
-            // cho từng bức ảnh trong album: nếu có toạ độ thì cập nhật đầy đủ Xã/Phường - Tỉnh/Thành phố, nếu không có thì để trống ""
-            const allPhotosHaveSameGenericLocWithoutGps = album.photos.length > 1 &&
-                album.photos.every(p => p.lat == null && p.lon == null) &&
-                album.photos.every(p => p.location === album.photos[0].location);
-
+            // cho từng bức ảnh trong album: nếu có toạ độ thì cập nhật đầy đủ Xã/Phường - Tỉnh/Thành phố, nếu không có thì giữ nguyên vị trí XMP/IPTC của ảnh hoặc để trống ""
             for (let i = 0; i < album.photos.length; i += CONCURRENCY) {
                 const batch = album.photos.slice(i, i + CONCURRENCY);
                 await Promise.all(batch.map(async (photo) => {
@@ -4612,18 +4615,11 @@ function testRun() {
                                 photo.city = geo.city;
                             }
                         }
-                    } else if (!photo.lat && !photo.lon) {
-                        const nameLoc = photo.title ? extractLocationFromText(photo.title) : null;
+                    } else if (!photo.lat && !photo.lon && !photo.location && photo.title) {
+                        const nameLoc = extractLocationFromText(photo.title);
                         if (nameLoc && nameLoc.location) {
                             photo.location = nameLoc.location;
                             photo.city = nameLoc.city || "";
-                        } else if (allPhotosHaveSameGenericLocWithoutGps || !photo.location || photo.location === album.city || photo.location === album.location) {
-                            // Không có thông tin vị trí EXIF GPS riêng biệt của bức ảnh -> để trống "" (không áp dụng vị trí chung cho cả album)
-                            if (photo.location !== "") {
-                                photo.location = "";
-                                photo.city = "";
-                                updatedCount++;
-                            }
                         }
                     }
                 }));

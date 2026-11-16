@@ -413,13 +413,10 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
     for (var i = 0; i < maxLen; i++) {
       var b = bytes[i];
       if (b < 0) b += 256;
-      if (b >= 32 && b <= 126) {
-        chars.push(String.fromCharCode(b));
-      } else {
-        chars.push(' ');
-      }
+      chars.push(b > 0 ? String.fromCharCode(b) : ' ');
     }
-    var str = chars.join('');
+    var rawHeaderStr = chars.join('');
+    var str = rawHeaderStr.replace(/[\x00-\x1F\x7F-\x9F]+/g, ' ');
 
     // Tìm ngày giờ chụp thật từ XMP DateTimeOriginal (chỉ lấy duy nhất DateTimeOriginal - TUÂN THỦ ĐIỀU 5)
     if (!meta.capturedAt) {
@@ -443,19 +440,27 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
       }
     }
 
-    // Tìm địa danh Photoshop / Lightroom đã gắn vào ảnh
-    var mCity = str.match(/photoshop:City[=">\s]+([^"<&\r\n]+)/i);
+    // Tìm địa danh Photoshop / Lightroom / IPTC đã gắn vào ảnh (hỗ trợ đầy đủ tiếng Việt UTF-8)
+    var decodeUtf8 = function(rawS) {
+      if (!rawS) return "";
+      try {
+        return decodeURIComponent(escape(rawS)).trim();
+      } catch (e) {
+        return rawS.trim();
+      }
+    };
+    var mCity = rawHeaderStr.match(/photoshop:City[=">\s]+([^"<&\r\n\x00]+)/i);
     if (mCity) {
-      var cCandidate = mCity[1].trim();
+      var cCandidate = decodeUtf8(mCity[1]);
       if (cCandidate.toLowerCase() !== "việt nam" && cCandidate.toLowerCase() !== "vietnam") {
         meta.city = cCandidate;
       }
     }
-    var mLoc = str.match(/Iptc4xmpCore:Location[=">\s]+([^"<&\r\n]+)/i);
+    var mLoc = rawHeaderStr.match(/(?:Iptc4xmpCore:Location|photoshop:Sublocation)[=">\s]+([^"<&\r\n\x00]+)/i);
     if (mLoc) {
-      meta.location = mLoc[1].trim();
-      if (meta.city && meta.location !== meta.city) {
-        meta.location = meta.location + " - " + meta.city;
+      meta.location = decodeUtf8(mLoc[1]);
+      if (meta.city && meta.location.toLowerCase().indexOf(meta.city.toLowerCase()) === -1) {
+        meta.location = meta.location + ", " + meta.city;
       }
     } else if (meta.city) {
       meta.location = meta.city;
