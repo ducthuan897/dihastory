@@ -368,47 +368,31 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
   };
 
   try {
-    // Đọc nhị phân 64KB đầu của file ảnh để quét EXIF ASCII và TIFF GPS trong 1-2ms
+    // Ưu tiên 1: Sử dụng Drive Advanced Service (Drive.Files.get) nếu được bật để lấy EXIF gốc trong 1ms
+    if (typeof Drive !== "undefined" && Drive.Files && typeof Drive.Files.get === "function") {
+      try {
+        var dFile = Drive.Files.get(file.getId(), { fields: "imageMediaMetadata" });
+        if (dFile && dFile.imageMediaMetadata) {
+          var imm = dFile.imageMediaMetadata;
+          if (imm.time) {
+            var mImm = String(imm.time).match(/^(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s]+(\d{2}):(\d{2})/);
+            if (mImm) {
+              meta.capturedAt = mImm[1] + "-" + mImm[2] + "-" + mImm[3] + "T" + mImm[4] + ":" + mImm[5];
+            }
+          }
+          if (imm.location && typeof imm.location.latitude === "number" && typeof imm.location.longitude === "number") {
+            meta.lat = imm.location.latitude;
+            meta.lon = imm.location.longitude;
+          }
+        }
+      } catch (eAdv) {}
+    }
+
+    // Ưu tiên 2: Đọc nhị phân 64KB đầu của file ảnh để quét EXIF DateTimeOriginal (0x9003) và TIFF GPS
     var blob = file.getBlob();
     var bytes = blob.getBytes();
-    var maxLen = Math.min(bytes.length, 65536);
-    var chars = [];
-    for (var i = 0; i < maxLen; i++) {
-      var b = bytes[i];
-      if (b < 0) b += 256;
-      if (b >= 32 && b <= 126) {
-        chars.push(String.fromCharCode(b));
-      } else {
-        chars.push(' ');
-      }
-    }
-    var str = chars.join('');
 
-    // 1. Tìm ngày giờ chụp thật từ EXIF / XMP (chỉ lấy duy nhất DateTimeOriginal - Date taken)
-    var mDateXmp = str.match(/DateTimeOriginal[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
-    if (mDateXmp) {
-      meta.capturedAt = mDateXmp[1] + "-" + mDateXmp[2] + "-" + mDateXmp[3] + "T" + mDateXmp[4] + ":" + mDateXmp[5];
-    }
-    if (!meta.capturedAt) {
-      var mDateExif = str.match(/\b(19\d\d|20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})(?::\d{2})?/);
-      if (mDateExif) {
-        meta.capturedAt = mDateExif[1] + "-" + mDateExif[2] + "-" + mDateExif[3] + "T" + mDateExif[4] + ":" + mDateExif[5];
-      }
-    }
-
-    // 2. Tìm toạ độ GPS từ XMP
-    var mLat = str.match(/exif:GPSLatitude[=">\s]+([^"<&\s]+)/i);
-    var mLon = str.match(/exif:GPSLongitude[=">\s]+([^"<&\s]+)/i);
-    if (mLat && mLon) {
-      var pLat = parseGpsString(mLat[1]);
-      var pLon = parseGpsString(mLon[1]);
-      if (pLat != null && pLon != null && (Math.abs(pLat) > 0.001 || Math.abs(pLon) > 0.001)) {
-        meta.lat = pLat;
-        meta.lon = pLon;
-      }
-    }
-
-    // 3. Quét toạ độ GPS & ngày giờ chụp từ Binary EXIF TIFF nếu XMP chưa có
+    // Quét Binary EXIF TIFF trước tiên để lấy đúng thẻ 0x9003 (DateTimeOriginal) và GPS
     if ((meta.lat == null || !meta.capturedAt) && bytes.length > 512) {
       try {
         var binExif = parseBinaryExifGps(bytes);
@@ -424,7 +408,42 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
       } catch(eBin) {}
     }
 
-    // 4. Tìm địa danh Photoshop / Lightroom đã gắn vào ảnh
+    var maxLen = Math.min(bytes.length, 65536);
+    var chars = [];
+    for (var i = 0; i < maxLen; i++) {
+      var b = bytes[i];
+      if (b < 0) b += 256;
+      if (b >= 32 && b <= 126) {
+        chars.push(String.fromCharCode(b));
+      } else {
+        chars.push(' ');
+      }
+    }
+    var str = chars.join('');
+
+    // Tìm ngày giờ chụp thật từ XMP DateTimeOriginal (chỉ lấy duy nhất DateTimeOriginal - TUÂN THỦ ĐIỀU 5)
+    if (!meta.capturedAt) {
+      var mDateXmp = str.match(/DateTimeOriginal[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
+      if (mDateXmp) {
+        meta.capturedAt = mDateXmp[1] + "-" + mDateXmp[2] + "-" + mDateXmp[3] + "T" + mDateXmp[4] + ":" + mDateXmp[5];
+      }
+    }
+
+    // Tìm toạ độ GPS từ XMP
+    if (meta.lat == null) {
+      var mLat = str.match(/exif:GPSLatitude[=">\s]+([^"<&\s]+)/i);
+      var mLon = str.match(/exif:GPSLongitude[=">\s]+([^"<&\s]+)/i);
+      if (mLat && mLon) {
+        var pLat = parseGpsString(mLat[1]);
+        var pLon = parseGpsString(mLon[1]);
+        if (pLat != null && pLon != null && (Math.abs(pLat) > 0.001 || Math.abs(pLon) > 0.001)) {
+          meta.lat = pLat;
+          meta.lon = pLon;
+        }
+      }
+    }
+
+    // Tìm địa danh Photoshop / Lightroom đã gắn vào ảnh
     var mCity = str.match(/photoshop:City[=">\s]+([^"<&\r\n]+)/i);
     if (mCity) {
       var cCandidate = mCity[1].trim();
@@ -444,17 +463,12 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
   } catch(err) {}
 
   var fname = file.getName();
-  // 4. Nếu file không có EXIF: lấy ngày từ tên file hoặc ngày file được cập nhật
+  // Nếu file không có EXIF DateTimeOriginal: chỉ lấy ngày từ tên file nếu có (TUÂN THỦ ĐIỀU 5: không lấy ngày tải lên/chỉnh sửa file)
   if (!meta.capturedAt && fname) {
     meta.capturedAt = extractDateFromText(fname);
   }
-  if (!meta.capturedAt) {
-    try {
-      meta.capturedAt = Utilities.formatDate(file.getLastUpdated(), "GMT+7", "yyyy-MM-dd'T'HH:mm");
-    } catch(e) {}
-  }
 
-  // 5. Kiểm tra tên file có chứa tên địa điểm quen thuộc
+  // Kiểm tra tên file có chứa tên địa điểm quen thuộc
   if (!meta.city && fname) {
     var fnLoc = extractLocationFromText(fname);
     if (fnLoc) {
@@ -463,9 +477,9 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
     }
   }
 
-  // 6. Dịch toạ độ GPS thành địa danh tiếng Việt thực tế (có cache theo toạ độ để chạy siêu tốc)
+  // Dịch toạ độ GPS thành địa danh tiếng Việt thực tế riêng cho từng ảnh
   if (meta.lat != null && meta.lon != null && !meta.city) {
-    var cacheKey = meta.lat.toFixed(3) + "," + meta.lon.toFixed(3);
+    var cacheKey = meta.lat.toFixed(4) + "," + meta.lon.toFixed(4);
     if (geoCache && geoCache[cacheKey]) {
       meta.city = geoCache[cacheKey].city;
       meta.location = geoCache[cacheKey].location;
@@ -490,7 +504,6 @@ function getFolderPhotosWithExif(folderId) {
   var detectedFolderCity = null;
   var detectedFolderLoc = null;
 
-  // 1. Kiểm tra vị trí & ngày chụp từ tên thư mục (ví dụ: "Chụp cưới Đà Lạt 20-10-2024")
   var titleLoc = extractLocationFromText(folderTitle);
   if (titleLoc) {
     detectedFolderCity = titleLoc.city;
@@ -501,7 +514,6 @@ function getFolderPhotosWithExif(folderId) {
     detectedFolderDate = titleDate;
   }
 
-  // 2. Lấy danh sách file ảnh trong thư mục
   var iter = folder.getFiles();
   var allFiles = [];
   while (iter.hasNext()) {
@@ -512,7 +524,6 @@ function getFolderPhotosWithExif(folderId) {
     }
   }
 
-  // 3. Quét metadata EXIF, GPS & ngày giờ riêng biệt cho TỪNG tấm ảnh
   var geoCache = {};
 
   for (var k = 0; k < allFiles.length; k++) {
@@ -520,12 +531,7 @@ function getFolderPhotosWithExif(folderId) {
     var fname = f.getName();
     var meta = extractExifAndLocationFromDriveFile(f, geoCache);
 
-    var fDate = meta.capturedAt || extractDateFromText(fname);
-    if (!fDate) {
-      try {
-        fDate = Utilities.formatDate(f.getLastUpdated(), "GMT+7", "yyyy-MM-dd'T'HH:mm");
-      } catch(e) {}
-    }
+    var fDate = meta.capturedAt || extractDateFromText(fname) || "";
 
     if (fDate && !detectedFolderDate) detectedFolderDate = fDate;
     if (meta.city && !detectedFolderCity) {
@@ -534,11 +540,10 @@ function getFolderPhotosWithExif(folderId) {
     }
 
     // TUÂN THỦ ĐIỀU 5: Mỗi bức ảnh mang thông tin vị trí và ngày giờ chụp riêng biệt của chính nó
-    // Tuyệt đối không lấy vị trí hoặc ngày chụp của thư mục hay ảnh khác gán cho ảnh này
     filesList.push({
       id: f.getId(),
       name: fname,
-      capturedAt: fDate || "",
+      capturedAt: fDate,
       city: meta.city || "",
       location: meta.location || meta.city || "",
       lat: meta.lat != null ? meta.lat : null,

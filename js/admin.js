@@ -545,43 +545,30 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
   };
 
   try {
+    // Ưu tiên 1: Sử dụng Drive Advanced Service (Drive.Files.get) nếu được bật để lấy EXIF gốc trong 1ms
+    if (typeof Drive !== "undefined" && Drive.Files && typeof Drive.Files.get === "function") {
+      try {
+        var dFile = Drive.Files.get(file.getId(), { fields: "imageMediaMetadata" });
+        if (dFile && dFile.imageMediaMetadata) {
+          var imm = dFile.imageMediaMetadata;
+          if (imm.time) {
+            var mImm = String(imm.time).match(/^(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s]+(\d{2}):(\d{2})/);
+            if (mImm) {
+              meta.capturedAt = mImm[1] + "-" + mImm[2] + "-" + mImm[3] + "T" + mImm[4] + ":" + mImm[5];
+            }
+          }
+          if (imm.location && typeof imm.location.latitude === "number" && typeof imm.location.longitude === "number") {
+            meta.lat = imm.location.latitude;
+            meta.lon = imm.location.longitude;
+          }
+        }
+      } catch (eAdv) {}
+    }
+
     var blob = file.getBlob();
     var bytes = blob.getBytes();
-    var maxLen = Math.min(bytes.length, 65536);
-    var chars = [];
-    for (var i = 0; i < maxLen; i++) {
-      var b = bytes[i];
-      if (b < 0) b += 256;
-      if (b >= 32 && b <= 126) {
-        chars.push(String.fromCharCode(b));
-      } else {
-        chars.push(' ');
-      }
-    }
-    var str = chars.join('');
 
-    var mDateXmp = str.match(/DateTimeOriginal[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
-    if (mDateXmp) {
-      meta.capturedAt = mDateXmp[1] + "-" + mDateXmp[2] + "-" + mDateXmp[3] + "T" + mDateXmp[4] + ":" + mDateXmp[5];
-    }
-    if (!meta.capturedAt) {
-      var mDateExif = str.match(/\\b(19\\d\\d|20[12]\\d)[:\\-](\\d{2})[:\\-](\\d{2})[\\sT](\\d{2}):(\\d{2})(?::\\d{2})?/);
-      if (mDateExif) {
-        meta.capturedAt = mDateExif[1] + "-" + mDateExif[2] + "-" + mDateExif[3] + "T" + mDateExif[4] + ":" + mDateExif[5];
-      }
-    }
-
-    var mLat = str.match(/exif:GPSLatitude[=">\s]+([^"<&\s]+)/i);
-    var mLon = str.match(/exif:GPSLongitude[=">\s]+([^"<&\s]+)/i);
-    if (mLat && mLon) {
-      var pLat = parseGpsString(mLat[1]);
-      var pLon = parseGpsString(mLon[1]);
-      if (pLat != null && pLon != null && (Math.abs(pLat) > 0.001 || Math.abs(pLon) > 0.001)) {
-        meta.lat = pLat;
-        meta.lon = pLon;
-      }
-    }
-
+    // Ưu tiên 2: Quét Binary EXIF TIFF trước tiên để lấy đúng thẻ 0x9003 (DateTimeOriginal) và GPS
     if ((meta.lat == null || !meta.capturedAt) && bytes.length > 512) {
       try {
         var binExif = parseBinaryExifGps(bytes);
@@ -595,6 +582,39 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
           }
         }
       } catch(eBin) {}
+    }
+
+    var maxLen = Math.min(bytes.length, 65536);
+    var chars = [];
+    for (var i = 0; i < maxLen; i++) {
+      var b = bytes[i];
+      if (b < 0) b += 256;
+      if (b >= 32 && b <= 126) {
+        chars.push(String.fromCharCode(b));
+      } else {
+        chars.push(' ');
+      }
+    }
+    var str = chars.join('');
+
+    if (!meta.capturedAt) {
+      var mDateXmp = str.match(/DateTimeOriginal[=">\s:]+(\d{4})[:\-](\d{2})[:\-](\d{2})[T\s](\d{2}):(\d{2})/i);
+      if (mDateXmp) {
+        meta.capturedAt = mDateXmp[1] + "-" + mDateXmp[2] + "-" + mDateXmp[3] + "T" + mDateXmp[4] + ":" + mDateXmp[5];
+      }
+    }
+
+    if (meta.lat == null) {
+      var mLat = str.match(/exif:GPSLatitude[=">\s]+([^"<&\s]+)/i);
+      var mLon = str.match(/exif:GPSLongitude[=">\s]+([^"<&\s]+)/i);
+      if (mLat && mLon) {
+        var pLat = parseGpsString(mLat[1]);
+        var pLon = parseGpsString(mLon[1]);
+        if (pLat != null && pLon != null && (Math.abs(pLat) > 0.001 || Math.abs(pLon) > 0.001)) {
+          meta.lat = pLat;
+          meta.lon = pLon;
+        }
+      }
     }
 
     var mCity = str.match(/photoshop:City[=">\s]+([^"<&\r\n]+)/i);
@@ -619,11 +639,6 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
   if (!meta.capturedAt && fname) {
     meta.capturedAt = extractDateFromText(fname);
   }
-  if (!meta.capturedAt) {
-    try {
-      meta.capturedAt = Utilities.formatDate(file.getLastUpdated(), "GMT+7", "yyyy-MM-dd'T'HH:mm");
-    } catch(e) {}
-  }
 
   if (!meta.city && fname) {
     var fnLoc = extractLocationFromText(fname);
@@ -634,7 +649,7 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
   }
 
   if (meta.lat != null && meta.lon != null && !meta.city) {
-    var cacheKey = meta.lat.toFixed(3) + "," + meta.lon.toFixed(3);
+    var cacheKey = meta.lat.toFixed(4) + "," + meta.lon.toFixed(4);
     if (geoCache && geoCache[cacheKey]) {
       meta.city = geoCache[cacheKey].city;
       meta.location = geoCache[cacheKey].location;
@@ -686,12 +701,7 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
             var fname = f.getName();
             var meta = extractExifAndLocationFromDriveFile(f, geoCache);
 
-            var fDate = meta.capturedAt || extractDateFromText(fname);
-            if (!fDate) {
-                try {
-                    fDate = Utilities.formatDate(f.getLastUpdated(), "GMT+7", "yyyy-MM-dd'T'HH:mm");
-                } catch(e) {}
-            }
+            var fDate = meta.capturedAt || extractDateFromText(fname) || "";
 
             if (fDate && !detectedFolderDate) detectedFolderDate = fDate;
             if (meta.city && !detectedFolderCity) {
@@ -703,7 +713,7 @@ function extractExifAndLocationFromDriveFile(file, geoCache) {
             filesList.push({
                 id: f.getId(),
                 name: fname,
-                capturedAt: fDate || "",
+                capturedAt: fDate,
                 city: meta.city || "",
                 location: meta.location || meta.city || "",
                 lat: meta.lat != null ? meta.lat : null,
@@ -2675,10 +2685,25 @@ function testRun() {
                         const data = await resp.json();
                         if (data && Array.isArray(data.files) && data.files.length > 0) {
                             const folderTitle = data.folderTitle || "";
+                            // Phát hiện nếu bản triển khai Apps Script cũ trả về cùng 1 ngày hoặc cùng 1 địa điểm không có tọa độ cho toàn bộ ảnh
+                            const validDatesInBatch = data.files.map(x => x.capturedAt).filter(Boolean);
+                            const allSameFallbackDate = data.files.length > 1 &&
+                                validDatesInBatch.length === data.files.length &&
+                                validDatesInBatch.every(d => d === validDatesInBatch[0]) &&
+                                data.files.every(x => x.lat == null && x.lon == null);
+
+                            const validLocsInBatch = data.files.map(x => x.location).filter(Boolean);
+                            const allSameGenericLocWithoutGps = data.files.length > 1 &&
+                                validLocsInBatch.length === data.files.length &&
+                                validLocsInBatch.every(l => l === validLocsInBatch[0]) &&
+                                data.files.every(x => x.lat == null && x.lon == null);
+
                             const processedFiles = await Promise.all(data.files.map(async (f) => {
-                                let photoLoc = f.location || "";
-                                let photoCity = f.city || "";
-                                let capturedAt = normalizeDateToIsoMinute(f.capturedAt) || extractDateFromText(f.name);
+                                let photoLoc = allSameGenericLocWithoutGps ? "" : (f.location || "");
+                                let photoCity = allSameGenericLocWithoutGps ? "" : (f.city || "");
+                                let capturedAt = allSameFallbackDate
+                                    ? (extractDateFromText(f.name) || "")
+                                    : (normalizeDateToIsoMinute(f.capturedAt) || extractDateFromText(f.name));
                                 if (!photoLoc && f.lat != null && f.lon != null) {
                                     const geo = await reverseGeocodeCoords(f.lat, f.lon);
                                     if (geo) {
@@ -4527,7 +4552,7 @@ function testRun() {
             });
 
             // TUÂN THỦ ĐIỀU 5: Trích xuất trực tiếp nhị phân DateTimeOriginal (0x9003) & GPS qua Range request
-            // song song theo nhóm cho những bức ảnh chưa có đủ thông tin metadata
+            // song song theo nhóm cho 100% bức ảnh trong album khi bấm Cập nhật
             const CONCURRENCY = 5;
             for (let i = 0; i < album.photos.length; i += CONCURRENCY) {
                 const batch = album.photos.slice(i, i + CONCURRENCY);
@@ -4544,7 +4569,7 @@ function testRun() {
                         if (known.lon != null && photo.lon !== known.lon) photo.lon = known.lon;
                         if (known.location && photo.location !== known.location) photo.location = known.location;
                         if (known.city && photo.city !== known.city) photo.city = known.city;
-                    } else if (photo.driveFileId && (!photo.capturedAt || (!photo.location && photo.lat == null))) {
+                    } else if (photo.driveFileId) {
                         try {
                             const fileMeta = await extractDriveFileMetaInBrowser(photo.driveFileId);
                             if (fileMeta) {
@@ -4559,6 +4584,7 @@ function testRun() {
                                 if (fileMeta.location && photo.location !== fileMeta.location) {
                                     photo.location = fileMeta.location;
                                     photo.city = fileMeta.city || "";
+                                    updatedCount++;
                                 }
                             }
                         } catch (eMeta) {}
@@ -4568,10 +4594,14 @@ function testRun() {
 
             // 3. TUÂN THỦ ĐIỀU 5: Trích xuất và cập nhật lại vị trí GPS (quy đổi xã/phường - tỉnh/thành phố)
             // cho từng bức ảnh trong album: nếu có toạ độ thì cập nhật đầy đủ Xã/Phường - Tỉnh/Thành phố, nếu không có thì để trống ""
+            const allPhotosHaveSameGenericLocWithoutGps = album.photos.length > 1 &&
+                album.photos.every(p => p.lat == null && p.lon == null) &&
+                album.photos.every(p => p.location === album.photos[0].location);
+
             for (let i = 0; i < album.photos.length; i += CONCURRENCY) {
                 const batch = album.photos.slice(i, i + CONCURRENCY);
                 await Promise.all(batch.map(async (photo) => {
-                    if (!photo.location && photo.lat != null && photo.lon != null) {
+                    if (photo.lat != null && photo.lon != null) {
                         const geo = await reverseGeocodeCoords(photo.lat, photo.lon);
                         if (geo && geo.location) {
                             if (photo.location !== geo.location) {
@@ -4582,15 +4612,18 @@ function testRun() {
                                 photo.city = geo.city;
                             }
                         }
-                    } else if (!photo.lat && !photo.lon && !photo.location && photo.title) {
-                        const nameLoc = extractLocationFromText(photo.title);
+                    } else if (!photo.lat && !photo.lon) {
+                        const nameLoc = photo.title ? extractLocationFromText(photo.title) : null;
                         if (nameLoc && nameLoc.location) {
                             photo.location = nameLoc.location;
                             photo.city = nameLoc.city || "";
-                        } else if (!photo.location || photo.location === album.city || photo.location === album.location) {
-                            // Không có thông tin vị trí EXIF GPS hay tên file -> để trống
-                            photo.location = "";
-                            photo.city = "";
+                        } else if (allPhotosHaveSameGenericLocWithoutGps || !photo.location || photo.location === album.city || photo.location === album.location) {
+                            // Không có thông tin vị trí EXIF GPS riêng biệt của bức ảnh -> để trống "" (không áp dụng vị trí chung cho cả album)
+                            if (photo.location !== "") {
+                                photo.location = "";
+                                photo.city = "";
+                                updatedCount++;
+                            }
                         }
                     }
                 }));
