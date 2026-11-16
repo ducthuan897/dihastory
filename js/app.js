@@ -1697,7 +1697,8 @@ const App = (function () {
     }
 
     function downloadLightboxCurrentPhoto() {
-        if (!isClientMode) {
+        const isAdmin = (typeof AuthModule !== 'undefined' && typeof AuthModule.isLoggedIn === 'function' && AuthModule.isLoggedIn());
+        if (!isClientMode && !isAdmin) {
             showToast("Trang chỉ xem được bảo vệ bản quyền, không hỗ trợ tải ảnh!", "error");
             return;
         }
@@ -1742,8 +1743,18 @@ const App = (function () {
         ctx.restore();
     }
 
-    // Helper: Tạo blob ảnh có đóng watermark từ ảnh gốc
-    async function createWatermarkedImageBlob(photoUrl) {
+    // Helper: Tạo blob ảnh gốc hoặc có đóng watermark
+    async function createPhotoDownloadBlob(photoUrl, applyWatermark = false) {
+        try {
+            const resp = await fetch(photoUrl, { mode: 'cors', credentials: 'omit' });
+            if (resp && resp.ok) {
+                const rawBlob = await resp.blob();
+                if (!applyWatermark) {
+                    return rawBlob;
+                }
+            }
+        } catch (e) {}
+
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
@@ -1756,8 +1767,9 @@ const App = (function () {
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0);
 
-                    // Vẽ watermark DIHA STORY bám chặt lên toàn ảnh
-                    applyWatermarkPatternToCanvas(ctx, canvas.width, canvas.height);
+                    if (applyWatermark) {
+                        applyWatermarkPatternToCanvas(ctx, canvas.width, canvas.height);
+                    }
 
                     canvas.toBlob((blob) => {
                         if (blob) {
@@ -1765,22 +1777,45 @@ const App = (function () {
                         } else {
                             reject(new Error("Canvas toBlob failed"));
                         }
-                    }, 'image/jpeg', 0.92);
+                    }, 'image/jpeg', 0.95);
                 } catch (err) {
                     reject(err);
                 }
             };
 
             img.onerror = () => {
-                reject(new Error("Failed to load image for watermarking"));
+                reject(new Error("Failed to load image for download"));
             };
 
             img.src = photoUrl;
         });
     }
 
+    function triggerDirectFileDownload(photo, dlUrl) {
+        const cleanFileName = `${(photo.code || photo.title || 'photo').replace(/\.[^/.]+$/, '')}.jpg`;
+        const driveId = photo.driveFileId || getDriveIdFromUrl(photo.url) || getDriveIdFromUrl(dlUrl);
+        if (driveId) {
+            const directDriveDlUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(driveId)}`;
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = directDriveDlUrl;
+            document.body.appendChild(iframe);
+            setTimeout(() => {
+                if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+            }, 60000);
+            return;
+        }
+        const a = document.createElement('a');
+        a.setAttribute('href', encodeURI(dlUrl));
+        a.download = cleanFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
     async function downloadSinglePhoto(photoId) {
-        if (!isClientMode) {
+        const isAdmin = (typeof AuthModule !== 'undefined' && typeof AuthModule.isLoggedIn === 'function' && AuthModule.isLoggedIn());
+        if (!isClientMode && !isAdmin) {
             showToast("Trang chỉ xem được bảo vệ bản quyền, không hỗ trợ tải ảnh!", "error");
             return;
         }
@@ -1793,47 +1828,49 @@ const App = (function () {
         const dlUrl = sanitizeMediaUrl(rawDlUrl);
         if (!dlUrl) return;
 
+        const cleanBaseName = (photo.code || photo.title || 'photo').replace(/\.[^/.]+$/, '');
+        const shouldDownloadOriginal = isAdmin || !!album.allowOriginalDownload || !album.watermarkEnabled;
+
         try {
-            // Nếu studio bật tuỳ chọn cho khách tải ảnh gốc không watermark
-            if (album.allowOriginalDownload) {
-                showToast(`Đang tải ảnh gốc ${photo.code || 'IMG'}...`);
-                const a = document.createElement('a');
-                a.setAttribute('href', encodeURI(dlUrl));
-                a.target = '_blank';
-                a.download = `${photo.code || 'photo'}.jpg`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+            if (shouldDownloadOriginal) {
+                showToast(`Đang tải ảnh gốc ${cleanBaseName}...`);
+                const origBlob = await createPhotoDownloadBlob(dlUrl, false).catch(() => null);
+                if (origBlob) {
+                    const blobUrl = URL.createObjectURL(origBlob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = `${cleanBaseName}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+                    showToast(`Đã tải xuống ảnh gốc ${cleanBaseName}.jpg!`);
+                    return;
+                }
+                triggerDirectFileDownload(photo, dlUrl);
                 return;
             }
 
-            showToast(`Đang nạp và đóng dấu Watermark cho ảnh ${photo.code || 'IMG'}...`);
+            showToast(`Đang nạp và đóng dấu Watermark cho ảnh ${cleanBaseName}...`);
 
             // Mặc định: tải ảnh có đóng watermark DIHA STORY
-            const watermarkedBlob = await createWatermarkedImageBlob(dlUrl).catch(() => null);
+            const watermarkedBlob = await createPhotoDownloadBlob(dlUrl, true).catch(() => null);
             if (watermarkedBlob) {
                 const blobUrl = URL.createObjectURL(watermarkedBlob);
                 const a = document.createElement('a');
                 a.href = blobUrl;
-                a.download = `${photo.code || 'photo'}_watermarked.jpg`;
+                a.download = `${cleanBaseName}_watermarked.jpg`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-                showToast(`Đã tải ảnh ${photo.code || 'IMG'} (Có Watermark)!`);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+                showToast(`Đã tải ảnh ${cleanBaseName} (Có Watermark)!`);
                 return;
             }
 
-            // Fallback nếu không đóng được watermark
-            const a = document.createElement('a');
-            a.setAttribute('href', encodeURI(dlUrl));
-            a.target = '_blank';
-            a.download = `${photo.code || 'photo'}.jpg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            triggerDirectFileDownload(photo, dlUrl);
         } catch (e) {
-            window.open(encodeURI(dlUrl), '_blank', 'noopener,noreferrer');
+            triggerDirectFileDownload(photo, dlUrl);
         }
     }
 
