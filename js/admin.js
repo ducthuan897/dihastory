@@ -209,6 +209,29 @@ function doGet(e) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 
+  // 1b. Trích xuất EXIF DateTimeOriginal (0x9003) & GPS cho 1 file ảnh đơn lẻ
+  if (action === 'fileMeta' && folderId) {
+    try {
+      var cleanFileId = folderId.replace(/[?&].*$/, "").trim();
+      var singleFile = DriveApp.getFileById(cleanFileId);
+      var singleMeta = extractExifAndLocationFromDriveFile(singleFile, {});
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "ok",
+        id: singleFile.getId(),
+        name: singleFile.getName(),
+        capturedAt: singleMeta.capturedAt || "",
+        city: singleMeta.city || "",
+        location: singleMeta.location || singleMeta.city || "",
+        lat: singleMeta.lat != null ? singleMeta.lat : null,
+        lon: singleMeta.lon != null ? singleMeta.lon : null
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch (errFile) {
+      return ContentService.createTextOutput(JSON.stringify({
+        error: errFile.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
   // 2. ĐỒNG BỘ: Lưu albums dự phòng qua GET
   if (action === 'saveAlbums' && e.parameter.data) {
     try {
@@ -231,7 +254,8 @@ function doGet(e) {
   if (!folderId || folderId === 'test') {
     return ContentService.createTextOutput(JSON.stringify({
       status: "ok",
-      message: "Kết nối Google Apps Script thành công! Sẵn sàng trích xuất EXIF và đồng bộ dữ liệu đa thiết bị."
+      version: "2.0",
+      message: "Kết nối Google Apps Script thành công! Sẵn sàng trích xuất EXIF 0x9003 và tọa độ GPS."
     })).setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -2051,12 +2075,6 @@ function testRun() {
                 if (!out.capturedAt) {
                     const dtMatch = asciiHeader.match(/DateTimeOriginal[=">\s:]+(\d{4}[:\-]\d{2}[:\-]\d{2}[T\s]\d{2}:\d{2})/i);
                     if (dtMatch) out.capturedAt = normalizeDateToIsoMinute(dtMatch[1]);
-                }
-                if (!out.capturedAt) {
-                    const rawDateMatch = asciiHeader.match(/\b(19\d\d|20[12]\d)[:\-](\d{2})[:\-](\d{2})[\sT](\d{2}):(\d{2})/);
-                    if (rawDateMatch) {
-                        out.capturedAt = `${rawDateMatch[1]}-${rawDateMatch[2]}-${rawDateMatch[3]}T${rawDateMatch[4]}:${rawDateMatch[5]}`;
-                    }
                 }
                 if (out.lat == null || out.lon == null) {
                     const latMatch = asciiHeader.match(/exif:GPSLatitude[=">\s]+([^"<&\s]+)/i);
@@ -4558,6 +4576,10 @@ function testRun() {
                 }
             });
 
+            // Kiểm tra xem có bức ảnh nào trên Google Drive bị từ chối quyền đọc trực tiếp (401 Restricted)
+            // và cũng không nhận được tọa độ GPS / ngày chụp riêng từ Apps Script hay không
+            let restrictedOrMissingExifCount = 0;
+
             // TUÂN THỦ ĐIỀU 5: Trích xuất trực tiếp nhị phân DateTimeOriginal (0x9003) & GPS qua Range request
             // song song theo nhóm cho 100% bức ảnh trong album khi bấm Cập nhật
             const CONCURRENCY = 5;
@@ -4579,7 +4601,7 @@ function testRun() {
                     } else if (photo.driveFileId) {
                         try {
                             const fileMeta = await extractDriveFileMetaInBrowser(photo.driveFileId);
-                            if (fileMeta) {
+                            if (fileMeta && (fileMeta.capturedAt || fileMeta.lat != null || fileMeta.location)) {
                                 if (fileMeta.capturedAt && photo.capturedAt !== fileMeta.capturedAt) {
                                     photo.capturedAt = fileMeta.capturedAt;
                                     updatedCount++;
@@ -4593,8 +4615,14 @@ function testRun() {
                                     photo.city = fileMeta.city || "";
                                     updatedCount++;
                                 }
+                            } else if (photo.lat == null && photo.lon == null) {
+                                restrictedOrMissingExifCount++;
                             }
-                        } catch (eMeta) {}
+                        } catch (eMeta) {
+                            if (photo.lat == null && photo.lon == null) {
+                                restrictedOrMissingExifCount++;
+                            }
+                        }
                     }
                 }));
             }
@@ -4658,7 +4686,9 @@ function testRun() {
             if (updatedCount > 0) msgParts.push(`cập nhật ${updatedCount} ảnh`);
             if (removedCount > 0) msgParts.push(`xóa ${removedCount} ảnh không còn trên Drive`);
 
-            if (msgParts.length > 0) {
+            if (restrictedOrMissingExifCount > 0 && album.photos.length > 1 && album.photos.every(p => p.capturedAt === album.photos[0].capturedAt && p.lat == null)) {
+                App.showToast(`Thư mục Google Drive đang để "Hạn chế" (Restricted)! Hãy bật chia sẻ "Bất kỳ ai có đường liên kết" trên Google Drive rồi bấm Cập nhật lại để đọc đúng Ngày chụp gốc (0x9003) & GPS từng ảnh.`, "error");
+            } else if (msgParts.length > 0) {
                 App.showToast(`Đã đồng bộ xong (${msgParts.join(', ')}). Tổng: ${album.photos.length} ảnh!`);
             } else {
                 App.showToast(`Album đã đồng bộ mới nhất với Google Drive (${album.photos.length} ảnh)!`);

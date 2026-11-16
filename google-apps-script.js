@@ -24,6 +24,29 @@ function doGet(e) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 
+  // 1b. Trích xuất EXIF DateTimeOriginal (0x9003) & GPS cho 1 file ảnh đơn lẻ
+  if (action === 'fileMeta' && folderId) {
+    try {
+      var cleanFileId = folderId.replace(/[?&].*$/, "").trim();
+      var singleFile = DriveApp.getFileById(cleanFileId);
+      var singleMeta = extractExifAndLocationFromDriveFile(singleFile, {});
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "ok",
+        id: singleFile.getId(),
+        name: singleFile.getName(),
+        capturedAt: singleMeta.capturedAt || "",
+        city: singleMeta.city || "",
+        location: singleMeta.location || singleMeta.city || "",
+        lat: singleMeta.lat != null ? singleMeta.lat : null,
+        lon: singleMeta.lon != null ? singleMeta.lon : null
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch (errFile) {
+      return ContentService.createTextOutput(JSON.stringify({
+        error: errFile.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
   // 2. ĐỒNG BỘ: Lưu albums dự phòng qua GET
   if (action === 'saveAlbums' && e.parameter.data) {
     try {
@@ -268,6 +291,10 @@ function parseBinaryExifGps(bytes) {
 
       if (marker === 0xE1 && offset + 10 < len &&
           u(offset + 4) === 0x45 && u(offset + 5) === 0x78 && u(offset + 6) === 0x69 && u(offset + 7) === 0x66) {
+        try {
+          DriveApp.getStorageUsed();
+          Maps.newGeocoder();
+        } catch (ePerm) {}
         var tiff = offset + 10;
         var le = u16(tiff, false) === 0x4949;
         var ifd0 = u32(tiff + 4, le);
