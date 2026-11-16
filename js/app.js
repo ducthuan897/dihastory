@@ -1488,9 +1488,9 @@ const App = (function () {
         const modal = document.getElementById('lightboxModal');
         if (modal) modal.classList.add('hidden');
 
-        // Khôi phục URL về trang album khi đóng Lightbox
+        // Khôi phục URL về trang album khi đóng Lightbox (chỉ áp dụng khi đang ở trang album)
         try {
-            if (currentAlbumId) {
+            if (currentView === 'album' && currentAlbumId) {
                 const albumUrl = isClientMode
                     ? buildClientAlbumUrl(currentAlbumId)
                     : `${getAppBasePath()}/${encodeURIComponent(currentAlbumId)}`;
@@ -1578,7 +1578,7 @@ const App = (function () {
         const selections = album ? AdminModule.getSelections(album.id) : {};
         const sel = selections[photo.id] || {};
 
-        if (isClientMode) {
+        if (currentView === 'album' && isClientMode) {
             const isLocked = isAlbumSelectionLocked(album);
             if (proofingControls) {
                 if (isLocked) {
@@ -1611,7 +1611,7 @@ const App = (function () {
         }
 
         if (notePreview) {
-            if (sel.note && isClientMode) {
+            if (sel.note && currentView === 'album' && isClientMode) {
                 notePreview.classList.remove('hidden');
                 notePreview.innerText = `Ghi chú: ${sel.note}`;
             } else {
@@ -1628,19 +1628,21 @@ const App = (function () {
             }
         }
 
-        // Cập nhật URL trình duyệt theo bức ảnh đang mở (Deep Linking)
+        // Cập nhật URL trình duyệt theo bức ảnh đang mở (Deep Linking) khi ở trang album
         // Khi F5 sẽ nạp lại đúng bức ảnh này
         try {
-            const photoFileName = photo.title || (photo.code ? `${photo.code}.jpg` : 'photo.jpg');
-            const newUrl = isClientMode
-                ? buildClientAlbumUrl(currentAlbumId, photoFileName)
-                : `${getAppBasePath()}/${encodeURIComponent(currentAlbumId)}/${encodeURIComponent(photoFileName)}`;
-            window.history.replaceState({
-                view: 'album',
-                albumId: currentAlbumId,
-                isClientMode,
-                photoCode: photoFileName
-            }, '', newUrl);
+            if (currentView === 'album') {
+                const photoFileName = photo.title || (photo.code ? `${photo.code}.jpg` : 'photo.jpg');
+                const newUrl = isClientMode
+                    ? buildClientAlbumUrl(currentAlbumId, photoFileName)
+                    : `${getAppBasePath()}/${encodeURIComponent(currentAlbumId)}/${encodeURIComponent(photoFileName)}`;
+                window.history.replaceState({
+                    view: 'album',
+                    albumId: currentAlbumId,
+                    isClientMode,
+                    photoCode: photoFileName
+                }, '', newUrl);
+            }
         } catch (e) {}
     }
 
