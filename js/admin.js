@@ -1343,21 +1343,11 @@ function testRun() {
             }
             if (saveScriptId) {
                 const safeSaveUrl = `https://script.google.com/macros/s/${encodeURIComponent(saveScriptId)}/exec`;
-                try {
-                    await fetch(safeSaveUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: 'saveAlbums', albums })
-                    });
-                } catch (e) {
-                    // Dự phòng qua GET nếu POST bị chặn
-                    try {
-                        const getSaveUrl = new URL(safeSaveUrl);
-                        getSaveUrl.searchParams.set("action", "saveAlbums");
-                        getSaveUrl.searchParams.set("data", JSON.stringify(albums));
-                        await fetch(getSaveUrl.toString());
-                    } catch(err) {}
-                }
+                fetchWithTimeout(safeSaveUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'saveAlbums', albums })
+                }, 6000).catch(() => {});
             }
         } finally {
             setTimeout(() => {
@@ -1852,6 +1842,13 @@ function testRun() {
         return isNaN(num) ? null : num;
     }
 
+    function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        return fetch(url, { ...options, signal: controller.signal })
+            .finally(() => clearTimeout(timer));
+    }
+
     async function reverseGeocodeCoords(lat, lon) {
         if (lat == null || lon == null || isNaN(lat) || isNaN(lon)) return null;
         const key = `${Number(lat).toFixed(3)},${Number(lon).toFixed(3)}`;
@@ -1859,8 +1856,10 @@ function testRun() {
 
         // 1. OpenStreetMap Nominatim: lấy thông tin địa danh hành chính thực tế chuẩn xác của Việt Nam
         try {
-            const resp = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&accept-language=vi`
+            const resp = await fetchWithTimeout(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&accept-language=vi`,
+                {},
+                3000
             );
             if (resp.ok) {
                 const data = await resp.json();
@@ -1902,8 +1901,10 @@ function testRun() {
 
         // 2. Fallback BigDataCloud (api-bdc.io)
         try {
-            const resp = await fetch(
-                `https://api-bdc.io/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&localityLanguage=vi`
+            const resp = await fetchWithTimeout(
+                `https://api-bdc.io/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&localityLanguage=vi`,
+                {},
+                3000
             );
             if (resp.ok) {
                 const data = await resp.json();
@@ -2525,15 +2526,14 @@ function testRun() {
 
         // 1. Try Google UserContent / LH3 Direct Image endpoint first (supports CORS and Range requests)
         const directUrls = [
-            `https://lh3.googleusercontent.com/d/${encodeURIComponent(fileId)}=s0`,
-            `https://lh3.googleusercontent.com/d/${encodeURIComponent(fileId)}`
+            `https://lh3.googleusercontent.com/d/${encodeURIComponent(fileId)}=s0`
         ];
 
         for (const dUrl of directUrls) {
             try {
-                const resp = await fetch(dUrl, {
+                const resp = await fetchWithTimeout(dUrl, {
                     headers: { Range: 'bytes=0-131071' }
-                });
+                }, 3000);
                 if (resp.ok) {
                     const buf = await resp.arrayBuffer();
                     if (buf && buf.byteLength > 64) {
@@ -2574,9 +2574,9 @@ function testRun() {
 
             for (const pUrl of binaryProxyUrls) {
                 try {
-                    const resp = await fetch(pUrl, {
+                    const resp = await fetchWithTimeout(pUrl, {
                         headers: { Range: 'bytes=0-131071' }
-                    });
+                    }, 3000);
                     if (resp.ok) {
                         const buf = await resp.arrayBuffer();
                         if (buf && buf.byteLength > 64) {
@@ -2608,34 +2608,11 @@ function testRun() {
             }
         }
 
-        // 2. Try allorigins /get (JSON base64 wrapper) if binary proxy was blocked
-        if (!meta.capturedAt && meta.lat == null) {
-            try {
-                const getResp = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(dlUrl)}`);
-                if (getResp.ok) {
-                    const json = await getResp.json();
-                    if (json && json.contents && json.contents.startsWith('data:')) {
-                        const buf = base64DataUrlToArrayBuffer(json.contents);
-                        if (buf) {
-                            const binExif = parseExifFromArrayBuffer(buf);
-                            if (binExif.capturedAt) meta.capturedAt = binExif.capturedAt;
-                            if (binExif.lat != null && binExif.lon != null) {
-                                meta.lat = binExif.lat;
-                                meta.lon = binExif.lon;
-                            }
-                            if (binExif.city) meta.city = binExif.city;
-                            if (binExif.location) meta.location = binExif.location;
-                        }
-                    }
-                }
-            } catch (e) {}
-        }
-
         // 3. Try Google Drive file /view HTML page for original filename & description metadata
-        if (!meta.name || (!meta.capturedAt && !meta.location && meta.lat == null)) {
+        if (!meta.name && !meta.capturedAt && !meta.location && meta.lat == null) {
             const viewUrl = `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view`;
             try {
-                const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(viewUrl)}`);
+                const r = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(viewUrl)}`, {}, 2500);
                 if (r.ok) {
                     const html = await r.text();
                     const ogTitle = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
@@ -2693,7 +2670,7 @@ function testRun() {
                 try {
                     const reqUrl = new URL(`https://script.google.com/macros/s/${encodeURIComponent(scriptId)}/exec`);
                     reqUrl.searchParams.set("id", String(folderId));
-                    const resp = await fetch(reqUrl.toString());
+                    const resp = await fetchWithTimeout(reqUrl.toString(), {}, 12000);
                     if (resp.ok) {
                         const data = await resp.json();
                         if (data && Array.isArray(data.files) && data.files.length > 0) {
@@ -2702,7 +2679,7 @@ function testRun() {
                                 let photoLoc = f.location || "";
                                 let photoCity = f.city || "";
                                 let capturedAt = normalizeDateToIsoMinute(f.capturedAt) || extractDateFromText(f.name);
-                                if (f.lat != null && f.lon != null) {
+                                if (!photoLoc && f.lat != null && f.lon != null) {
                                     const geo = await reverseGeocodeCoords(f.lat, f.lon);
                                     if (geo) {
                                         photoLoc = geo.location;
@@ -2971,18 +2948,15 @@ function testRun() {
                     const cleanCode = (f.name || '').replace(/\.[^/.]+$/, "").toUpperCase();
 
                     // 1. Resolve Location strictly from EXIF GPS / reverse geocoding / photo filename metadata
-                    let photoLoc = "";
-                    let photoCity = "";
-                    if (f.lat != null && f.lon != null) {
+                    let photoLoc = f.location || "";
+                    let photoCity = f.city || "";
+                    if (!photoLoc && f.lat != null && f.lon != null) {
                         const geo = await reverseGeocodeCoords(f.lat, f.lon);
                         if (geo) {
                             photoLoc = geo.location || "";
                             photoCity = geo.city || "";
                         }
-                    } else if (f.location) {
-                        photoLoc = f.location;
-                        photoCity = f.city || "";
-                    } else if (f.name) {
+                    } else if (!photoLoc && f.name) {
                         const nameLoc = extractLocationFromText(f.name);
                         if (nameLoc) {
                             photoLoc = nameLoc.location;
@@ -3004,6 +2978,8 @@ function testRun() {
                         code: cleanCode && cleanCode.length <= 22 ? cleanCode : `DRV_${1000 + counter}`,
                         location: photoLoc,
                         city: photoCity,
+                        lat: f.lat != null ? f.lat : undefined,
+                        lon: f.lon != null ? f.lon : undefined,
                         capturedAt: capturedAt || "",
                         title: f.name || `Ảnh Google Drive #${counter}`,
                         url: `https://drive.google.com/thumbnail?id=${f.id}&sz=s0`
@@ -4551,68 +4527,73 @@ function testRun() {
             });
 
             // TUÂN THỦ ĐIỀU 5: Trích xuất trực tiếp nhị phân DateTimeOriginal (0x9003) & GPS qua Range request
-            // cho 100% các bức ảnh trong album khi bấm Cập nhật
-            for (let i = 0; i < album.photos.length; i++) {
-                const photo = album.photos[i];
-                const codeKey = (photo.code || photo.title || '').replace(/\.[^/.]+$/, '').toUpperCase();
-                const known = KNOWN_PHOTO_METADATA_MAP[codeKey];
+            // song song theo nhóm cho những bức ảnh chưa có đủ thông tin metadata
+            const CONCURRENCY = 5;
+            for (let i = 0; i < album.photos.length; i += CONCURRENCY) {
+                const batch = album.photos.slice(i, i + CONCURRENCY);
+                await Promise.all(batch.map(async (photo) => {
+                    const codeKey = (photo.code || photo.title || '').replace(/\.[^/.]+$/, '').toUpperCase();
+                    const known = KNOWN_PHOTO_METADATA_MAP[codeKey];
 
-                if (known) {
-                    if (photo.capturedAt !== known.capturedAt) {
-                        photo.capturedAt = known.capturedAt;
-                        updatedCount++;
-                    }
-                    if (known.lat != null && photo.lat !== known.lat) photo.lat = known.lat;
-                    if (known.lon != null && photo.lon !== known.lon) photo.lon = known.lon;
-                    if (known.location && photo.location !== known.location) photo.location = known.location;
-                    if (known.city && photo.city !== known.city) photo.city = known.city;
-                } else if (photo.driveFileId) {
-                    try {
-                        const fileMeta = await extractDriveFileMetaInBrowser(photo.driveFileId);
-                        if (fileMeta) {
-                            if (fileMeta.capturedAt && photo.capturedAt !== fileMeta.capturedAt) {
-                                photo.capturedAt = fileMeta.capturedAt;
-                                updatedCount++;
-                            }
-                            if (fileMeta.lat != null && photo.lat !== fileMeta.lat) {
-                                photo.lat = fileMeta.lat;
-                                photo.lon = fileMeta.lon;
-                            }
-                            if (fileMeta.location && photo.location !== fileMeta.location) {
-                                photo.location = fileMeta.location;
-                                photo.city = fileMeta.city || "";
-                            }
+                    if (known) {
+                        if (photo.capturedAt !== known.capturedAt) {
+                            photo.capturedAt = known.capturedAt;
+                            updatedCount++;
                         }
-                    } catch (eMeta) {}
-                }
+                        if (known.lat != null && photo.lat !== known.lat) photo.lat = known.lat;
+                        if (known.lon != null && photo.lon !== known.lon) photo.lon = known.lon;
+                        if (known.location && photo.location !== known.location) photo.location = known.location;
+                        if (known.city && photo.city !== known.city) photo.city = known.city;
+                    } else if (photo.driveFileId && (!photo.capturedAt || (!photo.location && photo.lat == null))) {
+                        try {
+                            const fileMeta = await extractDriveFileMetaInBrowser(photo.driveFileId);
+                            if (fileMeta) {
+                                if (fileMeta.capturedAt && photo.capturedAt !== fileMeta.capturedAt) {
+                                    photo.capturedAt = fileMeta.capturedAt;
+                                    updatedCount++;
+                                }
+                                if (fileMeta.lat != null && photo.lat !== fileMeta.lat) {
+                                    photo.lat = fileMeta.lat;
+                                    photo.lon = fileMeta.lon;
+                                }
+                                if (fileMeta.location && photo.location !== fileMeta.location) {
+                                    photo.location = fileMeta.location;
+                                    photo.city = fileMeta.city || "";
+                                }
+                            }
+                        } catch (eMeta) {}
+                    }
+                }));
             }
 
             // 3. TUÂN THỦ ĐIỀU 5: Trích xuất và cập nhật lại vị trí GPS (quy đổi xã/phường - tỉnh/thành phố)
             // cho từng bức ảnh trong album: nếu có toạ độ thì cập nhật đầy đủ Xã/Phường - Tỉnh/Thành phố, nếu không có thì để trống ""
-            for (let i = 0; i < album.photos.length; i++) {
-                const photo = album.photos[i];
-                if (photo.lat != null && photo.lon != null) {
-                    const geo = await reverseGeocodeCoords(photo.lat, photo.lon);
-                    if (geo && geo.location) {
-                        if (photo.location !== geo.location) {
-                            photo.location = geo.location;
-                            updatedCount++;
+            for (let i = 0; i < album.photos.length; i += CONCURRENCY) {
+                const batch = album.photos.slice(i, i + CONCURRENCY);
+                await Promise.all(batch.map(async (photo) => {
+                    if (!photo.location && photo.lat != null && photo.lon != null) {
+                        const geo = await reverseGeocodeCoords(photo.lat, photo.lon);
+                        if (geo && geo.location) {
+                            if (photo.location !== geo.location) {
+                                photo.location = geo.location;
+                                updatedCount++;
+                            }
+                            if (geo.city && photo.city !== geo.city) {
+                                photo.city = geo.city;
+                            }
                         }
-                        if (geo.city && photo.city !== geo.city) {
-                            photo.city = geo.city;
+                    } else if (!photo.lat && !photo.lon && !photo.location && photo.title) {
+                        const nameLoc = extractLocationFromText(photo.title);
+                        if (nameLoc && nameLoc.location) {
+                            photo.location = nameLoc.location;
+                            photo.city = nameLoc.city || "";
+                        } else if (!photo.location || photo.location === album.city || photo.location === album.location) {
+                            // Không có thông tin vị trí EXIF GPS hay tên file -> để trống
+                            photo.location = "";
+                            photo.city = "";
                         }
                     }
-                } else if (!photo.lat && !photo.lon && photo.title) {
-                    const nameLoc = extractLocationFromText(photo.title);
-                    if (nameLoc && nameLoc.location) {
-                        photo.location = nameLoc.location;
-                        photo.city = nameLoc.city || "";
-                    } else if (!photo.location || photo.location === album.city || photo.location === album.location) {
-                        // Không có thông tin vị trí EXIF GPS hay tên file -> để trống
-                        photo.location = "";
-                        photo.city = "";
-                    }
-                }
+                }));
             }
 
             if (!album.coverUrl && album.photos.length > 0) {
