@@ -1747,16 +1747,6 @@ const App = (function () {
 
     // Helper: Tạo blob ảnh gốc hoặc có đóng watermark
     async function createPhotoDownloadBlob(photoUrl, applyWatermark = false) {
-        try {
-            const resp = await fetch(photoUrl, { mode: 'cors', credentials: 'omit' });
-            if (resp && resp.ok) {
-                const rawBlob = await resp.blob();
-                if (!applyWatermark) {
-                    return rawBlob;
-                }
-            }
-        } catch (e) {}
-
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
@@ -1779,7 +1769,7 @@ const App = (function () {
                         } else {
                             reject(new Error("Canvas toBlob failed"));
                         }
-                    }, 'image/jpeg', 0.95);
+                    }, 'image/jpeg', 0.98);
                 } catch (err) {
                     reject(err);
                 }
@@ -1789,7 +1779,12 @@ const App = (function () {
                 reject(new Error("Failed to load image for download"));
             };
 
-            img.src = photoUrl;
+            const safeSrc = sanitizeMediaUrl(photoUrl);
+            if (!safeSrc) {
+                reject(new Error("Invalid photo URL"));
+                return;
+            }
+            img.setAttribute('src', encodeURI(safeSrc));
         });
     }
 
